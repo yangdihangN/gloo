@@ -3,12 +3,12 @@ package translator
 import (
 	"context"
 
+	"github.com/solo-io/gloo/projects/gateway/pkg/todo"
+	gloov1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
+	"github.com/solo-io/gloo/projects/ingress/pkg/api/v1"
 	"github.com/solo-io/solo-kit/pkg/api/v1/clients"
 	"github.com/solo-io/solo-kit/pkg/api/v1/reporter"
 	"github.com/solo-io/solo-kit/pkg/utils/contextutils"
-	gloov1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
-	"github.com/solo-io/gloo/projects/ingress/pkg/api/v1"
-	"github.com/solo-io/gloo/projects/sqoop/pkg/todo"
 )
 
 type translatorSyncer struct {

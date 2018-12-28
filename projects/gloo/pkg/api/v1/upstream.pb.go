@@ -25,7 +25,7 @@ const _ = proto.GoGoProtoPackageIsVersion2 // please upgrade the proto package
 //
 // @solo-kit:resource.short_name=us
 // @solo-kit:resource.plural_name=upstreams
-// @solo-kit:resource.resource_groups=api.gloo.solo.io,discovery.gloo.solo.io,translator.supergloo.solo.io
+// @solo-kit:resource.resource_groups=api.gloo.solo.io,discovery.gloo.solo.io,translator.supergloo.solo.io,api.ingress.solo.io
 //
 // Upstreams represent destination for routing HTTP requests. Upstreams can be compared to
 // [clusters](https://www.envoyproxy.io/docs/envoy/latest/api-v1/cluster_manager/cluster.html?highlight=cluster) in Envoy terminology.
@@ -51,7 +51,7 @@ func (m *Upstream) Reset()         { *m = Upstream{} }
 func (m *Upstream) String() string { return proto.CompactTextString(m) }
 func (*Upstream) ProtoMessage()    {}
 func (*Upstream) Descriptor() ([]byte, []int) {
-	return fileDescriptor_upstream_29947727819065fe, []int{0}
+	return fileDescriptor_upstream_3bf6379cda613587, []int{0}
 }
 func (m *Upstream) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Upstream.Unmarshal(m, b)
@@ -110,7 +110,7 @@ func (m *DiscoveryMetadata) Reset()         { *m = DiscoveryMetadata{} }
 func (m *DiscoveryMetadata) String() string { return proto.CompactTextString(m) }
 func (*DiscoveryMetadata) ProtoMessage()    {}
 func (*DiscoveryMetadata) Descriptor() ([]byte, []int) {
-	return fileDescriptor_upstream_29947727819065fe, []int{1}
+	return fileDescriptor_upstream_3bf6379cda613587, []int{1}
 }
 func (m *DiscoveryMetadata) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_DiscoveryMetadata.Unmarshal(m, b)
@@ -196,10 +196,10 @@ func (this *DiscoveryMetadata) Equal(that interface{}) bool {
 }
 
 func init() {
-	proto.RegisterFile("github.com/solo-io/gloo/projects/gloo/api/v1/upstream.proto", fileDescriptor_upstream_29947727819065fe)
+	proto.RegisterFile("github.com/solo-io/gloo/projects/gloo/api/v1/upstream.proto", fileDescriptor_upstream_3bf6379cda613587)
 }
 
-var fileDescriptor_upstream_29947727819065fe = []byte{
+var fileDescriptor_upstream_3bf6379cda613587 = []byte{
 	// 325 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x90, 0x4d, 0x4e, 0x02, 0x31,
 	0x1c, 0xc5, 0x85, 0x18, 0x24, 0x15, 0x17, 0x8c, 0xc4, 0x20, 0x0b, 0x31, 0xb3, 0x72, 0x63, 0x2b,

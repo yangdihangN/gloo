@@ -5,13 +5,13 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	. "github.com/solo-io/gloo/projects/ingress/pkg/api/ingress"
+	"github.com/solo-io/gloo/projects/ingress/pkg/api/v1"
 	"github.com/solo-io/solo-kit/pkg/api/v1/clients"
 	"github.com/solo-io/solo-kit/pkg/utils/kubeutils"
 	"github.com/solo-io/solo-kit/pkg/utils/log"
 	"github.com/solo-io/solo-kit/test/helpers"
 	"github.com/solo-io/solo-kit/test/setup"
-	. "github.com/solo-io/gloo/projects/ingress/pkg/api/ingress"
-	"github.com/solo-io/gloo/projects/ingress/pkg/api/v1"
 	"k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -44,7 +44,7 @@ var _ = Describe("ResourceClient", func() {
 		kube, err := kubernetes.NewForConfig(cfg)
 		Expect(err).NotTo(HaveOccurred())
 		baseClient := NewResourceClient(kube, &v1.Ingress{})
-		ingressClient := v1.NewIngressClientFromBase(baseClient)
+		ingressClient := v1.NewIngressClientWithBase(baseClient)
 		Expect(err).NotTo(HaveOccurred())
 		kubeIngressClient := kube.ExtensionsV1beta1().Ingresses(namespace)
 		backend := &v1beta1.IngressBackend{

@@ -70,7 +70,7 @@ func IngressClientTest(namespace string, client IngressClient) {
 	Expect(r1.GetMetadata().Namespace).To(Equal(namespace))
 	Expect(r1.Metadata.ResourceVersion).NotTo(Equal(input.Metadata.ResourceVersion))
 	Expect(r1.Metadata.Ref()).To(Equal(input.Metadata.Ref()))
-	Expect(r1.KubeIngressSpecRaw).To(Equal(input.KubeIngressSpecRaw))
+	Expect(r1.KubeIngressSpec).To(Equal(input.KubeIngressSpec))
 	Expect(r1.KubeIngressStatus).To(Equal(input.KubeIngressStatus))
 	Expect(r1.Status).To(Equal(input.Status))
 

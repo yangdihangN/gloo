@@ -24,7 +24,7 @@ func (s SetupSnapshot) Hash() uint64 {
 }
 
 func (s SetupSnapshot) hashSettings() uint64 {
-	return hashutils.HashAll(s.Settings.List()...)
+	return hashutils.HashAll(s.Settings.List().AsInterfaces()...)
 }
 
 func (s SetupSnapshot) HashFields() []zap.Field {

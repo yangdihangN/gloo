@@ -32,15 +32,15 @@ func (s ApiSnapshot) Hash() uint64 {
 }
 
 func (s ApiSnapshot) hashSecrets() uint64 {
-	return hashutils.HashAll(s.Secrets.List()...)
+	return hashutils.HashAll(s.Secrets.List().AsInterfaces()...)
 }
 
 func (s ApiSnapshot) hashUpstreams() uint64 {
-	return hashutils.HashAll(s.Upstreams.List()...)
+	return hashutils.HashAll(s.Upstreams.List().AsInterfaces()...)
 }
 
 func (s ApiSnapshot) hashIngresses() uint64 {
-	return hashutils.HashAll(s.Ingresses.List()...)
+	return hashutils.HashAll(s.Ingresses.List().AsInterfaces()...)
 }
 
 func (s ApiSnapshot) HashFields() []zap.Field {

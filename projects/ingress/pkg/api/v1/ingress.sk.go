@@ -104,6 +104,20 @@ func (list IngressList) Clone() IngressList {
 	return ingressList
 }
 
+func (list IngressList) Each(f func(element *Ingress)) {
+	for _, ingress := range list {
+		f(ingress)
+	}
+}
+
+func (list IngressList) AsInterfaces() []interface{} {
+	var asInterfaces []interface{}
+	list.Each(func(element *Ingress) {
+		asInterfaces = append(asInterfaces, element)
+	})
+	return asInterfaces
+}
+
 func (list IngressList) ByNamespace() IngressesByNamespace {
 	byNamespace := make(IngressesByNamespace)
 	for _, ingress := range list {

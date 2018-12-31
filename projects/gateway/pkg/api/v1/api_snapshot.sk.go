@@ -27,11 +27,11 @@ func (s ApiSnapshot) Hash() uint64 {
 }
 
 func (s ApiSnapshot) hashGateways() uint64 {
-	return hashutils.HashAll(s.Gateways.List()...)
+	return hashutils.HashAll(s.Gateways.List().AsInterfaces()...)
 }
 
 func (s ApiSnapshot) hashVirtualServices() uint64 {
-	return hashutils.HashAll(s.VirtualServices.List()...)
+	return hashutils.HashAll(s.VirtualServices.List().AsInterfaces()...)
 }
 
 func (s ApiSnapshot) HashFields() []zap.Field {

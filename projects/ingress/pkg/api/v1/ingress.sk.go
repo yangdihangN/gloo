@@ -38,7 +38,7 @@ func (r *Ingress) Hash() uint64 {
 	metaCopy.ResourceVersion = ""
 	return hashutils.HashAll(
 		metaCopy,
-		r.KubeIngressSpecRaw,
+		r.KubeIngressSpec,
 	)
 }
 

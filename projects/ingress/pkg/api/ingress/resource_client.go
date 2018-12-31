@@ -6,14 +6,14 @@ import (
 	"sort"
 	"time"
 
-	"github.com/solo-io/gloo/projects/ingress/pkg/api/v1"
-	"k8s.io/api/extensions/v1beta1"
-
 	"github.com/gogo/protobuf/proto"
+	"github.com/gogo/protobuf/types"
+	"github.com/solo-io/gloo/projects/ingress/pkg/api/v1"
 	"github.com/solo-io/solo-kit/pkg/api/v1/clients"
 	"github.com/solo-io/solo-kit/pkg/api/v1/resources"
 	"github.com/solo-io/solo-kit/pkg/errors"
 	"github.com/solo-io/solo-kit/pkg/utils/kubeutils"
+	"k8s.io/api/extensions/v1beta1"
 	apiexts "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,6 +21,8 @@ import (
 	kubewatch "k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 )
+
+const typeUrl = "k8s.io/extensions.v1beta1/Ingress"
 
 type ResourceClient struct {
 	apiexts      apiexts.Interface
@@ -39,14 +41,29 @@ func NewResourceClient(kube kubernetes.Interface, resourceType resources.Resourc
 }
 
 func FromKube(ingress *v1beta1.Ingress) (*v1.Ingress, error) {
-	raw, err := json.Marshal(ingress)
+	rawSpec, err := json.Marshal(ingress.Spec)
 	if err != nil {
 		return nil, errors.Wrapf(err, "marshalling kube ingress object")
 	}
+	spec := &types.Any{
+		TypeUrl: typeUrl,
+		Value:   rawSpec,
+	}
+
+	rawStatus, err := json.Marshal(ingress.Status)
+	if err != nil {
+		return nil, errors.Wrapf(err, "marshalling kube ingress object")
+	}
+	status := &types.Any{
+		TypeUrl: typeUrl,
+		Value:   rawStatus,
+	}
 
 	resource := &v1.Ingress{
-		KubeIngressRaw: raw,
+		KubeIngressSpec:   spec,
+		KubeIngressStatus: status,
 	}
+
 	resource.SetMetadata(kubeutils.FromKubeMeta(ingress.ObjectMeta))
 
 	return resource, nil
@@ -57,9 +74,17 @@ func ToKube(resource resources.Resource) (*v1beta1.Ingress, error) {
 	if !ok {
 		return nil, errors.Errorf("internal error: invalid resource %v passed to ingress-only client", resources.Kind(resource))
 	}
+	if ingResource.KubeIngressSpec == nil {
+		return nil, errors.Errorf("internal error: %v ingress spec cannot be nil", ingResource.GetMetadata().Ref())
+	}
 	var ingress v1beta1.Ingress
-	if err := json.Unmarshal(ingResource.KubeIngressRaw, &ingress); err != nil {
-		return nil, errors.Wrapf(err, "unmarshalling kube ingress data")
+	if err := json.Unmarshal(ingResource.KubeIngressSpec.Value, &ingress.Spec); err != nil {
+		return nil, errors.Wrapf(err, "unmarshalling kube ingress spec data")
+	}
+	if ingResource.KubeIngressStatus != nil {
+		if err := json.Unmarshal(ingResource.KubeIngressStatus.Value, &ingress.Status); err != nil {
+			return nil, errors.Wrapf(err, "unmarshalling kube ingress status data")
+		}
 	}
 
 	meta := kubeutils.ToKubeMeta(resource.GetMetadata())

@@ -5,11 +5,15 @@ import (
 
 	"github.com/solo-io/gloo/projects/ingress/pkg/translator"
 
-	"github.com/solo-io/solo-kit/pkg/utils/kubeutils"
 	"github.com/solo-io/gloo/projects/ingress/pkg/api/ingress"
+	"github.com/solo-io/solo-kit/pkg/utils/kubeutils"
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/gogo/protobuf/types"
+	gloov1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
+	"github.com/solo-io/gloo/projects/gloo/pkg/bootstrap"
+	gloodefaults "github.com/solo-io/gloo/projects/gloo/pkg/defaults"
+	"github.com/solo-io/gloo/projects/ingress/pkg/api/v1"
 	"github.com/solo-io/solo-kit/pkg/api/v1/clients"
 	"github.com/solo-io/solo-kit/pkg/api/v1/clients/kube"
 	"github.com/solo-io/solo-kit/pkg/api/v1/clients/memory"
@@ -17,10 +21,6 @@ import (
 	"github.com/solo-io/solo-kit/pkg/errors"
 	"github.com/solo-io/solo-kit/pkg/utils/contextutils"
 	"github.com/solo-io/solo-kit/pkg/utils/errutils"
-	gloov1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
-	"github.com/solo-io/gloo/projects/gloo/pkg/bootstrap"
-	gloodefaults "github.com/solo-io/gloo/projects/gloo/pkg/defaults"
-	"github.com/solo-io/gloo/projects/ingress/pkg/api/v1"
 	"k8s.io/client-go/rest"
 )
 

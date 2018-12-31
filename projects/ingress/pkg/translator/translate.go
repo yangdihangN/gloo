@@ -4,11 +4,11 @@ import (
 	"sort"
 
 	"github.com/pkg/errors"
-	"github.com/solo-io/solo-kit/pkg/api/v1/resources/core"
-	"github.com/solo-io/solo-kit/pkg/utils/log"
 	gloov1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
 	"github.com/solo-io/gloo/projects/ingress/pkg/api/ingress"
 	"github.com/solo-io/gloo/projects/ingress/pkg/api/v1"
+	"github.com/solo-io/solo-kit/pkg/api/v1/resources/core"
+	"github.com/solo-io/solo-kit/pkg/utils/log"
 	"k8s.io/api/extensions/v1beta1"
 )
 
@@ -73,6 +73,7 @@ func translateProxy(namespace string, snap *v1.ApiSnapshot) (*gloov1.Proxy, erro
 		Listeners: listeners,
 	}, nil
 }
+
 func upstreamForBackend(upstreams gloov1.UpstreamList, ingressNamespace string, backend v1beta1.IngressBackend) (*gloov1.Upstream, error) {
 	// find the upstream with the smallest matching selector
 	// longer selectors represent subsets of pods for a service

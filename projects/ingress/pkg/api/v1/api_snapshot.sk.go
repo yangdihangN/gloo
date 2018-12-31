@@ -5,9 +5,7 @@ package v1
 import (
 	gloo_solo_io "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
 
-	"github.com/mitchellh/hashstructure"
-	"github.com/solo-io/solo-kit/pkg/api/v1/resources"
-	"github.com/solo-io/solo-kit/pkg/api/v1/resources/core"
+	"github.com/solo-io/solo-kit/pkg/utils/hashutils"
 	"go.uber.org/zap"
 )
 
@@ -25,50 +23,31 @@ func (s ApiSnapshot) Clone() ApiSnapshot {
 	}
 }
 
-func (s ApiSnapshot) snapshotToHash() ApiSnapshot {
-	snapshotForHashing := s.Clone()
-	for _, secret := range snapshotForHashing.Secrets.List() {
-		resources.UpdateMetadata(secret, func(meta *core.Metadata) {
-			meta.ResourceVersion = ""
-		})
-	}
-	for _, upstream := range snapshotForHashing.Upstreams.List() {
-		resources.UpdateMetadata(upstream, func(meta *core.Metadata) {
-			meta.ResourceVersion = ""
-		})
-		upstream.SetStatus(core.Status{})
-	}
-	for _, ingress := range snapshotForHashing.Ingresses.List() {
-		resources.UpdateMetadata(ingress, func(meta *core.Metadata) {
-			meta.ResourceVersion = ""
-		})
-		ingress.SetStatus(core.Status{})
-	}
-
-	return snapshotForHashing
+func (s ApiSnapshot) Hash() uint64 {
+	return hashutils.HashAll(
+		s.hashSecrets(),
+		s.hashUpstreams(),
+		s.hashIngresses(),
+	)
 }
 
-func (s ApiSnapshot) Hash() uint64 {
-	return s.hashStruct(s.snapshotToHash())
+func (s ApiSnapshot) hashSecrets() uint64 {
+	return hashutils.HashAll(s.Secrets.List()...)
+}
+
+func (s ApiSnapshot) hashUpstreams() uint64 {
+	return hashutils.HashAll(s.Upstreams.List()...)
+}
+
+func (s ApiSnapshot) hashIngresses() uint64 {
+	return hashutils.HashAll(s.Ingresses.List()...)
 }
 
 func (s ApiSnapshot) HashFields() []zap.Field {
-	snapshotForHashing := s.snapshotToHash()
 	var fields []zap.Field
-	secrets := s.hashStruct(snapshotForHashing.Secrets.List())
-	fields = append(fields, zap.Uint64("secrets", secrets))
-	upstreams := s.hashStruct(snapshotForHashing.Upstreams.List())
-	fields = append(fields, zap.Uint64("upstreams", upstreams))
-	ingresses := s.hashStruct(snapshotForHashing.Ingresses.List())
-	fields = append(fields, zap.Uint64("ingresses", ingresses))
+	fields = append(fields, zap.Uint64("secrets", s.hashSecrets()))
+	fields = append(fields, zap.Uint64("upstreams", s.hashUpstreams()))
+	fields = append(fields, zap.Uint64("ingresses", s.hashIngresses()))
 
-	return append(fields, zap.Uint64("snapshotHash", s.hashStruct(snapshotForHashing)))
-}
-
-func (s ApiSnapshot) hashStruct(v interface{}) uint64 {
-	h, err := hashstructure.Hash(v, nil)
-	if err != nil {
-		panic(err)
-	}
-	return h
+	return append(fields, zap.Uint64("snapshotHash", s.Hash()))
 }

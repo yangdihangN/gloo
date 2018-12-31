@@ -27,11 +27,11 @@ func (s DiscoverySnapshot) Hash() uint64 {
 }
 
 func (s DiscoverySnapshot) hashSecrets() uint64 {
-	return hashutils.HashAll(s.Secrets.List().AsInterfaces()...)
+	return hashutils.HashAll(s.Secrets.List()...)
 }
 
 func (s DiscoverySnapshot) hashUpstreams() uint64 {
-	return hashutils.HashAll(s.Upstreams.List().AsInterfaces()...)
+	return hashutils.HashAll(s.Upstreams.List()...)
 }
 
 func (s DiscoverySnapshot) HashFields() []zap.Field {

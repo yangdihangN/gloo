@@ -8,18 +8,18 @@ import (
 )
 
 type ApiSnapshot struct {
+	Proxies   ProxiesByNamespace
 	Artifacts ArtifactsByNamespace
 	Endpoints EndpointsByNamespace
-	Proxies   ProxiesByNamespace
 	Secrets   SecretsByNamespace
 	Upstreams UpstreamsByNamespace
 }
 
 func (s ApiSnapshot) Clone() ApiSnapshot {
 	return ApiSnapshot{
+		Proxies:   s.Proxies.Clone(),
 		Artifacts: s.Artifacts.Clone(),
 		Endpoints: s.Endpoints.Clone(),
-		Proxies:   s.Proxies.Clone(),
 		Secrets:   s.Secrets.Clone(),
 		Upstreams: s.Upstreams.Clone(),
 	}
@@ -27,39 +27,39 @@ func (s ApiSnapshot) Clone() ApiSnapshot {
 
 func (s ApiSnapshot) Hash() uint64 {
 	return hashutils.HashAll(
+		s.hashProxies(),
 		s.hashArtifacts(),
 		s.hashEndpoints(),
-		s.hashProxies(),
 		s.hashSecrets(),
 		s.hashUpstreams(),
 	)
 }
 
+func (s ApiSnapshot) hashProxies() uint64 {
+	return hashutils.HashAll(s.Proxies.List()...)
+}
+
 func (s ApiSnapshot) hashArtifacts() uint64 {
-	return hashutils.HashAll(s.Artifacts.List().AsInterfaces()...)
+	return hashutils.HashAll(s.Artifacts.List()...)
 }
 
 func (s ApiSnapshot) hashEndpoints() uint64 {
-	return hashutils.HashAll(s.Endpoints.List().AsInterfaces()...)
-}
-
-func (s ApiSnapshot) hashProxies() uint64 {
-	return hashutils.HashAll(s.Proxies.List().AsInterfaces()...)
+	return hashutils.HashAll(s.Endpoints.List()...)
 }
 
 func (s ApiSnapshot) hashSecrets() uint64 {
-	return hashutils.HashAll(s.Secrets.List().AsInterfaces()...)
+	return hashutils.HashAll(s.Secrets.List()...)
 }
 
 func (s ApiSnapshot) hashUpstreams() uint64 {
-	return hashutils.HashAll(s.Upstreams.List().AsInterfaces()...)
+	return hashutils.HashAll(s.Upstreams.List()...)
 }
 
 func (s ApiSnapshot) HashFields() []zap.Field {
 	var fields []zap.Field
+	fields = append(fields, zap.Uint64("proxies", s.hashProxies()))
 	fields = append(fields, zap.Uint64("artifacts", s.hashArtifacts()))
 	fields = append(fields, zap.Uint64("endpoints", s.hashEndpoints()))
-	fields = append(fields, zap.Uint64("proxies", s.hashProxies()))
 	fields = append(fields, zap.Uint64("secrets", s.hashSecrets()))
 	fields = append(fields, zap.Uint64("upstreams", s.hashUpstreams()))
 

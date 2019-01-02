@@ -21,19 +21,17 @@ type translatorSyncer struct {
 	writeNamespace  string
 	reporter        reporter.Reporter
 	propagator      *propagator.Propagator
-	writeErrs       chan error
 	proxyClient     gloov1.ProxyClient
 	gwClient        v1.GatewayClient
 	vsClient        v1.VirtualServiceClient
 	proxyReconciler gloov1.ProxyReconciler
 }
 
-func NewTranslatorSyncer(writeNamespace string, proxyClient gloov1.ProxyClient, gwClient v1.GatewayClient, vsClient v1.VirtualServiceClient, reporter reporter.Reporter, propagator *propagator.Propagator, writeErrs chan error) v1.ApiSyncer {
+func NewTranslatorSyncer(writeNamespace string, proxyClient gloov1.ProxyClient, gwClient v1.GatewayClient, vsClient v1.VirtualServiceClient, reporter reporter.Reporter, propagator *propagator.Propagator) v1.ApiSyncer {
 	return &translatorSyncer{
 		writeNamespace:  writeNamespace,
 		reporter:        reporter,
 		propagator:      propagator,
-		writeErrs:       writeErrs,
 		proxyClient:     proxyClient,
 		gwClient:        gwClient,
 		vsClient:        vsClient,

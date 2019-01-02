@@ -7,7 +7,7 @@ import proto "github.com/gogo/protobuf/proto"
 import fmt "fmt"
 import math "math"
 import _ "github.com/gogo/protobuf/gogoproto"
-import any "github.com/golang/protobuf/ptypes/any"
+import types "github.com/gogo/protobuf/types"
 import core "github.com/solo-io/solo-kit/pkg/api/v1/resources/core"
 
 import bytes "bytes"
@@ -31,9 +31,9 @@ const _ = proto.GoGoProtoPackageIsVersion2 // please upgrade the proto package
 // A simple wrapper for a Kubernetes Service Object.
 type KubeService struct {
 	// a raw byte representation of the kubernetes service this resource wraps
-	KubeServiceSpec *any.Any `protobuf:"bytes,1,opt,name=kube_service_spec,json=kubeServiceSpec" json:"kube_service_spec,omitempty"`
+	KubeServiceSpec *types.Any `protobuf:"bytes,1,opt,name=kube_service_spec,json=kubeServiceSpec" json:"kube_service_spec,omitempty"`
 	// a raw byte representation of the service status of the kubernetes service object
-	KubeServiceStatus *any.Any `protobuf:"bytes,2,opt,name=kube_service_status,json=kubeServiceStatus" json:"kube_service_status,omitempty"`
+	KubeServiceStatus *types.Any `protobuf:"bytes,2,opt,name=kube_service_status,json=kubeServiceStatus" json:"kube_service_status,omitempty"`
 	// Status indicates the validation status of this resource.
 	// Status is read-only by clients, and set by gloo during validation
 	Status core.Status `protobuf:"bytes,6,opt,name=status" json:"status" testdiff:"ignore"`
@@ -48,7 +48,7 @@ func (m *KubeService) Reset()         { *m = KubeService{} }
 func (m *KubeService) String() string { return proto.CompactTextString(m) }
 func (*KubeService) ProtoMessage()    {}
 func (*KubeService) Descriptor() ([]byte, []int) {
-	return fileDescriptor_service_8938cf860e4ac527, []int{0}
+	return fileDescriptor_service_e80c60ca6912a46e, []int{0}
 }
 func (m *KubeService) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_KubeService.Unmarshal(m, b)
@@ -68,14 +68,14 @@ func (m *KubeService) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_KubeService proto.InternalMessageInfo
 
-func (m *KubeService) GetKubeServiceSpec() *any.Any {
+func (m *KubeService) GetKubeServiceSpec() *types.Any {
 	if m != nil {
 		return m.KubeServiceSpec
 	}
 	return nil
 }
 
-func (m *KubeService) GetKubeServiceStatus() *any.Any {
+func (m *KubeService) GetKubeServiceStatus() *types.Any {
 	if m != nil {
 		return m.KubeServiceStatus
 	}
@@ -137,10 +137,10 @@ func (this *KubeService) Equal(that interface{}) bool {
 }
 
 func init() {
-	proto.RegisterFile("github.com/solo-io/gloo/projects/ingress/api/v1/service.proto", fileDescriptor_service_8938cf860e4ac527)
+	proto.RegisterFile("github.com/solo-io/gloo/projects/ingress/api/v1/service.proto", fileDescriptor_service_e80c60ca6912a46e)
 }
 
-var fileDescriptor_service_8938cf860e4ac527 = []byte{
+var fileDescriptor_service_e80c60ca6912a46e = []byte{
 	// 338 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x92, 0xc1, 0x4e, 0xfa, 0x40,
 	0x10, 0xc6, 0xff, 0x25, 0x84, 0xbf, 0x29, 0x07, 0x42, 0x25, 0x06, 0x38, 0x88, 0xe1, 0xe4, 0xc5,

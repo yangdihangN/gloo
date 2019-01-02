@@ -7,7 +7,7 @@ import proto "github.com/gogo/protobuf/proto"
 import fmt "fmt"
 import math "math"
 import _ "github.com/gogo/protobuf/gogoproto"
-import any "github.com/golang/protobuf/ptypes/any"
+import types "github.com/gogo/protobuf/types"
 import core "github.com/solo-io/solo-kit/pkg/api/v1/resources/core"
 
 import bytes "bytes"
@@ -31,9 +31,9 @@ const _ = proto.GoGoProtoPackageIsVersion2 // please upgrade the proto package
 // A simple wrapper for a Kubernetes Ingress Object.
 type Ingress struct {
 	// a raw byte representation of the kubernetes ingress this resource wraps
-	KubeIngressSpec *any.Any `protobuf:"bytes,1,opt,name=kube_ingress_spec,json=kubeIngressSpec" json:"kube_ingress_spec,omitempty"`
+	KubeIngressSpec *types.Any `protobuf:"bytes,1,opt,name=kube_ingress_spec,json=kubeIngressSpec" json:"kube_ingress_spec,omitempty"`
 	// a raw byte representation of the ingress status of the kubernetes ingress object
-	KubeIngressStatus *any.Any `protobuf:"bytes,2,opt,name=kube_ingress_status,json=kubeIngressStatus" json:"kube_ingress_status,omitempty"`
+	KubeIngressStatus *types.Any `protobuf:"bytes,2,opt,name=kube_ingress_status,json=kubeIngressStatus" json:"kube_ingress_status,omitempty"`
 	// Status indicates the validation status of this resource.
 	// Status is read-only by clients, and set by gloo during validation
 	Status core.Status `protobuf:"bytes,6,opt,name=status" json:"status" testdiff:"ignore"`
@@ -48,7 +48,7 @@ func (m *Ingress) Reset()         { *m = Ingress{} }
 func (m *Ingress) String() string { return proto.CompactTextString(m) }
 func (*Ingress) ProtoMessage()    {}
 func (*Ingress) Descriptor() ([]byte, []int) {
-	return fileDescriptor_ingress_d22492cc797137a6, []int{0}
+	return fileDescriptor_ingress_ee0c988df9b7eb8e, []int{0}
 }
 func (m *Ingress) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Ingress.Unmarshal(m, b)
@@ -68,14 +68,14 @@ func (m *Ingress) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_Ingress proto.InternalMessageInfo
 
-func (m *Ingress) GetKubeIngressSpec() *any.Any {
+func (m *Ingress) GetKubeIngressSpec() *types.Any {
 	if m != nil {
 		return m.KubeIngressSpec
 	}
 	return nil
 }
 
-func (m *Ingress) GetKubeIngressStatus() *any.Any {
+func (m *Ingress) GetKubeIngressStatus() *types.Any {
 	if m != nil {
 		return m.KubeIngressStatus
 	}
@@ -137,10 +137,10 @@ func (this *Ingress) Equal(that interface{}) bool {
 }
 
 func init() {
-	proto.RegisterFile("github.com/solo-io/gloo/projects/ingress/api/v1/ingress.proto", fileDescriptor_ingress_d22492cc797137a6)
+	proto.RegisterFile("github.com/solo-io/gloo/projects/ingress/api/v1/ingress.proto", fileDescriptor_ingress_ee0c988df9b7eb8e)
 }
 
-var fileDescriptor_ingress_d22492cc797137a6 = []byte{
+var fileDescriptor_ingress_ee0c988df9b7eb8e = []byte{
 	// 330 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x92, 0xc1, 0x4a, 0xc3, 0x30,
 	0x1c, 0xc6, 0xed, 0x18, 0x9b, 0xc4, 0xc3, 0x58, 0x1d, 0xb2, 0xed, 0xe0, 0x64, 0x27, 0x2f, 0x26,

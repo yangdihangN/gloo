@@ -1,4 +1,4 @@
-package ingress
+package service
 
 import (
 	"encoding/json"
@@ -13,7 +13,7 @@ import (
 	"github.com/solo-io/solo-kit/pkg/api/v1/resources"
 	"github.com/solo-io/solo-kit/pkg/errors"
 	"github.com/solo-io/solo-kit/pkg/utils/kubeutils"
-	"k8s.io/api/extensions/v1beta1"
+	kubev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -21,7 +21,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-const typeUrl = "k8s.io/extensions.v1beta1/Ingress"
+const typeUrl = "k8s.io/core.v1/Service"
 
 type ResourceClient struct {
 	kube         kubernetes.Interface
@@ -38,50 +38,50 @@ func NewResourceClient(kube kubernetes.Interface, resourceType resources.Resourc
 	}
 }
 
-func FromKube(ingress *v1beta1.Ingress) (*v1.Ingress, error) {
-	rawSpec, err := json.Marshal(ingress.Spec)
+func FromKube(svc *kubev1.Service) (*v1.KubeService, error) {
+	rawSpec, err := json.Marshal(svc.Spec)
 	if err != nil {
-		return nil, errors.Wrapf(err, "marshalling kube ingress object")
+		return nil, errors.Wrapf(err, "marshalling kube svc object")
 	}
 	spec := &types.Any{
 		TypeUrl: typeUrl,
 		Value:   rawSpec,
 	}
 
-	rawStatus, err := json.Marshal(ingress.Status)
+	rawStatus, err := json.Marshal(svc.Status)
 	if err != nil {
-		return nil, errors.Wrapf(err, "marshalling kube ingress object")
+		return nil, errors.Wrapf(err, "marshalling kube svc object")
 	}
 	status := &types.Any{
 		TypeUrl: typeUrl,
 		Value:   rawStatus,
 	}
 
-	resource := &v1.Ingress{
-		KubeIngressSpec:   spec,
-		KubeIngressStatus: status,
+	resource := &v1.KubeService{
+		KubeServiceSpec:   spec,
+		KubeServiceStatus: status,
 	}
 
-	resource.SetMetadata(kubeutils.FromKubeMeta(ingress.ObjectMeta))
+	resource.SetMetadata(kubeutils.FromKubeMeta(svc.ObjectMeta))
 
 	return resource, nil
 }
 
-func ToKube(resource resources.Resource) (*v1beta1.Ingress, error) {
-	ingResource, ok := resource.(*v1.Ingress)
+func ToKube(resource resources.Resource) (*kubev1.Service, error) {
+	ingResource, ok := resource.(*v1.KubeService)
 	if !ok {
-		return nil, errors.Errorf("internal error: invalid resource %v passed to ingress-only client", resources.Kind(resource))
+		return nil, errors.Errorf("internal error: invalid resource %v passed to svc-only client", resources.Kind(resource))
 	}
-	if ingResource.KubeIngressSpec == nil {
-		return nil, errors.Errorf("internal error: %v ingress spec cannot be nil", ingResource.GetMetadata().Ref())
+	if ingResource.KubeServiceSpec == nil {
+		return nil, errors.Errorf("internal error: %v svc spec cannot be nil", ingResource.GetMetadata().Ref())
 	}
-	var ingress v1beta1.Ingress
-	if err := json.Unmarshal(ingResource.KubeIngressSpec.Value, &ingress.Spec); err != nil {
-		return nil, errors.Wrapf(err, "unmarshalling kube ingress spec data")
+	var svc kubev1.Service
+	if err := json.Unmarshal(ingResource.KubeServiceSpec.Value, &svc.Spec); err != nil {
+		return nil, errors.Wrapf(err, "unmarshalling kube svc spec data")
 	}
-	if ingResource.KubeIngressStatus != nil {
-		if err := json.Unmarshal(ingResource.KubeIngressStatus.Value, &ingress.Status); err != nil {
-			return nil, errors.Wrapf(err, "unmarshalling kube ingress status data")
+	if ingResource.KubeServiceStatus != nil {
+		if err := json.Unmarshal(ingResource.KubeServiceStatus.Value, &svc.Status); err != nil {
+			return nil, errors.Wrapf(err, "unmarshalling kube svc status data")
 		}
 	}
 
@@ -89,8 +89,8 @@ func ToKube(resource resources.Resource) (*v1beta1.Ingress, error) {
 	if meta.Annotations == nil {
 		meta.Annotations = make(map[string]string)
 	}
-	ingress.ObjectMeta = meta
-	return &ingress, nil
+	svc.ObjectMeta = meta
+	return &svc, nil
 }
 
 var _ clients.ResourceClient = &ResourceClient{}
@@ -114,19 +114,19 @@ func (rc *ResourceClient) Read(namespace, name string, opts clients.ReadOpts) (r
 	opts = opts.WithDefaults()
 	namespace = clients.DefaultNamespaceIfEmpty(namespace)
 
-	ingressObj, err := rc.kube.ExtensionsV1beta1().Ingresses(namespace).Get(name, metav1.GetOptions{})
+	svcObj, err := rc.kube.ExtensionsV1beta1().Ingresses(namespace).Get(name, metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			return nil, errors.NewNotExistErr(namespace, name, err)
 		}
-		return nil, errors.Wrapf(err, "reading ingressObj from kubernetes")
+		return nil, errors.Wrapf(err, "reading svcObj from kubernetes")
 	}
-	resource, err := FromKube(ingressObj)
+	resource, err := FromKube(svcObj)
 	if err != nil {
 		return nil, err
 	}
 	if resource == nil {
-		return nil, errors.Errorf("ingressObj %v is not kind %v", name, rc.Kind())
+		return nil, errors.Errorf("svcObj %v is not kind %v", name, rc.Kind())
 	}
 	return resource, nil
 }
@@ -142,7 +142,7 @@ func (rc *ResourceClient) Write(resource resources.Resource, opts clients.WriteO
 	// mutate and return clone
 	clone := proto.Clone(resource).(resources.Resource)
 	clone.SetMetadata(meta)
-	ingressObj, err := ToKube(resource)
+	svcObj, err := ToKube(resource)
 	if err != nil {
 		return nil, err
 	}
@@ -157,17 +157,17 @@ func (rc *ResourceClient) Write(resource resources.Resource, opts clients.WriteO
 		if meta.ResourceVersion != original.GetMetadata().ResourceVersion {
 			return nil, errors.NewResourceVersionErr(meta.Namespace, meta.Name, meta.ResourceVersion, original.GetMetadata().ResourceVersion)
 		}
-		if _, err := rc.kube.ExtensionsV1beta1().Ingresses(ingressObj.Namespace).Update(ingressObj); err != nil {
-			return nil, errors.Wrapf(err, "updating kube ingressObj %v", ingressObj.Name)
+		if _, err := rc.kube.ExtensionsV1beta1().Ingresses(svcObj.Namespace).Update(svcObj); err != nil {
+			return nil, errors.Wrapf(err, "updating kube svcObj %v", svcObj.Name)
 		}
 	} else {
-		if _, err := rc.kube.ExtensionsV1beta1().Ingresses(ingressObj.Namespace).Create(ingressObj); err != nil {
-			return nil, errors.Wrapf(err, "creating kube ingressObj %v", ingressObj.Name)
+		if _, err := rc.kube.ExtensionsV1beta1().Ingresses(svcObj.Namespace).Create(svcObj); err != nil {
+			return nil, errors.Wrapf(err, "creating kube svcObj %v", svcObj.Name)
 		}
 	}
 
 	// return a read object to update the resource version
-	return rc.Read(ingressObj.Namespace, ingressObj.Name, clients.ReadOpts{Ctx: opts.Ctx})
+	return rc.Read(svcObj.Namespace, svcObj.Name, clients.ReadOpts{Ctx: opts.Ctx})
 }
 
 func (rc *ResourceClient) Delete(namespace, name string, opts clients.DeleteOpts) error {
@@ -180,7 +180,7 @@ func (rc *ResourceClient) Delete(namespace, name string, opts clients.DeleteOpts
 	}
 
 	if err := rc.kube.ExtensionsV1beta1().Ingresses(namespace).Delete(name, nil); err != nil {
-		return errors.Wrapf(err, "deleting ingressObj %v", name)
+		return errors.Wrapf(err, "deleting svcObj %v", name)
 	}
 	return nil
 }
@@ -189,15 +189,15 @@ func (rc *ResourceClient) List(namespace string, opts clients.ListOpts) (resourc
 	opts = opts.WithDefaults()
 	namespace = clients.DefaultNamespaceIfEmpty(namespace)
 
-	ingressObjList, err := rc.kube.ExtensionsV1beta1().Ingresses(namespace).List(metav1.ListOptions{
+	svcObjList, err := rc.kube.ExtensionsV1beta1().Ingresses(namespace).List(metav1.ListOptions{
 		LabelSelector: labels.SelectorFromSet(opts.Selector).String(),
 	})
 	if err != nil {
-		return nil, errors.Wrapf(err, "listing ingressObjs in %v", namespace)
+		return nil, errors.Wrapf(err, "listing svcObjs in %v", namespace)
 	}
 	var resourceList resources.ResourceList
-	for _, ingressObj := range ingressObjList.Items {
-		resource, err := FromKube(&ingressObj)
+	for _, svcObj := range svcObjList.Items {
+		resource, err := FromKube(&svcObj)
 		if err != nil {
 			return nil, err
 		}

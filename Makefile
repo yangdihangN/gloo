@@ -42,7 +42,7 @@ clean:
 generated-code: $(OUTPUT_DIR)/.generated-code
 
 SUBDIRS:=projects
-$(OUTPUT_DIR)/.generated-code:
+$(OUTPUT_DIR)/.generated-code: manifest
 	go generate ./...
 	gofmt -w $(SUBDIRS)
 	goimports -w $(SUBDIRS)
@@ -210,7 +210,7 @@ build: gloo glooctl gateway discovery envoyinit
 # Deployment Manifests / Helm
 #----------------------------------------------------------------------------------
 
-.PHONY: manifest bump-helm-version
+.PHONY: manifest
 manifest: install/kube.yaml bump-helm-version
 
 bump-helm-version:

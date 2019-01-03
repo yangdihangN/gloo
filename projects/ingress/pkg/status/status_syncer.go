@@ -2,14 +2,15 @@ package status
 
 import (
 	"context"
+	"net"
+	"sort"
+
 	"github.com/gogo/protobuf/proto"
 	"github.com/pkg/errors"
 	"github.com/solo-io/gloo/projects/ingress/pkg/api/ingress"
 	"github.com/solo-io/gloo/projects/ingress/pkg/api/service"
 	"github.com/solo-io/solo-kit/pkg/api/v1/resources/core"
 	kubev1 "k8s.io/api/core/v1"
-	"net"
-	"sort"
 
 	"github.com/solo-io/gloo/projects/ingress/pkg/api/v1"
 	"github.com/solo-io/solo-kit/pkg/api/v1/clients"

@@ -34,7 +34,7 @@ clean:
 generated-code: $(OUTPUT_DIR)/.generated-code
 
 SUBDIRS:=projects
-$(OUTPUT_DIR)/.generated-code:
+$(OUTPUT_DIR)/.generated-code: manifest
 	go generate ./...
 	gofmt -w $(SUBDIRS)
 	goimports -w $(SUBDIRS)
@@ -193,7 +193,7 @@ gloo-envoy-wrapper-docker: $(OUTPUT_DIR)/envoyinit-linux-amd64 $(OUTPUT_DIR)/Doc
 # Deployment Manifests / Helm
 #----------------------------------------------------------------------------------
 
-.PHONY: manifest bump-helm-version
+.PHONY: manifest
 manifest: install/kube.yaml bump-helm-version
 
 bump-helm-version:

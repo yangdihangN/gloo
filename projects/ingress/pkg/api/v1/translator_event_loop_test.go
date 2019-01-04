@@ -7,8 +7,6 @@ import (
 	"sync"
 	"time"
 
-	gloo_solo_io "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/solo-io/solo-kit/pkg/api/v1/clients"
@@ -16,10 +14,10 @@ import (
 	"github.com/solo-io/solo-kit/pkg/api/v1/clients/memory"
 )
 
-var _ = Describe("ApiEventLoop", func() {
+var _ = Describe("TranslatorEventLoop", func() {
 	var (
 		namespace string
-		emitter   ApiEmitter
+		emitter   TranslatorEmitter
 		err       error
 	)
 
@@ -28,13 +26,13 @@ var _ = Describe("ApiEventLoop", func() {
 		secretClientFactory := &factory.MemoryResourceClientFactory{
 			Cache: memory.NewInMemoryResourceCache(),
 		}
-		secretClient, err := gloo_solo_io.NewSecretClient(secretClientFactory)
+		secretClient, err := NewSecretClient(secretClientFactory)
 		Expect(err).NotTo(HaveOccurred())
 
 		upstreamClientFactory := &factory.MemoryResourceClientFactory{
 			Cache: memory.NewInMemoryResourceCache(),
 		}
-		upstreamClient, err := gloo_solo_io.NewUpstreamClient(upstreamClientFactory)
+		upstreamClient, err := NewUpstreamClient(upstreamClientFactory)
 		Expect(err).NotTo(HaveOccurred())
 
 		ingressClientFactory := &factory.MemoryResourceClientFactory{
@@ -43,35 +41,35 @@ var _ = Describe("ApiEventLoop", func() {
 		ingressClient, err := NewIngressClient(ingressClientFactory)
 		Expect(err).NotTo(HaveOccurred())
 
-		emitter = NewApiEmitter(secretClient, upstreamClient, ingressClient)
+		emitter = NewTranslatorEmitter(secretClient, upstreamClient, ingressClient)
 	})
 	It("runs sync function on a new snapshot", func() {
-		_, err = emitter.Secret().Write(gloo_solo_io.NewSecret(namespace, "jerry"), clients.WriteOpts{})
+		_, err = emitter.Secret().Write(NewSecret(namespace, "jerry"), clients.WriteOpts{})
 		Expect(err).NotTo(HaveOccurred())
-		_, err = emitter.Upstream().Write(gloo_solo_io.NewUpstream(namespace, "jerry"), clients.WriteOpts{})
+		_, err = emitter.Upstream().Write(NewUpstream(namespace, "jerry"), clients.WriteOpts{})
 		Expect(err).NotTo(HaveOccurred())
 		_, err = emitter.Ingress().Write(NewIngress(namespace, "jerry"), clients.WriteOpts{})
 		Expect(err).NotTo(HaveOccurred())
-		sync := &mockApiSyncer{}
-		el := NewApiEventLoop(emitter, sync)
+		sync := &mockTranslatorSyncer{}
+		el := NewTranslatorEventLoop(emitter, sync)
 		_, err := el.Run([]string{namespace}, clients.WatchOpts{})
 		Expect(err).NotTo(HaveOccurred())
 		Eventually(sync.Synced, 5*time.Second).Should(BeTrue())
 	})
 })
 
-type mockApiSyncer struct {
+type mockTranslatorSyncer struct {
 	synced bool
 	mutex  sync.Mutex
 }
 
-func (s *mockApiSyncer) Synced() bool {
+func (s *mockTranslatorSyncer) Synced() bool {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	return s.synced
 }
 
-func (s *mockApiSyncer) Sync(ctx context.Context, snap *ApiSnapshot) error {
+func (s *mockTranslatorSyncer) Sync(ctx context.Context, snap *TranslatorSnapshot) error {
 	s.mutex.Lock()
 	s.synced = true
 	s.mutex.Unlock()

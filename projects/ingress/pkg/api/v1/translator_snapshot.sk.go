@@ -3,27 +3,25 @@
 package v1
 
 import (
-	gloo_solo_io "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
-
 	"github.com/solo-io/solo-kit/pkg/utils/hashutils"
 	"go.uber.org/zap"
 )
 
-type ApiSnapshot struct {
-	Secrets   gloo_solo_io.SecretsByNamespace
-	Upstreams gloo_solo_io.UpstreamsByNamespace
+type TranslatorSnapshot struct {
+	Secrets   SecretsByNamespace
+	Upstreams UpstreamsByNamespace
 	Ingresses IngressesByNamespace
 }
 
-func (s ApiSnapshot) Clone() ApiSnapshot {
-	return ApiSnapshot{
+func (s TranslatorSnapshot) Clone() TranslatorSnapshot {
+	return TranslatorSnapshot{
 		Secrets:   s.Secrets.Clone(),
 		Upstreams: s.Upstreams.Clone(),
 		Ingresses: s.Ingresses.Clone(),
 	}
 }
 
-func (s ApiSnapshot) Hash() uint64 {
+func (s TranslatorSnapshot) Hash() uint64 {
 	return hashutils.HashAll(
 		s.hashSecrets(),
 		s.hashUpstreams(),
@@ -31,19 +29,19 @@ func (s ApiSnapshot) Hash() uint64 {
 	)
 }
 
-func (s ApiSnapshot) hashSecrets() uint64 {
+func (s TranslatorSnapshot) hashSecrets() uint64 {
 	return hashutils.HashAll(s.Secrets.List().AsInterfaces()...)
 }
 
-func (s ApiSnapshot) hashUpstreams() uint64 {
+func (s TranslatorSnapshot) hashUpstreams() uint64 {
 	return hashutils.HashAll(s.Upstreams.List().AsInterfaces()...)
 }
 
-func (s ApiSnapshot) hashIngresses() uint64 {
+func (s TranslatorSnapshot) hashIngresses() uint64 {
 	return hashutils.HashAll(s.Ingresses.List().AsInterfaces()...)
 }
 
-func (s ApiSnapshot) HashFields() []zap.Field {
+func (s TranslatorSnapshot) HashFields() []zap.Field {
 	var fields []zap.Field
 	fields = append(fields, zap.Uint64("secrets", s.hashSecrets()))
 	fields = append(fields, zap.Uint64("upstreams", s.hashUpstreams()))

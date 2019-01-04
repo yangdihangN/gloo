@@ -6,8 +6,6 @@ import (
 	"sync"
 	"time"
 
-	gloo_solo_io "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
-
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/tag"
@@ -18,19 +16,19 @@ import (
 )
 
 var (
-	mApiSnapshotIn  = stats.Int64("api.ingress.solo.io/snap_emitter/snap_in", "The number of snapshots in", "1")
-	mApiSnapshotOut = stats.Int64("api.ingress.solo.io/snap_emitter/snap_out", "The number of snapshots out", "1")
+	mTranslatorSnapshotIn  = stats.Int64("translator.ingress.solo.io/snap_emitter/snap_in", "The number of snapshots in", "1")
+	mTranslatorSnapshotOut = stats.Int64("translator.ingress.solo.io/snap_emitter/snap_out", "The number of snapshots out", "1")
 
-	apisnapshotInView = &view.View{
-		Name:        "api.ingress.solo.io_snap_emitter/snap_in",
-		Measure:     mApiSnapshotIn,
+	translatorsnapshotInView = &view.View{
+		Name:        "translator.ingress.solo.io_snap_emitter/snap_in",
+		Measure:     mTranslatorSnapshotIn,
 		Description: "The number of snapshots updates coming in",
 		Aggregation: view.Count(),
 		TagKeys:     []tag.Key{},
 	}
-	apisnapshotOutView = &view.View{
-		Name:        "api.ingress.solo.io/snap_emitter/snap_out",
-		Measure:     mApiSnapshotOut,
+	translatorsnapshotOutView = &view.View{
+		Name:        "translator.ingress.solo.io/snap_emitter/snap_out",
+		Measure:     mTranslatorSnapshotOut,
 		Description: "The number of snapshots updates going out",
 		Aggregation: view.Count(),
 		TagKeys:     []tag.Key{},
@@ -38,23 +36,23 @@ var (
 )
 
 func init() {
-	view.Register(apisnapshotInView, apisnapshotOutView)
+	view.Register(translatorsnapshotInView, translatorsnapshotOutView)
 }
 
-type ApiEmitter interface {
+type TranslatorEmitter interface {
 	Register() error
-	Secret() gloo_solo_io.SecretClient
-	Upstream() gloo_solo_io.UpstreamClient
+	Secret() SecretClient
+	Upstream() UpstreamClient
 	Ingress() IngressClient
-	Snapshots(watchNamespaces []string, opts clients.WatchOpts) (<-chan *ApiSnapshot, <-chan error, error)
+	Snapshots(watchNamespaces []string, opts clients.WatchOpts) (<-chan *TranslatorSnapshot, <-chan error, error)
 }
 
-func NewApiEmitter(secretClient gloo_solo_io.SecretClient, upstreamClient gloo_solo_io.UpstreamClient, ingressClient IngressClient) ApiEmitter {
-	return NewApiEmitterWithEmit(secretClient, upstreamClient, ingressClient, make(chan struct{}))
+func NewTranslatorEmitter(secretClient SecretClient, upstreamClient UpstreamClient, ingressClient IngressClient) TranslatorEmitter {
+	return NewTranslatorEmitterWithEmit(secretClient, upstreamClient, ingressClient, make(chan struct{}))
 }
 
-func NewApiEmitterWithEmit(secretClient gloo_solo_io.SecretClient, upstreamClient gloo_solo_io.UpstreamClient, ingressClient IngressClient, emit <-chan struct{}) ApiEmitter {
-	return &apiEmitter{
+func NewTranslatorEmitterWithEmit(secretClient SecretClient, upstreamClient UpstreamClient, ingressClient IngressClient, emit <-chan struct{}) TranslatorEmitter {
+	return &translatorEmitter{
 		secret:    secretClient,
 		upstream:  upstreamClient,
 		ingress:   ingressClient,
@@ -62,14 +60,14 @@ func NewApiEmitterWithEmit(secretClient gloo_solo_io.SecretClient, upstreamClien
 	}
 }
 
-type apiEmitter struct {
+type translatorEmitter struct {
 	forceEmit <-chan struct{}
-	secret    gloo_solo_io.SecretClient
-	upstream  gloo_solo_io.UpstreamClient
+	secret    SecretClient
+	upstream  UpstreamClient
 	ingress   IngressClient
 }
 
-func (c *apiEmitter) Register() error {
+func (c *translatorEmitter) Register() error {
 	if err := c.secret.Register(); err != nil {
 		return err
 	}
@@ -82,31 +80,31 @@ func (c *apiEmitter) Register() error {
 	return nil
 }
 
-func (c *apiEmitter) Secret() gloo_solo_io.SecretClient {
+func (c *translatorEmitter) Secret() SecretClient {
 	return c.secret
 }
 
-func (c *apiEmitter) Upstream() gloo_solo_io.UpstreamClient {
+func (c *translatorEmitter) Upstream() UpstreamClient {
 	return c.upstream
 }
 
-func (c *apiEmitter) Ingress() IngressClient {
+func (c *translatorEmitter) Ingress() IngressClient {
 	return c.ingress
 }
 
-func (c *apiEmitter) Snapshots(watchNamespaces []string, opts clients.WatchOpts) (<-chan *ApiSnapshot, <-chan error, error) {
+func (c *translatorEmitter) Snapshots(watchNamespaces []string, opts clients.WatchOpts) (<-chan *TranslatorSnapshot, <-chan error, error) {
 	errs := make(chan error)
 	var done sync.WaitGroup
 	ctx := opts.Ctx
 	/* Create channel for Secret */
 	type secretListWithNamespace struct {
-		list      gloo_solo_io.SecretList
+		list      SecretList
 		namespace string
 	}
 	secretChan := make(chan secretListWithNamespace)
 	/* Create channel for Upstream */
 	type upstreamListWithNamespace struct {
-		list      gloo_solo_io.UpstreamList
+		list      UpstreamList
 		namespace string
 	}
 	upstreamChan := make(chan upstreamListWithNamespace)
@@ -181,9 +179,9 @@ func (c *apiEmitter) Snapshots(watchNamespaces []string, opts clients.WatchOpts)
 		}(namespace)
 	}
 
-	snapshots := make(chan *ApiSnapshot)
+	snapshots := make(chan *TranslatorSnapshot)
 	go func() {
-		originalSnapshot := ApiSnapshot{}
+		originalSnapshot := TranslatorSnapshot{}
 		currentSnapshot := originalSnapshot.Clone()
 		timer := time.NewTicker(time.Second * 1)
 		sync := func() {
@@ -191,7 +189,7 @@ func (c *apiEmitter) Snapshots(watchNamespaces []string, opts clients.WatchOpts)
 				return
 			}
 
-			stats.Record(ctx, mApiSnapshotOut.M(1))
+			stats.Record(ctx, mTranslatorSnapshotOut.M(1))
 			originalSnapshot = currentSnapshot.Clone()
 			sentSnapshot := currentSnapshot.Clone()
 			snapshots <- &sentSnapshot
@@ -217,7 +215,7 @@ func (c *apiEmitter) Snapshots(watchNamespaces []string, opts clients.WatchOpts)
 		*/
 
 		for {
-			record := func() { stats.Record(ctx, mApiSnapshotIn.M(1)) }
+			record := func() { stats.Record(ctx, mTranslatorSnapshotIn.M(1)) }
 
 			select {
 			case <-timer.C:

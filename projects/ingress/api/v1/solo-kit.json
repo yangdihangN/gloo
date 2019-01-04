@@ -18,7 +18,7 @@
     ],
     "status.ingress.solo.io": [
       {
-        "name": "Service",
+        "name": "KubeService",
         "package": "ingress.solo.io"
       },
       {

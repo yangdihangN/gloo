@@ -25,10 +25,6 @@ func NewIngress(namespace, name string) *Ingress {
 	}
 }
 
-func (r *Ingress) SetStatus(status core.Status) {
-	r.Status = status
-}
-
 func (r *Ingress) SetMetadata(meta core.Metadata) {
 	r.Metadata = meta
 }
@@ -59,14 +55,6 @@ func (list IngressList) Find(namespace, name string) (*Ingress, error) {
 
 func (list IngressList) AsResources() resources.ResourceList {
 	var ress resources.ResourceList
-	for _, ingress := range list {
-		ress = append(ress, ingress)
-	}
-	return ress
-}
-
-func (list IngressList) AsInputResources() resources.InputResourceList {
-	var ress resources.InputResourceList
 	for _, ingress := range list {
 		ress = append(ress, ingress)
 	}

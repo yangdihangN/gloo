@@ -72,7 +72,6 @@ func IngressClientTest(namespace string, client IngressClient) {
 	Expect(r1.Metadata.Ref()).To(Equal(input.Metadata.Ref()))
 	Expect(r1.KubeIngressSpec).To(Equal(input.KubeIngressSpec))
 	Expect(r1.KubeIngressStatus).To(Equal(input.KubeIngressStatus))
-	Expect(r1.Status).To(Equal(input.Status))
 
 	_, err = client.Write(input, clients.WriteOpts{
 		OverwriteExisting: true,

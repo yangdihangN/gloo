@@ -32,8 +32,8 @@ func (s *statusSyncer) Sync(ctx context.Context, snap *v1.StatusSnapshot) error 
 	ctx = contextutils.WithLogger(ctx, "statusSyncer")
 
 	logger := contextutils.LoggerFrom(ctx)
-	logger.Infof("begin sync %v (%v ingresses)", snap.Hash(),
-		len(snap.Ingresses.List()))
+	logger.Infof("begin sync %v (%v ingresses, %v services)", snap.Hash(),
+		len(snap.Ingresses.List()), len(snap.Services.List()))
 	defer logger.Infof("end sync %v", snap.Hash())
 	logger.Debugf("%v", snap)
 	services := snap.Services.List()

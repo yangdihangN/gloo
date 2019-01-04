@@ -114,7 +114,7 @@ func (rc *ResourceClient) Read(namespace, name string, opts clients.ReadOpts) (r
 	opts = opts.WithDefaults()
 	namespace = clients.DefaultNamespaceIfEmpty(namespace)
 
-	svcObj, err := rc.kube.ExtensionsV1beta1().Ingresses(namespace).Get(name, metav1.GetOptions{})
+	svcObj, err := rc.kube.CoreV1().Services(namespace).Get(name, metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			return nil, errors.NewNotExistErr(namespace, name, err)
@@ -157,11 +157,11 @@ func (rc *ResourceClient) Write(resource resources.Resource, opts clients.WriteO
 		if meta.ResourceVersion != original.GetMetadata().ResourceVersion {
 			return nil, errors.NewResourceVersionErr(meta.Namespace, meta.Name, meta.ResourceVersion, original.GetMetadata().ResourceVersion)
 		}
-		if _, err := rc.kube.ExtensionsV1beta1().Ingresses(svcObj.Namespace).Update(svcObj); err != nil {
+		if _, err := rc.kube.CoreV1().Services(svcObj.Namespace).Update(svcObj); err != nil {
 			return nil, errors.Wrapf(err, "updating kube svcObj %v", svcObj.Name)
 		}
 	} else {
-		if _, err := rc.kube.ExtensionsV1beta1().Ingresses(svcObj.Namespace).Create(svcObj); err != nil {
+		if _, err := rc.kube.CoreV1().Services(svcObj.Namespace).Create(svcObj); err != nil {
 			return nil, errors.Wrapf(err, "creating kube svcObj %v", svcObj.Name)
 		}
 	}
@@ -179,7 +179,7 @@ func (rc *ResourceClient) Delete(namespace, name string, opts clients.DeleteOpts
 		return nil
 	}
 
-	if err := rc.kube.ExtensionsV1beta1().Ingresses(namespace).Delete(name, nil); err != nil {
+	if err := rc.kube.CoreV1().Services(namespace).Delete(name, nil); err != nil {
 		return errors.Wrapf(err, "deleting svcObj %v", name)
 	}
 	return nil
@@ -189,7 +189,7 @@ func (rc *ResourceClient) List(namespace string, opts clients.ListOpts) (resourc
 	opts = opts.WithDefaults()
 	namespace = clients.DefaultNamespaceIfEmpty(namespace)
 
-	svcObjList, err := rc.kube.ExtensionsV1beta1().Ingresses(namespace).List(metav1.ListOptions{
+	svcObjList, err := rc.kube.CoreV1().Services(namespace).List(metav1.ListOptions{
 		LabelSelector: labels.SelectorFromSet(opts.Selector).String(),
 	})
 	if err != nil {
@@ -217,7 +217,7 @@ func (rc *ResourceClient) List(namespace string, opts clients.ListOpts) (resourc
 func (rc *ResourceClient) Watch(namespace string, opts clients.WatchOpts) (<-chan resources.ResourceList, <-chan error, error) {
 	opts = opts.WithDefaults()
 	namespace = clients.DefaultNamespaceIfEmpty(namespace)
-	watch, err := rc.kube.ExtensionsV1beta1().Ingresses(namespace).Watch(metav1.ListOptions{
+	watch, err := rc.kube.CoreV1().Services(namespace).Watch(metav1.ListOptions{
 		LabelSelector: labels.SelectorFromSet(opts.Selector).String(),
 	})
 	if err != nil {
@@ -264,6 +264,6 @@ func (rc *ResourceClient) Watch(namespace string, opts clients.WatchOpts) (<-cha
 }
 
 func (rc *ResourceClient) exist(namespace, name string) bool {
-	_, err := rc.kube.ExtensionsV1beta1().Ingresses(namespace).Get(name, metav1.GetOptions{})
+	_, err := rc.kube.CoreV1().Services(namespace).Get(name, metav1.GetOptions{})
 	return err == nil
 }

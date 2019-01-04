@@ -25,10 +25,6 @@ func NewKubeService(namespace, name string) *KubeService {
 	}
 }
 
-func (r *KubeService) SetStatus(status core.Status) {
-	r.Status = status
-}
-
 func (r *KubeService) SetMetadata(meta core.Metadata) {
 	r.Metadata = meta
 }
@@ -39,6 +35,7 @@ func (r *KubeService) Hash() uint64 {
 	return hashutils.HashAll(
 		metaCopy,
 		r.KubeServiceSpec,
+		r.KubeServiceStatus,
 	)
 }
 
@@ -59,14 +56,6 @@ func (list KubeServiceList) Find(namespace, name string) (*KubeService, error) {
 
 func (list KubeServiceList) AsResources() resources.ResourceList {
 	var ress resources.ResourceList
-	for _, kubeService := range list {
-		ress = append(ress, kubeService)
-	}
-	return ress
-}
-
-func (list KubeServiceList) AsInputResources() resources.InputResourceList {
-	var ress resources.InputResourceList
 	for _, kubeService := range list {
 		ress = append(ress, kubeService)
 	}

@@ -72,7 +72,6 @@ func KubeServiceClientTest(namespace string, client KubeServiceClient) {
 	Expect(r1.Metadata.Ref()).To(Equal(input.Metadata.Ref()))
 	Expect(r1.KubeServiceSpec).To(Equal(input.KubeServiceSpec))
 	Expect(r1.KubeServiceStatus).To(Equal(input.KubeServiceStatus))
-	Expect(r1.Status).To(Equal(input.Status))
 
 	_, err = client.Write(input, clients.WriteOpts{
 		OverwriteExisting: true,

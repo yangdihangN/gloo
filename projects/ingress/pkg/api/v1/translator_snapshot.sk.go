@@ -3,13 +3,15 @@
 package v1
 
 import (
+	gloo_solo_io "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
+
 	"github.com/solo-io/solo-kit/pkg/utils/hashutils"
 	"go.uber.org/zap"
 )
 
 type TranslatorSnapshot struct {
-	Secrets   SecretsByNamespace
-	Upstreams UpstreamsByNamespace
+	Secrets   gloo_solo_io.SecretsByNamespace
+	Upstreams gloo_solo_io.UpstreamsByNamespace
 	Ingresses IngressesByNamespace
 }
 

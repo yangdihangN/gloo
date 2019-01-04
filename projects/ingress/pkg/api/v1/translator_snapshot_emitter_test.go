@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"time"
 
+	gloo_solo_io "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/solo-io/solo-kit/pkg/api/v1/clients"
@@ -34,8 +36,8 @@ var _ = Describe("V1Emitter", func() {
 		namespace2     string
 		cfg            *rest.Config
 		emitter        TranslatorEmitter
-		secretClient   SecretClient
-		upstreamClient UpstreamClient
+		secretClient   gloo_solo_io.SecretClient
+		upstreamClient gloo_solo_io.UpstreamClient
 		ingressClient  IngressClient
 	)
 
@@ -58,15 +60,15 @@ var _ = Describe("V1Emitter", func() {
 		secretClientFactory := &factory.KubeSecretClientFactory{
 			Clientset: kube,
 		}
-		secretClient, err = NewSecretClient(secretClientFactory)
+		secretClient, err = gloo_solo_io.NewSecretClient(secretClientFactory)
 		Expect(err).NotTo(HaveOccurred())
 		// Upstream Constructor
 		upstreamClientFactory := &factory.KubeResourceClientFactory{
-			Crd:         UpstreamCrd,
+			Crd:         gloo_solo_io.UpstreamCrd,
 			Cfg:         cfg,
 			SharedCache: cache,
 		}
-		upstreamClient, err = NewUpstreamClient(upstreamClientFactory)
+		upstreamClient, err = gloo_solo_io.NewUpstreamClient(upstreamClientFactory)
 		Expect(err).NotTo(HaveOccurred())
 		// Ingress Constructor
 		ingressClientFactory := &factory.KubeResourceClientFactory{
@@ -99,7 +101,7 @@ var _ = Describe("V1Emitter", func() {
 			Secret
 		*/
 
-		assertSnapshotSecrets := func(expectSecrets SecretList, unexpectSecrets SecretList) {
+		assertSnapshotSecrets := func(expectSecrets gloo_solo_io.SecretList, unexpectSecrets gloo_solo_io.SecretList) {
 		drain:
 			for {
 				select {
@@ -127,39 +129,39 @@ var _ = Describe("V1Emitter", func() {
 			}
 		}
 
-		secret1a, err := secretClient.Write(NewSecret(namespace1, "angela"), clients.WriteOpts{Ctx: ctx})
+		secret1a, err := secretClient.Write(gloo_solo_io.NewSecret(namespace1, "angela"), clients.WriteOpts{Ctx: ctx})
 		Expect(err).NotTo(HaveOccurred())
-		secret1b, err := secretClient.Write(NewSecret(namespace2, "angela"), clients.WriteOpts{Ctx: ctx})
-		Expect(err).NotTo(HaveOccurred())
-
-		assertSnapshotSecrets(SecretList{secret1a, secret1b}, nil)
-
-		secret2a, err := secretClient.Write(NewSecret(namespace1, "bob"), clients.WriteOpts{Ctx: ctx})
-		Expect(err).NotTo(HaveOccurred())
-		secret2b, err := secretClient.Write(NewSecret(namespace2, "bob"), clients.WriteOpts{Ctx: ctx})
+		secret1b, err := secretClient.Write(gloo_solo_io.NewSecret(namespace2, "angela"), clients.WriteOpts{Ctx: ctx})
 		Expect(err).NotTo(HaveOccurred())
 
-		assertSnapshotSecrets(SecretList{secret1a, secret1b, secret2a, secret2b}, nil)
+		assertSnapshotSecrets(gloo_solo_io.SecretList{secret1a, secret1b}, nil)
+
+		secret2a, err := secretClient.Write(gloo_solo_io.NewSecret(namespace1, "bob"), clients.WriteOpts{Ctx: ctx})
+		Expect(err).NotTo(HaveOccurred())
+		secret2b, err := secretClient.Write(gloo_solo_io.NewSecret(namespace2, "bob"), clients.WriteOpts{Ctx: ctx})
+		Expect(err).NotTo(HaveOccurred())
+
+		assertSnapshotSecrets(gloo_solo_io.SecretList{secret1a, secret1b, secret2a, secret2b}, nil)
 
 		err = secretClient.Delete(secret2a.Metadata.Namespace, secret2a.Metadata.Name, clients.DeleteOpts{Ctx: ctx})
 		Expect(err).NotTo(HaveOccurred())
 		err = secretClient.Delete(secret2b.Metadata.Namespace, secret2b.Metadata.Name, clients.DeleteOpts{Ctx: ctx})
 		Expect(err).NotTo(HaveOccurred())
 
-		assertSnapshotSecrets(SecretList{secret1a, secret1b}, SecretList{secret2a, secret2b})
+		assertSnapshotSecrets(gloo_solo_io.SecretList{secret1a, secret1b}, gloo_solo_io.SecretList{secret2a, secret2b})
 
 		err = secretClient.Delete(secret1a.Metadata.Namespace, secret1a.Metadata.Name, clients.DeleteOpts{Ctx: ctx})
 		Expect(err).NotTo(HaveOccurred())
 		err = secretClient.Delete(secret1b.Metadata.Namespace, secret1b.Metadata.Name, clients.DeleteOpts{Ctx: ctx})
 		Expect(err).NotTo(HaveOccurred())
 
-		assertSnapshotSecrets(nil, SecretList{secret1a, secret1b, secret2a, secret2b})
+		assertSnapshotSecrets(nil, gloo_solo_io.SecretList{secret1a, secret1b, secret2a, secret2b})
 
 		/*
 			Upstream
 		*/
 
-		assertSnapshotUpstreams := func(expectUpstreams UpstreamList, unexpectUpstreams UpstreamList) {
+		assertSnapshotUpstreams := func(expectUpstreams gloo_solo_io.UpstreamList, unexpectUpstreams gloo_solo_io.UpstreamList) {
 		drain:
 			for {
 				select {
@@ -187,33 +189,33 @@ var _ = Describe("V1Emitter", func() {
 			}
 		}
 
-		upstream1a, err := upstreamClient.Write(NewUpstream(namespace1, "angela"), clients.WriteOpts{Ctx: ctx})
+		upstream1a, err := upstreamClient.Write(gloo_solo_io.NewUpstream(namespace1, "angela"), clients.WriteOpts{Ctx: ctx})
 		Expect(err).NotTo(HaveOccurred())
-		upstream1b, err := upstreamClient.Write(NewUpstream(namespace2, "angela"), clients.WriteOpts{Ctx: ctx})
-		Expect(err).NotTo(HaveOccurred())
-
-		assertSnapshotUpstreams(UpstreamList{upstream1a, upstream1b}, nil)
-
-		upstream2a, err := upstreamClient.Write(NewUpstream(namespace1, "bob"), clients.WriteOpts{Ctx: ctx})
-		Expect(err).NotTo(HaveOccurred())
-		upstream2b, err := upstreamClient.Write(NewUpstream(namespace2, "bob"), clients.WriteOpts{Ctx: ctx})
+		upstream1b, err := upstreamClient.Write(gloo_solo_io.NewUpstream(namespace2, "angela"), clients.WriteOpts{Ctx: ctx})
 		Expect(err).NotTo(HaveOccurred())
 
-		assertSnapshotUpstreams(UpstreamList{upstream1a, upstream1b, upstream2a, upstream2b}, nil)
+		assertSnapshotUpstreams(gloo_solo_io.UpstreamList{upstream1a, upstream1b}, nil)
+
+		upstream2a, err := upstreamClient.Write(gloo_solo_io.NewUpstream(namespace1, "bob"), clients.WriteOpts{Ctx: ctx})
+		Expect(err).NotTo(HaveOccurred())
+		upstream2b, err := upstreamClient.Write(gloo_solo_io.NewUpstream(namespace2, "bob"), clients.WriteOpts{Ctx: ctx})
+		Expect(err).NotTo(HaveOccurred())
+
+		assertSnapshotUpstreams(gloo_solo_io.UpstreamList{upstream1a, upstream1b, upstream2a, upstream2b}, nil)
 
 		err = upstreamClient.Delete(upstream2a.Metadata.Namespace, upstream2a.Metadata.Name, clients.DeleteOpts{Ctx: ctx})
 		Expect(err).NotTo(HaveOccurred())
 		err = upstreamClient.Delete(upstream2b.Metadata.Namespace, upstream2b.Metadata.Name, clients.DeleteOpts{Ctx: ctx})
 		Expect(err).NotTo(HaveOccurred())
 
-		assertSnapshotUpstreams(UpstreamList{upstream1a, upstream1b}, UpstreamList{upstream2a, upstream2b})
+		assertSnapshotUpstreams(gloo_solo_io.UpstreamList{upstream1a, upstream1b}, gloo_solo_io.UpstreamList{upstream2a, upstream2b})
 
 		err = upstreamClient.Delete(upstream1a.Metadata.Namespace, upstream1a.Metadata.Name, clients.DeleteOpts{Ctx: ctx})
 		Expect(err).NotTo(HaveOccurred())
 		err = upstreamClient.Delete(upstream1b.Metadata.Namespace, upstream1b.Metadata.Name, clients.DeleteOpts{Ctx: ctx})
 		Expect(err).NotTo(HaveOccurred())
 
-		assertSnapshotUpstreams(nil, UpstreamList{upstream1a, upstream1b, upstream2a, upstream2b})
+		assertSnapshotUpstreams(nil, gloo_solo_io.UpstreamList{upstream1a, upstream1b, upstream2a, upstream2b})
 
 		/*
 			Ingress

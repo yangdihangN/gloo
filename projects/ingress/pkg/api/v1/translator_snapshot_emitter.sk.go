@@ -6,6 +6,8 @@ import (
 	"sync"
 	"time"
 
+	gloo_solo_io "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
+
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/tag"
@@ -41,17 +43,17 @@ func init() {
 
 type TranslatorEmitter interface {
 	Register() error
-	Secret() SecretClient
-	Upstream() UpstreamClient
+	Secret() gloo_solo_io.SecretClient
+	Upstream() gloo_solo_io.UpstreamClient
 	Ingress() IngressClient
 	Snapshots(watchNamespaces []string, opts clients.WatchOpts) (<-chan *TranslatorSnapshot, <-chan error, error)
 }
 
-func NewTranslatorEmitter(secretClient SecretClient, upstreamClient UpstreamClient, ingressClient IngressClient) TranslatorEmitter {
+func NewTranslatorEmitter(secretClient gloo_solo_io.SecretClient, upstreamClient gloo_solo_io.UpstreamClient, ingressClient IngressClient) TranslatorEmitter {
 	return NewTranslatorEmitterWithEmit(secretClient, upstreamClient, ingressClient, make(chan struct{}))
 }
 
-func NewTranslatorEmitterWithEmit(secretClient SecretClient, upstreamClient UpstreamClient, ingressClient IngressClient, emit <-chan struct{}) TranslatorEmitter {
+func NewTranslatorEmitterWithEmit(secretClient gloo_solo_io.SecretClient, upstreamClient gloo_solo_io.UpstreamClient, ingressClient IngressClient, emit <-chan struct{}) TranslatorEmitter {
 	return &translatorEmitter{
 		secret:    secretClient,
 		upstream:  upstreamClient,
@@ -62,8 +64,8 @@ func NewTranslatorEmitterWithEmit(secretClient SecretClient, upstreamClient Upst
 
 type translatorEmitter struct {
 	forceEmit <-chan struct{}
-	secret    SecretClient
-	upstream  UpstreamClient
+	secret    gloo_solo_io.SecretClient
+	upstream  gloo_solo_io.UpstreamClient
 	ingress   IngressClient
 }
 
@@ -80,11 +82,11 @@ func (c *translatorEmitter) Register() error {
 	return nil
 }
 
-func (c *translatorEmitter) Secret() SecretClient {
+func (c *translatorEmitter) Secret() gloo_solo_io.SecretClient {
 	return c.secret
 }
 
-func (c *translatorEmitter) Upstream() UpstreamClient {
+func (c *translatorEmitter) Upstream() gloo_solo_io.UpstreamClient {
 	return c.upstream
 }
 
@@ -98,13 +100,13 @@ func (c *translatorEmitter) Snapshots(watchNamespaces []string, opts clients.Wat
 	ctx := opts.Ctx
 	/* Create channel for Secret */
 	type secretListWithNamespace struct {
-		list      SecretList
+		list      gloo_solo_io.SecretList
 		namespace string
 	}
 	secretChan := make(chan secretListWithNamespace)
 	/* Create channel for Upstream */
 	type upstreamListWithNamespace struct {
-		list      UpstreamList
+		list      gloo_solo_io.UpstreamList
 		namespace string
 	}
 	upstreamChan := make(chan upstreamListWithNamespace)

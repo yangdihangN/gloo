@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	gloo_solo_io "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/solo-io/solo-kit/pkg/api/v1/clients"
@@ -26,13 +28,13 @@ var _ = Describe("TranslatorEventLoop", func() {
 		secretClientFactory := &factory.MemoryResourceClientFactory{
 			Cache: memory.NewInMemoryResourceCache(),
 		}
-		secretClient, err := NewSecretClient(secretClientFactory)
+		secretClient, err := gloo_solo_io.NewSecretClient(secretClientFactory)
 		Expect(err).NotTo(HaveOccurred())
 
 		upstreamClientFactory := &factory.MemoryResourceClientFactory{
 			Cache: memory.NewInMemoryResourceCache(),
 		}
-		upstreamClient, err := NewUpstreamClient(upstreamClientFactory)
+		upstreamClient, err := gloo_solo_io.NewUpstreamClient(upstreamClientFactory)
 		Expect(err).NotTo(HaveOccurred())
 
 		ingressClientFactory := &factory.MemoryResourceClientFactory{
@@ -44,9 +46,9 @@ var _ = Describe("TranslatorEventLoop", func() {
 		emitter = NewTranslatorEmitter(secretClient, upstreamClient, ingressClient)
 	})
 	It("runs sync function on a new snapshot", func() {
-		_, err = emitter.Secret().Write(NewSecret(namespace, "jerry"), clients.WriteOpts{})
+		_, err = emitter.Secret().Write(gloo_solo_io.NewSecret(namespace, "jerry"), clients.WriteOpts{})
 		Expect(err).NotTo(HaveOccurred())
-		_, err = emitter.Upstream().Write(NewUpstream(namespace, "jerry"), clients.WriteOpts{})
+		_, err = emitter.Upstream().Write(gloo_solo_io.NewUpstream(namespace, "jerry"), clients.WriteOpts{})
 		Expect(err).NotTo(HaveOccurred())
 		_, err = emitter.Ingress().Write(NewIngress(namespace, "jerry"), clients.WriteOpts{})
 		Expect(err).NotTo(HaveOccurred())

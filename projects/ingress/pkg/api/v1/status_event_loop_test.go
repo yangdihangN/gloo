@@ -23,24 +23,24 @@ var _ = Describe("StatusEventLoop", func() {
 
 	BeforeEach(func() {
 
-		ingressClientFactory := &factory.MemoryResourceClientFactory{
-			Cache: memory.NewInMemoryResourceCache(),
-		}
-		ingressClient, err := NewIngressClient(ingressClientFactory)
-		Expect(err).NotTo(HaveOccurred())
-
 		kubeServiceClientFactory := &factory.MemoryResourceClientFactory{
 			Cache: memory.NewInMemoryResourceCache(),
 		}
 		kubeServiceClient, err := NewKubeServiceClient(kubeServiceClientFactory)
 		Expect(err).NotTo(HaveOccurred())
 
-		emitter = NewStatusEmitter(ingressClient, kubeServiceClient)
+		ingressClientFactory := &factory.MemoryResourceClientFactory{
+			Cache: memory.NewInMemoryResourceCache(),
+		}
+		ingressClient, err := NewIngressClient(ingressClientFactory)
+		Expect(err).NotTo(HaveOccurred())
+
+		emitter = NewStatusEmitter(kubeServiceClient, ingressClient)
 	})
 	It("runs sync function on a new snapshot", func() {
-		_, err = emitter.Ingress().Write(NewIngress(namespace, "jerry"), clients.WriteOpts{})
-		Expect(err).NotTo(HaveOccurred())
 		_, err = emitter.KubeService().Write(NewKubeService(namespace, "jerry"), clients.WriteOpts{})
+		Expect(err).NotTo(HaveOccurred())
+		_, err = emitter.Ingress().Write(NewIngress(namespace, "jerry"), clients.WriteOpts{})
 		Expect(err).NotTo(HaveOccurred())
 		sync := &mockStatusSyncer{}
 		el := NewStatusEventLoop(emitter, sync)

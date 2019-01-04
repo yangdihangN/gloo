@@ -41,76 +41,65 @@ func init() {
 
 type StatusEmitter interface {
 	Register() error
-	Ingress() IngressClient
 	KubeService() KubeServiceClient
+	Ingress() IngressClient
 	Snapshots(watchNamespaces []string, opts clients.WatchOpts) (<-chan *StatusSnapshot, <-chan error, error)
 }
 
-func NewStatusEmitter(ingressClient IngressClient, kubeServiceClient KubeServiceClient) StatusEmitter {
-	return NewStatusEmitterWithEmit(ingressClient, kubeServiceClient, make(chan struct{}))
+func NewStatusEmitter(kubeServiceClient KubeServiceClient, ingressClient IngressClient) StatusEmitter {
+	return NewStatusEmitterWithEmit(kubeServiceClient, ingressClient, make(chan struct{}))
 }
 
-func NewStatusEmitterWithEmit(ingressClient IngressClient, kubeServiceClient KubeServiceClient, emit <-chan struct{}) StatusEmitter {
+func NewStatusEmitterWithEmit(kubeServiceClient KubeServiceClient, ingressClient IngressClient, emit <-chan struct{}) StatusEmitter {
 	return &statusEmitter{
-		ingress:     ingressClient,
 		kubeService: kubeServiceClient,
+		ingress:     ingressClient,
 		forceEmit:   emit,
 	}
 }
 
 type statusEmitter struct {
 	forceEmit   <-chan struct{}
-	ingress     IngressClient
 	kubeService KubeServiceClient
+	ingress     IngressClient
 }
 
 func (c *statusEmitter) Register() error {
-	if err := c.ingress.Register(); err != nil {
-		return err
-	}
 	if err := c.kubeService.Register(); err != nil {
 		return err
 	}
+	if err := c.ingress.Register(); err != nil {
+		return err
+	}
 	return nil
-}
-
-func (c *statusEmitter) Ingress() IngressClient {
-	return c.ingress
 }
 
 func (c *statusEmitter) KubeService() KubeServiceClient {
 	return c.kubeService
 }
 
+func (c *statusEmitter) Ingress() IngressClient {
+	return c.ingress
+}
+
 func (c *statusEmitter) Snapshots(watchNamespaces []string, opts clients.WatchOpts) (<-chan *StatusSnapshot, <-chan error, error) {
 	errs := make(chan error)
 	var done sync.WaitGroup
 	ctx := opts.Ctx
-	/* Create channel for Ingress */
-	type ingressListWithNamespace struct {
-		list      IngressList
-		namespace string
-	}
-	ingressChan := make(chan ingressListWithNamespace)
 	/* Create channel for KubeService */
 	type kubeServiceListWithNamespace struct {
 		list      KubeServiceList
 		namespace string
 	}
 	kubeServiceChan := make(chan kubeServiceListWithNamespace)
+	/* Create channel for Ingress */
+	type ingressListWithNamespace struct {
+		list      IngressList
+		namespace string
+	}
+	ingressChan := make(chan ingressListWithNamespace)
 
 	for _, namespace := range watchNamespaces {
-		/* Setup watch for Ingress */
-		ingressNamespacesChan, ingressErrs, err := c.ingress.Watch(namespace, opts)
-		if err != nil {
-			return nil, nil, errors.Wrapf(err, "starting Ingress watch")
-		}
-
-		done.Add(1)
-		go func(namespace string) {
-			defer done.Done()
-			errutils.AggregateErrs(ctx, errs, ingressErrs, namespace+"-ingresses")
-		}(namespace)
 		/* Setup watch for KubeService */
 		kubeServiceNamespacesChan, kubeServiceErrs, err := c.kubeService.Watch(namespace, opts)
 		if err != nil {
@@ -122,6 +111,17 @@ func (c *statusEmitter) Snapshots(watchNamespaces []string, opts clients.WatchOp
 			defer done.Done()
 			errutils.AggregateErrs(ctx, errs, kubeServiceErrs, namespace+"-services")
 		}(namespace)
+		/* Setup watch for Ingress */
+		ingressNamespacesChan, ingressErrs, err := c.ingress.Watch(namespace, opts)
+		if err != nil {
+			return nil, nil, errors.Wrapf(err, "starting Ingress watch")
+		}
+
+		done.Add(1)
+		go func(namespace string) {
+			defer done.Done()
+			errutils.AggregateErrs(ctx, errs, ingressErrs, namespace+"-ingresses")
+		}(namespace)
 
 		/* Watch for changes and update snapshot */
 		go func(namespace string) {
@@ -129,17 +129,17 @@ func (c *statusEmitter) Snapshots(watchNamespaces []string, opts clients.WatchOp
 				select {
 				case <-ctx.Done():
 					return
-				case ingressList := <-ingressNamespacesChan:
-					select {
-					case <-ctx.Done():
-						return
-					case ingressChan <- ingressListWithNamespace{list: ingressList, namespace: namespace}:
-					}
 				case kubeServiceList := <-kubeServiceNamespacesChan:
 					select {
 					case <-ctx.Done():
 						return
 					case kubeServiceChan <- kubeServiceListWithNamespace{list: kubeServiceList, namespace: namespace}:
+					}
+				case ingressList := <-ingressNamespacesChan:
+					select {
+					case <-ctx.Done():
+						return
+					case ingressChan <- ingressListWithNamespace{list: ingressList, namespace: namespace}:
 					}
 				}
 			}
@@ -166,14 +166,14 @@ func (c *statusEmitter) Snapshots(watchNamespaces []string, opts clients.WatchOp
 		   		// construct the first snapshot from all the configs that are currently there
 		   		// that guarantees that the first snapshot contains all the data.
 		   		for range watchNamespaces {
-		      ingressNamespacedList := <- ingressChan
-		      currentSnapshot.Ingresses.Clear(ingressNamespacedList.namespace)
-		      ingressList := ingressNamespacedList.list
-		   	currentSnapshot.Ingresses.Add(ingressList...)
 		      kubeServiceNamespacedList := <- kubeServiceChan
 		      currentSnapshot.Services.Clear(kubeServiceNamespacedList.namespace)
 		      kubeServiceList := kubeServiceNamespacedList.list
 		   	currentSnapshot.Services.Add(kubeServiceList...)
+		      ingressNamespacedList := <- ingressChan
+		      currentSnapshot.Ingresses.Clear(ingressNamespacedList.namespace)
+		      ingressList := ingressNamespacedList.list
+		   	currentSnapshot.Ingresses.Add(ingressList...)
 		   		}
 		*/
 
@@ -191,14 +191,6 @@ func (c *statusEmitter) Snapshots(watchNamespaces []string, opts clients.WatchOp
 			case <-c.forceEmit:
 				sentSnapshot := currentSnapshot.Clone()
 				snapshots <- &sentSnapshot
-			case ingressNamespacedList := <-ingressChan:
-				record()
-
-				namespace := ingressNamespacedList.namespace
-				ingressList := ingressNamespacedList.list
-
-				currentSnapshot.Ingresses.Clear(namespace)
-				currentSnapshot.Ingresses.Add(ingressList...)
 			case kubeServiceNamespacedList := <-kubeServiceChan:
 				record()
 
@@ -207,6 +199,14 @@ func (c *statusEmitter) Snapshots(watchNamespaces []string, opts clients.WatchOp
 
 				currentSnapshot.Services.Clear(namespace)
 				currentSnapshot.Services.Add(kubeServiceList...)
+			case ingressNamespacedList := <-ingressChan:
+				record()
+
+				namespace := ingressNamespacedList.namespace
+				ingressList := ingressNamespacedList.list
+
+				currentSnapshot.Ingresses.Clear(namespace)
+				currentSnapshot.Ingresses.Add(ingressList...)
 			}
 		}
 	}()

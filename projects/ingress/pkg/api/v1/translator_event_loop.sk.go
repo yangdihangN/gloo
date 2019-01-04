@@ -15,13 +15,13 @@ import (
 	"github.com/solo-io/solo-kit/pkg/utils/errutils"
 )
 
-type ApiSyncer interface {
-	Sync(context.Context, *ApiSnapshot) error
+type TranslatorSyncer interface {
+	Sync(context.Context, *TranslatorSnapshot) error
 }
 
-type ApiSyncers []ApiSyncer
+type TranslatorSyncers []TranslatorSyncer
 
-func (s ApiSyncers) Sync(ctx context.Context, snapshot *ApiSnapshot) error {
+func (s TranslatorSyncers) Sync(ctx context.Context, snapshot *TranslatorSnapshot) error {
 	var multiErr *multierror.Error
 	for _, syncer := range s {
 		if err := syncer.Sync(ctx, snapshot); err != nil {
@@ -31,23 +31,23 @@ func (s ApiSyncers) Sync(ctx context.Context, snapshot *ApiSnapshot) error {
 	return multiErr.ErrorOrNil()
 }
 
-type ApiEventLoop interface {
+type TranslatorEventLoop interface {
 	Run(namespaces []string, opts clients.WatchOpts) (<-chan error, error)
 }
 
-type apiEventLoop struct {
-	emitter ApiEmitter
-	syncer  ApiSyncer
+type translatorEventLoop struct {
+	emitter TranslatorEmitter
+	syncer  TranslatorSyncer
 }
 
-func NewApiEventLoop(emitter ApiEmitter, syncer ApiSyncer) ApiEventLoop {
-	return &apiEventLoop{
+func NewTranslatorEventLoop(emitter TranslatorEmitter, syncer TranslatorSyncer) TranslatorEventLoop {
+	return &translatorEventLoop{
 		emitter: emitter,
 		syncer:  syncer,
 	}
 }
 
-func (el *apiEventLoop) Run(namespaces []string, opts clients.WatchOpts) (<-chan error, error) {
+func (el *translatorEventLoop) Run(namespaces []string, opts clients.WatchOpts) (<-chan error, error) {
 	opts = opts.WithDefaults()
 	opts.Ctx = contextutils.WithLogger(opts.Ctx, "v1.event_loop")
 	logger := contextutils.LoggerFrom(opts.Ctx)
@@ -73,7 +73,7 @@ func (el *apiEventLoop) Run(namespaces []string, opts clients.WatchOpts) (<-chan
 				// cancel any open watches from previous loop
 				cancel()
 
-				ctx, span := trace.StartSpan(opts.Ctx, "api.ingress.solo.io.EventLoopSync")
+				ctx, span := trace.StartSpan(opts.Ctx, "translator.ingress.solo.io.EventLoopSync")
 				ctx, canc := context.WithCancel(ctx)
 				cancel = canc
 				err := el.syncer.Sync(ctx, snapshot)

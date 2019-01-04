@@ -8,36 +8,36 @@ import (
 )
 
 type StatusSnapshot struct {
-	Ingresses IngressesByNamespace
 	Services  ServicesByNamespace
+	Ingresses IngressesByNamespace
 }
 
 func (s StatusSnapshot) Clone() StatusSnapshot {
 	return StatusSnapshot{
-		Ingresses: s.Ingresses.Clone(),
 		Services:  s.Services.Clone(),
+		Ingresses: s.Ingresses.Clone(),
 	}
 }
 
 func (s StatusSnapshot) Hash() uint64 {
 	return hashutils.HashAll(
-		s.hashIngresses(),
 		s.hashServices(),
+		s.hashIngresses(),
 	)
-}
-
-func (s StatusSnapshot) hashIngresses() uint64 {
-	return hashutils.HashAll(s.Ingresses.List().AsInterfaces()...)
 }
 
 func (s StatusSnapshot) hashServices() uint64 {
 	return hashutils.HashAll(s.Services.List().AsInterfaces()...)
 }
 
+func (s StatusSnapshot) hashIngresses() uint64 {
+	return hashutils.HashAll(s.Ingresses.List().AsInterfaces()...)
+}
+
 func (s StatusSnapshot) HashFields() []zap.Field {
 	var fields []zap.Field
-	fields = append(fields, zap.Uint64("ingresses", s.hashIngresses()))
 	fields = append(fields, zap.Uint64("services", s.hashServices()))
+	fields = append(fields, zap.Uint64("ingresses", s.hashIngresses()))
 
 	return append(fields, zap.Uint64("snapshotHash", s.Hash()))
 }

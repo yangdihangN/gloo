@@ -8,7 +8,6 @@ import "google/protobuf/any.proto";
 
 import "github.com/solo-io/solo-kit/api/v1/metadata.proto";
 import "github.com/solo-io/solo-kit/api/v1/status.proto";
-import "github.com/solo-io/solo-kit/api/v1/solo-kit.proto";
 /*
 @solo-kit:resource.short_name=sv
 @solo-kit:resource.plural_name=services
@@ -20,11 +19,7 @@ message KubeService{
     // a raw byte representation of the kubernetes service this resource wraps
     google.protobuf.Any kube_service_spec = 1;
     // a raw byte representation of the service status of the kubernetes service object
-    google.protobuf.Any kube_service_status = 2 [(core.solo.io.skip_hashing) = true];
-
-    // Status indicates the validation status of this resource.
-    // Status is read-only by clients, and set by gloo during validation
-    core.solo.io.Status status = 6 [(gogoproto.nullable) = false, (gogoproto.moretags) = "testdiff:\"ignore\""];
+    google.protobuf.Any kube_service_status = 2;
 
     // Metadata contains the object metadata for this resource
     core.solo.io.Metadata metadata = 7 [(gogoproto.nullable) = false];

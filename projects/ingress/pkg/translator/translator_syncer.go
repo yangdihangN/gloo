@@ -20,7 +20,7 @@ type translatorSyncer struct {
 	proxyReconciler gloov1.ProxyReconciler
 }
 
-func NewSyncer(writeNamespace string, proxyClient gloov1.ProxyClient, ingressClient v1.IngressClient, reporter reporter.Reporter, writeErrs chan error) v1.ApiSyncer {
+func NewSyncer(writeNamespace string, proxyClient gloov1.ProxyClient, ingressClient v1.IngressClient, reporter reporter.Reporter, writeErrs chan error) v1.TranslatorSyncer {
 	return &translatorSyncer{
 		writeNamespace:  writeNamespace,
 		reporter:        reporter,
@@ -32,7 +32,7 @@ func NewSyncer(writeNamespace string, proxyClient gloov1.ProxyClient, ingressCli
 }
 
 // TODO (ilackarms): make sure that sync happens if proxies get updated as well; may need to resync
-func (s *translatorSyncer) Sync(ctx context.Context, snap *v1.ApiSnapshot) error {
+func (s *translatorSyncer) Sync(ctx context.Context, snap *v1.TranslatorSnapshot) error {
 	ctx = contextutils.WithLogger(ctx, "translatorSyncer")
 
 	logger := contextutils.LoggerFrom(ctx)

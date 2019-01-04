@@ -2,6 +2,8 @@ package setup
 
 import (
 	"context"
+	"github.com/solo-io/gloo/projects/ingress/pkg/api/service"
+	"github.com/solo-io/gloo/projects/ingress/pkg/status"
 
 	"github.com/solo-io/gloo/projects/ingress/pkg/translator"
 
@@ -135,19 +137,34 @@ func RunIngress() func(opts Opts) error {
 			return err
 		}
 
-		emitter := v1.NewApiEmitter(secretClient, upstreamClient, ingressClient)
-
 		rpt := reporter.NewReporter("ingress", ingressClient.BaseClient())
 		writeErrs := make(chan error)
 
-		sync := translator.NewSyncer(opts.WriteNamespace, proxyClient, ingressClient, rpt, writeErrs)
-
-		eventLoop := v1.NewApiEventLoop(emitter, sync)
-		eventLoopErrs, err := eventLoop.Run(opts.WatchNamespaces, opts.WatchOpts)
+		translatorEmitter := v1.NewTranslatorEmitter(secretClient, upstreamClient, ingressClient)
+		translatorSync := translator.NewSyncer(opts.WriteNamespace, proxyClient, ingressClient, rpt, writeErrs)
+		translatorEventLoop := v1.NewTranslatorEventLoop(translatorEmitter, translatorSync)
+		translatorEventLoopErrs, err := translatorEventLoop.Run(opts.WatchNamespaces, opts.WatchOpts)
 		if err != nil {
 			return err
 		}
-		go errutils.AggregateErrs(opts.WatchOpts.Ctx, writeErrs, eventLoopErrs, "event_loop")
+		go errutils.AggregateErrs(opts.WatchOpts.Ctx, writeErrs, translatorEventLoopErrs, "translator_event_loop")
+
+		baseKubeServiceClient := service.NewResourceClient(kube, &v1.KubeService{})
+		kubeServiceClient := v1.NewKubeServiceClientWithBase(baseKubeServiceClient)
+		// note (ilackarms): we must set the selector correctly here or the status syncer will not work
+		// the selector should return exactly 1 service which is our <install-namespace>.ingress-proxy service
+		// TODO (ilackarms): make the service labels configurable
+		kubeServiceClient = service.NewClientWithSelector(kubeServiceClient, map[string]string{
+			"gloo": "ingress-proxy",
+		})
+		statusEmitter := v1.NewStatusEmitter(kubeServiceClient, ingressClient)
+		statusSync := status.NewSyncer(ingressClient)
+		statusEventLoop := v1.NewStatusEventLoop(statusEmitter, statusSync)
+		statusEventLoopErrs, err := statusEventLoop.Run(opts.WatchNamespaces, opts.WatchOpts)
+		if err != nil {
+			return err
+		}
+		go errutils.AggregateErrs(opts.WatchOpts.Ctx, writeErrs, statusEventLoopErrs, "status_event_loop")
 
 		logger := contextutils.LoggerFrom(opts.WatchOpts.Ctx)
 

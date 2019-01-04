@@ -12,7 +12,7 @@ import (
 	"k8s.io/api/extensions/v1beta1"
 )
 
-func translateProxy(namespace string, snap *v1.ApiSnapshot) (*gloov1.Proxy, error) {
+func translateProxy(namespace string, snap *v1.TranslatorSnapshot) (*gloov1.Proxy, error) {
 	var ingresses []*v1beta1.Ingress
 	for _, ig := range snap.Ingresses.List() {
 		kubeIngress, err := ingress.ToKube(ig)

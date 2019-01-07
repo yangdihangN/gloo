@@ -51,7 +51,7 @@ func GlooHelmValues(version string) io.Reader {
 namespace:
   create: false
 rbac:
-  create: false
+  create: true
 
 deployment:
   imagePullPolicy: IfNotPresent
@@ -88,40 +88,46 @@ deployment:
 	return b
 }
 
-func WaitGlooPods() error {
-	if err := WaitPodsRunning(glooComponents...); err != nil {
+func WaitGlooPods(timeout, interval time.Duration) error {
+	if err := WaitPodsRunning(timeout, interval, glooComponents...); err != nil {
 		return err
 	}
 	return nil
 }
 
-func WaitPodsRunning(podNames ...string) error {
+func WaitPodsRunning(timeout, interval time.Duration, podNames ...string) error {
 	finished := func(output string) bool {
 		return strings.Contains(output, "Running") || strings.Contains(output, "ContainerCreating")
 	}
 	for _, pod := range podNames {
-		if err := WaitPodStatus(pod, "Running", finished); err != nil {
+		if err := WaitPodStatus(timeout, interval, pod, "Running", finished); err != nil {
+			return err
+		}
+	}
+	finished = func(output string) bool {
+		return strings.Contains(output, "Running")
+	}
+	for _, pod := range podNames {
+		if err := WaitPodStatus(timeout, interval, pod, "Running", finished); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func WaitPodsTerminated(podNames ...string) error {
+func WaitPodsTerminated(timeout, interval time.Duration, podNames ...string) error {
 	for _, pod := range podNames {
 		finished := func(output string) bool {
 			return !strings.Contains(output, pod)
 		}
-		if err := WaitPodStatus(pod, "terminated", finished); err != nil {
+		if err := WaitPodStatus(timeout, interval, pod, "terminated", finished); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func WaitPodStatus(pod, status string, finished func(output string) bool) error {
-	timeout := time.Second * 20
-	interval := time.Millisecond * 1000
+func WaitPodStatus(timeout, interval time.Duration, pod, status string, finished func(output string) bool) error {
 	tick := time.Tick(interval)
 
 	log.Debugf("waiting %v for pod %v to be %v...", timeout, pod, status)

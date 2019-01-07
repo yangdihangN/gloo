@@ -15,7 +15,7 @@ var glooComponents = []string{
 }
 var versionTag = ""
 
-func Version() string {
+func TestVersion() string {
 	if versionTag != "" {
 		return versionTag
 	}
@@ -39,23 +39,22 @@ func hash(h string) string {
 }
 
 // builds and pushes all docker containers needed for test
-func BuildPushContainers(push, verbose bool) (string, error) {
+func BuildPushContainers(version string, push, verbose bool) error {
 	if os.Getenv("SKIP_BUILD") == "1" {
-		return "", nil
+		return nil
 	}
-	version := Version()
 	os.Setenv("VERSION", version)
 
 	// make the gloo containers
 	if err := RunCommand(verbose, "make", "docker"); err != nil {
-		return "", err
+		return err
 	}
 
 	if push {
 		if err := RunCommand(verbose, "make", "docker-push"); err != nil {
-			return "", err
+			return err
 		}
 	}
 
-	return version, nil
+	return nil
 }

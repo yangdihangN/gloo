@@ -2,13 +2,10 @@ package kube2e_test
 
 import (
 	"github.com/solo-io/gloo/test/helpers"
-	"github.com/solo-io/solo-kit/pkg/utils/kubeutils"
 	stringutils "github.com/solo-io/solo-kit/test/helpers"
 	"github.com/solo-io/solo-kit/test/setup"
-	"k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
 	"testing"
+	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -32,14 +29,15 @@ var _ = BeforeSuite(func() {
 
 	err := setup.SetupKubeForTest(namespace)
 	Expect(err).NotTo(HaveOccurred())
-	err = DeployTestRunner(namespace, defaultTestRunnerImage)
+	err = helpers.DeployTestRunner(namespace, defaultTestRunnerImage)
 	Expect(err).NotTo(HaveOccurred())
 	// build and push images for test
-	version, err := helpers.BuildPushContainers(true, true)
+	version := helpers.TestVersion()
+	err = helpers.BuildPushContainers(version, true, true)
 	Expect(err).NotTo(HaveOccurred())
 	err = helpers.DeployGlooWithHelm(namespace, version, true)
 	Expect(err).NotTo(HaveOccurred())
-	err = helpers.WaitGlooPods()
+	err = helpers.WaitGlooPods(time.Minute, time.Second)
 	Expect(err).NotTo(HaveOccurred())
 })
 
@@ -47,36 +45,3 @@ var _ = AfterSuite(func() {
 	err := setup.TeardownKube(namespace)
 	Expect(err).NotTo(HaveOccurred())
 })
-
-func DeployTestRunner(namespace, image string) error {
-	cfg, err := kubeutils.GetConfig("", "")
-	if err != nil {
-		return err
-	}
-	kube, err := kubernetes.NewForConfig(cfg)
-	if err != nil {
-		return err
-	}
-	if _, err := kube.CoreV1().Pods(namespace).Create(&v1.Pod{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "testrunner",
-			Namespace: namespace,
-			// needed for WaitForPodsRunning
-			Labels: map[string]string{"gloo": "testrunner"},
-		},
-		Spec: v1.PodSpec{
-			Containers: []v1.Container{
-				{
-					Image: image,
-					Name:  "testrunner",
-				},
-			},
-		},
-	}); err != nil {
-		return err
-	}
-	if err := helpers.WaitPodsRunning("testrunner"); err != nil {
-		return err
-	}
-	return nil
-}

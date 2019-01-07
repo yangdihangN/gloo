@@ -3,15 +3,16 @@ package helpers
 import (
 	"bytes"
 	"fmt"
-	"github.com/solo-io/solo-kit/pkg/errors"
-	"github.com/solo-io/solo-kit/pkg/utils/log"
-	"github.com/solo-io/solo-kit/test/setup"
 	"io"
 	"io/ioutil"
 	"os"
 	"strings"
 	"text/template"
 	"time"
+
+	"github.com/solo-io/solo-kit/pkg/errors"
+	"github.com/solo-io/solo-kit/pkg/utils/log"
+	"github.com/solo-io/solo-kit/test/setup"
 )
 
 func DeployGlooWithHelm(namespace, imageVersion string, verbose bool) error {
@@ -76,7 +77,7 @@ deployment:
     image: soloio/gloo-envoy-wrapper:{{ .Version }}
     httpPort: 80
     replicas: 1
-`, )).Execute(b, struct {
+`)).Execute(b, struct {
 		Version string
 	}{
 		Version: version,

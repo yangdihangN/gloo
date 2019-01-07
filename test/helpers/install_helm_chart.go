@@ -6,6 +6,7 @@ import (
 	"github.com/onsi/ginkgo"
 	"github.com/solo-io/solo-kit/pkg/errors"
 	"github.com/solo-io/solo-kit/pkg/utils/log"
+	"github.com/solo-io/solo-kit/test/setup"
 	"io"
 	"io/ioutil"
 	"os"
@@ -25,21 +26,17 @@ func DeployGlooWithHelm(namespace, imageVersion string) error {
 		return err
 	}
 
-	cmd := exec.Command("helm", "template", GlooHelmChartDir())
+	cmd := exec.Command("helm", "template", GlooHelmChartDir(),
+		"--namespace", namespace,
+		"-f", values.Name(),
+	)
 	cmd.Dir = GlooDir()
 	cmd.Stdout = ginkgo.GinkgoWriter
 	cmd.Stderr = ginkgo.GinkgoWriter
 	cmd.Env = os.Environ()
-	if out, err := cmd.CombinedOutput(); err != nil {
-		return errors.Wrapf(err, "running command %v failed: %s", cmd.Args, out)
-	}
-
-	installBytes, err := exec.Command("helm", "template", HelmDirectory(),
-		"--namespace", namespace,
-		"-n", "test",
-		"-f", values.Name()).CombinedOutput()
+	installBytes, err := cmd.CombinedOutput()
 	if err != nil {
-		return errors.Wrapf(err, "running helm template: %v", string(installBytes))
+		return errors.Wrapf(err, "running command %v failed: %s", cmd.Args, installBytes)
 	}
 
 	kubeApply := exec.Command("kubectl", "apply", "-f", "-")
@@ -142,7 +139,7 @@ func WaitPodStatus(pod, status string, finished func(output string) bool) error 
 		case <-time.After(timeout):
 			return fmt.Errorf("timed out waiting for %v to be %v", pod, status)
 		case <-tick:
-			out, err := KubectlOut("get", "pod", "-l", "gloo="+pod)
+			out, err := setup.KubectlOut("get", "pod", "-l", "gloo="+pod)
 			if err != nil {
 				return fmt.Errorf("failed getting pod: %v", err)
 			}
@@ -151,7 +148,7 @@ func WaitPodStatus(pod, status string, finished func(output string) bool) error 
 				return errors.Errorf("%v in crash loop with logs %v", pod, out)
 			}
 			if strings.Contains(out, "ErrImagePull") || strings.Contains(out, "ImagePullBackOff") {
-				out, _ = KubectlOut("describe", "pod", "-l", "gloo="+pod)
+				out, _ = setup.KubectlOut("describe", "pod", "-l", "gloo="+pod)
 				return errors.Errorf("%v in ErrImagePull with description %v", pod, out)
 			}
 			if finished(out) {
@@ -162,7 +159,7 @@ func WaitPodStatus(pod, status string, finished func(output string) bool) error 
 }
 
 func KubeLogs(pod string) string {
-	out, err := KubectlOut("logs", "-l", "gloo="+pod)
+	out, err := setup.KubectlOut("logs", "-l", "gloo="+pod)
 	if err != nil {
 		out = err.Error()
 	}

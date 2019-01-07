@@ -26,7 +26,7 @@ var namespace string
 var testRunnerPort int32
 var _ = BeforeSuite(func() {
 	// todo (ilackarms): move randstring to stringutils package
-	namespace = stringutils.RandString(8)
+	namespace = "a"+stringutils.RandString(8)
 	testRunnerPort = 1234
 
 	err := setup.SetupKubeForTest(namespace)

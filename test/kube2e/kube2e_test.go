@@ -30,8 +30,9 @@ var _ = Describe("Kube2e: Ingress", func() {
 		}
 		kubeIng, err := kubeIngressClient.Create(&v1beta1.Ingress{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "simple-ingress-route",
-				Namespace: namespace,
+				Name:        "simple-ingress-route",
+				Namespace:   namespace,
+				Annotations: map[string]string{"kubernetes.io/ingress.class": "gloo"},
 			},
 			Spec: v1beta1.IngressSpec{
 				Backend: backend,

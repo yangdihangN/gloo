@@ -20,4 +20,4 @@ spec:
       - image: {{ .Values.deployment.ingress.image }}
         imagePullPolicy: {{ .Values.deployment.imagePullPolicy }}
         name: ingress
-        args: ["--namespace", "{{.Release.Namespace}}" ]
+        args: ["--namespace={{.Release.Namespace}}"]

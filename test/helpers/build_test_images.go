@@ -2,7 +2,7 @@ package helpers
 
 import (
 	"fmt"
-	"github.com/onsi/ginkgo"
+	"github.com/pkg/errors"
 	"github.com/solo-io/solo-kit/test/helpers"
 	"hash/crc32"
 	"os"
@@ -49,30 +49,24 @@ func BuildPushContainers(push bool) error {
 	os.Setenv("VERSION", version)
 
 	// make the gloo containers
-	for _, component := range []string{"gloo", "discovery", "kube-ingress-controller", "upstream-discovery"} {
+	for _, component := range glooComponents {
 		arg := component
 		arg += "-docker"
 
 		cmd := exec.Command("make", arg)
 		cmd.Dir = GlooDir()
-		cmd.Stdout = ginkgo.GinkgoWriter
-		cmd.Stderr = ginkgo.GinkgoWriter
 		cmd.Env = os.Environ()
-		if err := cmd.Run(); err != nil {
-			return err
+		if out, err := cmd.CombinedOutput(); err != nil {
+			return errors.Wrapf(err, "%v failed: %s", cmd.Args, out)
 		}
 
-		if push {
-			arg += "-push"
-
-			cmd := exec.Command("make", arg)
-			cmd.Dir = GlooDir()
-			cmd.Stdout = ginkgo.GinkgoWriter
-			cmd.Stderr = ginkgo.GinkgoWriter
-			cmd.Env = os.Environ()
-			if err := cmd.Run(); err != nil {
-				return err
-			}
+	}
+	if push {
+		cmd := exec.Command("make", "docker-push")
+		cmd.Dir = GlooDir()
+		cmd.Env = os.Environ()
+		if out, err := cmd.CombinedOutput(); err != nil {
+			return errors.Wrapf(err, "%v failed: %s", cmd.Args, out)
 		}
 	}
 

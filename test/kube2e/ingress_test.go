@@ -14,8 +14,6 @@ import (
 
 var _ = Describe("Kube2e: Ingress", func() {
 	It("works", func() {
-		ingressProxy := "ingress-proxy"
-		ingressPort := 80
 		cfg, err := kubeutils.GetConfig("", "")
 		Expect(err).NotTo(HaveOccurred())
 
@@ -23,9 +21,9 @@ var _ = Describe("Kube2e: Ingress", func() {
 		Expect(err).NotTo(HaveOccurred())
 		kubeIngressClient := kube.ExtensionsV1beta1().Ingresses(namespace)
 		backend := &v1beta1.IngressBackend{
-			ServiceName: ingressProxy,
+			ServiceName: "testrunner",
 			ServicePort: intstr.IntOrString{
-				IntVal: int32(ingressPort),
+				IntVal: testRunnerPort,
 			},
 		}
 		kubeIng, err := kubeIngressClient.Create(&v1beta1.Ingress{
@@ -61,6 +59,8 @@ var _ = Describe("Kube2e: Ingress", func() {
 		Expect(err).NotTo(HaveOccurred())
 		Expect(kubeIng).NotTo(BeNil())
 
+		ingressProxy := "ingress-proxy"
+		ingressPort := 80
 		setup.CurlEventuallyShouldRespond(setup.CurlOpts{
 			Protocol: "http",
 			Path:     "/",

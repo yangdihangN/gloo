@@ -3,20 +3,19 @@ package helpers
 import (
 	"bytes"
 	"fmt"
-	"github.com/onsi/ginkgo"
 	"github.com/solo-io/solo-kit/pkg/errors"
 	"github.com/solo-io/solo-kit/pkg/utils/log"
 	"github.com/solo-io/solo-kit/test/setup"
 	"io"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"strings"
 	"text/template"
 	"time"
 )
 
-func DeployGlooWithHelm(namespace, imageVersion string) error {
+func DeployGlooWithHelm(namespace, imageVersion string, verbose bool) error {
+	log.Printf("deploying gloo with version %v", imageVersion)
 	values, err := ioutil.TempFile("", "gloo-test-")
 	if err != nil {
 		return err
@@ -26,26 +25,18 @@ func DeployGlooWithHelm(namespace, imageVersion string) error {
 		return err
 	}
 
-	cmd := exec.Command("helm", "template", GlooHelmChartDir(),
+	// make the manifest
+	manifestContents, err := RunCommandOutput(verbose,
+		"helm", "template", GlooHelmChartDir(),
 		"--namespace", namespace,
 		"-f", values.Name(),
 	)
-	cmd.Dir = GlooDir()
-	cmd.Stdout = ginkgo.GinkgoWriter
-	cmd.Stderr = ginkgo.GinkgoWriter
-	cmd.Env = os.Environ()
-	installBytes, err := cmd.CombinedOutput()
 	if err != nil {
-		return errors.Wrapf(err, "running command %v failed: %s", cmd.Args, installBytes)
+		return err
 	}
 
-	kubeApply := exec.Command("kubectl", "apply", "-f", "-")
-	kubeApply.Stdin = bytes.NewBuffer(installBytes)
-	cmd.Stdout = ginkgo.GinkgoWriter
-	cmd.Stderr = ginkgo.GinkgoWriter
-	cmd.Env = os.Environ()
-	if out, err := cmd.CombinedOutput(); err != nil {
-		return errors.Wrapf(err, "running command %v failed: %s", cmd.Args, out)
+	if err := RunCommandInput(manifestContents, verbose, "kubectl", "apply", "-f", "-"); err != nil {
+		return err
 	}
 
 	return nil
@@ -54,7 +45,7 @@ func DeployGlooWithHelm(namespace, imageVersion string) error {
 func GlooHelmValues(version string) io.Reader {
 	b := &bytes.Buffer{}
 
-	err := template.Must(template.ParseGlob(`
+	err := template.Must(template.New("gloo-helm-values").Parse(`
 # note: these values must remain consistent with 
 # install/helm/gloo/values.yaml
 namespace:

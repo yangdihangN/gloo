@@ -74,7 +74,7 @@ deployment:
     replicas: 1
   ingressProxy:
     image: soloio/gloo-envoy-wrapper:{{ .Version }}
-    httpPort: 8080
+    httpPort: 80
     replicas: 1
 `, )).Execute(b, struct {
 		Version string

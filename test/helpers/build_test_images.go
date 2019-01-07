@@ -2,9 +2,10 @@ package helpers
 
 import (
 	"fmt"
-	"github.com/solo-io/solo-kit/test/helpers"
 	"hash/crc32"
 	"os"
+
+	"github.com/solo-io/solo-kit/test/helpers"
 )
 
 var glooComponents = []string{

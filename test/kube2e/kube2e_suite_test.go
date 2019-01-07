@@ -1,12 +1,13 @@
 package kube2e_test
 
 import (
-	"github.com/solo-io/gloo/test/helpers"
-	stringutils "github.com/solo-io/solo-kit/test/helpers"
-	"github.com/solo-io/solo-kit/test/setup"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/solo-io/gloo/test/helpers"
+	stringutils "github.com/solo-io/solo-kit/test/helpers"
+	"github.com/solo-io/solo-kit/test/setup"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -26,7 +27,7 @@ var namespace string
 var testRunnerPort int32
 var _ = BeforeSuite(func() {
 	// todo (ilackarms): move randstring to stringutils package
-	namespace = "a"+stringutils.RandString(8)
+	namespace = "a" + stringutils.RandString(8)
 	testRunnerPort = 1234
 
 	err := setup.SetupKubeForTest(namespace)

@@ -2,6 +2,8 @@ package helpers
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/onsi/ginkgo"
 	"github.com/onsi/gomega"
 	"github.com/solo-io/solo-kit/pkg/utils/kubeutils"
@@ -9,7 +11,6 @@ import (
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"time"
 )
 
 func DeployTestRunner(namespace, image string, port int32) error {

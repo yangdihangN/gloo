@@ -2,10 +2,11 @@ package helpers
 
 import (
 	"bytes"
-	"github.com/pkg/errors"
 	"io"
 	"os"
 	"os/exec"
+
+	"github.com/pkg/errors"
 )
 
 func RunCommand(verbose bool, args ...string) error {

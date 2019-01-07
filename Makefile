@@ -33,7 +33,7 @@ clean:
 .PHONY: generated-code
 generated-code: $(OUTPUT_DIR)/.generated-code
 
-SUBDIRS:=projects
+SUBDIRS:=projects test
 $(OUTPUT_DIR)/.generated-code:
 	go generate ./...
 	gofmt -w $(SUBDIRS)

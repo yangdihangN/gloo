@@ -4,13 +4,12 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/solo-io/gloo/test/helpers"
-	"github.com/solo-io/solo-kit/pkg/utils/kubeutils"
+	"github.com/solo-io/go-utils/kubeutils"
 	"github.com/solo-io/solo-kit/test/setup"
 	"k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes"
-	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 )
 
 var _ = Describe("Kube2e: Ingress", func() {

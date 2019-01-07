@@ -32,10 +32,14 @@ var _ = BeforeSuite(func() {
 
 	err := setup.SetupKubeForTest(namespace)
 	Expect(err).NotTo(HaveOccurred())
-	// build and push images for test
-	err = helpers.BuildPushContainers(true)
-	Expect(err).NotTo(HaveOccurred())
 	err = DeployTestRunner(namespace, defaultTestRunnerImage)
+	Expect(err).NotTo(HaveOccurred())
+	// build and push images for test
+	version, err := helpers.BuildPushContainers(true, true)
+	Expect(err).NotTo(HaveOccurred())
+	err = helpers.DeployGlooWithHelm(namespace, version, true)
+	Expect(err).NotTo(HaveOccurred())
+	err = helpers.WaitGlooPods()
 	Expect(err).NotTo(HaveOccurred())
 })
 
@@ -57,11 +61,14 @@ func DeployTestRunner(namespace, image string) error {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "testrunner",
 			Namespace: namespace,
+			// needed for WaitForPodsRunning
+			Labels: map[string]string{"gloo": "testrunner"},
 		},
 		Spec: v1.PodSpec{
 			Containers: []v1.Container{
 				{
 					Image: image,
+					Name:  "testrunner",
 				},
 			},
 		},

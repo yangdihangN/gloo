@@ -2,11 +2,9 @@ package helpers
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"github.com/solo-io/solo-kit/test/helpers"
 	"hash/crc32"
 	"os"
-	"os/exec"
 )
 
 var glooComponents = []string{
@@ -41,68 +39,23 @@ func hash(h string) string {
 }
 
 // builds and pushes all docker containers needed for test
-func BuildPushContainers(push bool) error {
+func BuildPushContainers(push, verbose bool) (string, error) {
 	if os.Getenv("SKIP_BUILD") == "1" {
-		return nil
+		return "", nil
 	}
 	version := Version()
 	os.Setenv("VERSION", version)
 
 	// make the gloo containers
-	for _, component := range glooComponents {
-		arg := component
-		arg += "-docker"
-
-		cmd := exec.Command("make", arg)
-		cmd.Dir = GlooDir()
-		cmd.Env = os.Environ()
-		if out, err := cmd.CombinedOutput(); err != nil {
-			return errors.Wrapf(err, "%v failed: %s", cmd.Args, out)
-		}
-
+	if err := RunCommand(verbose, "make", "docker"); err != nil {
+		return "", err
 	}
+
 	if push {
-		cmd := exec.Command("make", "docker-push")
-		cmd.Dir = GlooDir()
-		cmd.Env = os.Environ()
-		if out, err := cmd.CombinedOutput(); err != nil {
-			return errors.Wrapf(err, "%v failed: %s", cmd.Args, out)
+		if err := RunCommand(verbose, "make", "docker-push"); err != nil {
+			return "", err
 		}
 	}
 
-	// TODO (ilackarms): build test containers
-	//for _, path := range []string{
-	//	filepath.Join(GlooTestContainersDir(), "testrunner"),
-	//	filepath.Join(KubeE2eDirectory(), "containers", "event-emitter"),
-	//	filepath.Join(KubeE2eDirectory(), "containers", "upstream-for-events"),
-	//	filepath.Join(KubeE2eDirectory(), "containers", "grpc-test-service"),
-	//} {
-	//	dockerOrg := os.Getenv("DOCKER_ORG")
-	//	if dockerOrg == "" {
-	//		dockerOrg = "soloio"
-	//	}
-	//	fullImage := dockerOrg + "/" + filepath.Base(path) + ":" + Version()
-	//	log.Debugf("TEST: building fullImage %v", fullImage)
-	//	cmd := exec.Command("make", "docker")
-	//	cmd.Dir = path
-	//	cmd.Stdout = ginkgo.GinkgoWriter
-	//	cmd.Stderr = ginkgo.GinkgoWriter
-	//	if err := cmd.Run(); err != nil {
-	//		return err
-	//	}
-	//	if push {
-	//		cmd = exec.Command("docker", "push", fullImage)
-	//		cmd.Stdout = ginkgo.GinkgoWriter
-	//		cmd.Stderr = ginkgo.GinkgoWriter
-	//		if err := cmd.Run(); err != nil {
-	//			return err
-	//		}
-	//	}
-	//	cmd = exec.Command("make", "clean")
-	//	cmd.Dir = path
-	//	cmd.Stdout = ginkgo.GinkgoWriter
-	//	cmd.Stderr = ginkgo.GinkgoWriter
-	//	cmd.Run()
-	//}
-	return nil
+	return version, nil
 }

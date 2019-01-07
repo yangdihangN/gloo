@@ -4,6 +4,7 @@ import (
 	"github.com/solo-io/gloo/test/helpers"
 	stringutils "github.com/solo-io/solo-kit/test/helpers"
 	"github.com/solo-io/solo-kit/test/setup"
+	"os"
 	"testing"
 	"time"
 
@@ -22,19 +23,22 @@ func TestKube2e(t *testing.T) {
 }
 
 var namespace string
-
+var testRunnerPort int32
 var _ = BeforeSuite(func() {
 	// todo (ilackarms): move randstring to stringutils package
 	namespace = stringutils.RandString(8)
+	testRunnerPort = 1234
 
 	err := setup.SetupKubeForTest(namespace)
 	Expect(err).NotTo(HaveOccurred())
-	err = helpers.DeployTestRunner(namespace, defaultTestRunnerImage)
+	err = helpers.DeployTestRunner(namespace, defaultTestRunnerImage, testRunnerPort)
 	Expect(err).NotTo(HaveOccurred())
 	// build and push images for test
 	version := helpers.TestVersion()
-	err = helpers.BuildPushContainers(version, true, true)
-	Expect(err).NotTo(HaveOccurred())
+	if os.Getenv("BUILD") == "1" {
+		err = helpers.BuildPushContainers(version, true, true)
+		Expect(err).NotTo(HaveOccurred())
+	}
 	err = helpers.DeployGlooWithHelm(namespace, version, true)
 	Expect(err).NotTo(HaveOccurred())
 	err = helpers.WaitGlooPods(time.Minute, time.Second)

@@ -54,7 +54,7 @@ rbac:
   create: true
 
 deployment:
-  imagePullPolicy: IfNotPresent
+  imagePullPolicy: Always
   gloo:
     xdsPort: 9977
     image: soloio/gloo:{{ .Version }}

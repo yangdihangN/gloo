@@ -150,7 +150,7 @@ var _ = Describe("StatusSyncer", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		time.Sleep(time.Second) // give the kube service time to update lb endpoints
-		svc, err =  kubeSvcClient.Get(svc.Name, metav1.GetOptions{})
+		svc, err = kubeSvcClient.Get(svc.Name, metav1.GetOptions{})
 		Expect(err).NotTo(HaveOccurred())
 
 		// note (ilackarms): unless running on a cloud provider that supports

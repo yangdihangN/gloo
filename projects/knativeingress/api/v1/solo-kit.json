@@ -1,0 +1,20 @@
+{
+  "name": "knativeingress.solo.io",
+  "version": "v1",
+  "resource_groups": {
+    "translator.knativeingress.solo.io": [
+      {
+        "name": "Secret",
+        "package": "gloo.solo.io"
+      },
+      {
+        "name": "Upstream",
+        "package": "gloo.solo.io"
+      },
+      {
+        "name": "ClusterIngress",
+        "package": "knativeingress.solo.io"
+      }
+    ]
+  }
+}

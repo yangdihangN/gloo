@@ -37,10 +37,6 @@
   name = "github.com/gogo/protobuf"
 
 [[override]]
-  branch = "master"
-  name = "k8s.io/api"
-
-[[override]]
   version = "1.2.0"
   name = "github.com/golang/protobuf"
 
@@ -48,9 +44,11 @@
   name = "github.com/solo-io/envoy-operator"
   revision = "c71f318a203bca8433268be67336086379a2bf9f"
 
+# todo: dont commit this
 [[constraint]]
   name = "github.com/solo-io/solo-kit"
-  version = "0.2.12"
+  #version = ">=0.2.12"
+  revision = "ad28b04f58d030111e655b9e73d817de8ef28967"
 
 [[constraint]]
   name = "github.com/hashicorp/consul"
@@ -77,15 +75,16 @@
   name = "k8s.io/kubernetes"
   version = "=v1.13.0"
 
-[[constraint]]
+# need override for knative
+[[override]]
   name = "k8s.io/api"
   version = "kubernetes-1.13.0"
 
-[[constraint]]
+[[override]]
   name = "k8s.io/client-go"
   version = "kubernetes-1.13.0"
 
-[[constraint]]
+[[override]]
   name = "k8s.io/apimachinery"
   version = "kubernetes-1.13.0"
 

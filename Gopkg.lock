@@ -198,6 +198,14 @@
   revision = "676016db8193d83324a507a986a78cd3642ad713"
 
 [[projects]]
+  digest = "1:f1f2bd73c025d24c3b93abf6364bccb802cf2fdedaa44360804c67800e8fab8d"
+  name = "github.com/evanphx/json-patch"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "72bf35d0ff611848c1dc9df0f976c81192392fa5"
+  version = "v4.1.0"
+
+[[projects]]
   digest = "1:58981659bb698cb749d5bf7316e71e2768ffed5fd35f6ba3b182dfa1fed13420"
   name = "github.com/fgrosse/zaptest"
   packages = ["."]
@@ -356,6 +364,19 @@
   packages = ["."]
   pruneopts = "UT"
   revision = "e89373fe6b4a7413d7acd6da1725b83ef713e6e4"
+
+[[projects]]
+  digest = "1:2e3c336fc7fde5c984d2841455a658a6d626450b1754a854b3b32e7a8f49a07a"
+  name = "github.com/google/go-cmp"
+  packages = [
+    "cmp",
+    "cmp/internal/diff",
+    "cmp/internal/function",
+    "cmp/internal/value",
+  ]
+  pruneopts = "UT"
+  revision = "3af367b6b30c263d47e8895973edcca9a49cf029"
+  version = "v0.2.0"
 
 [[projects]]
   digest = "1:34bd52916ea0a9e4d95d34dab5bc4f125a7ee7b1e11b1a531d2ea43f41b4f4e8"
@@ -786,6 +807,47 @@
   revision = "668c8856d9992f97248b3177d45743d2cc1068db"
 
 [[projects]]
+  digest = "1:345bbba667abadd6263391c915251ede8d9fa6f6852839c60bb6738b6122b89c"
+  name = "github.com/knative/build"
+  packages = [
+    "pkg/apis/build",
+    "pkg/apis/build/v1alpha1",
+  ]
+  pruneopts = "UT"
+  revision = "94859753e2c6724df2be86f6a254f810895fa3eb"
+  version = "v0.2.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:c887acbfa6d222ce7e8ad79bdb773cc067d1a3f8f54d71214841550fd727c72c"
+  name = "github.com/knative/pkg"
+  packages = [
+    "apis",
+    "apis/duck",
+    "apis/duck/v1alpha1",
+    "kmeta",
+  ]
+  pruneopts = "UT"
+  revision = "08febf8f13246f4217581904dcfb25ffebf52814"
+
+[[projects]]
+  digest = "1:086cee678cb308797b42928049bfd98da9d43d7dd21d776cf11a557e789bb66f"
+  name = "github.com/knative/serving"
+  packages = [
+    "pkg/apis/autoscaling",
+    "pkg/apis/autoscaling/v1alpha1",
+    "pkg/apis/networking",
+    "pkg/apis/networking/v1alpha1",
+    "pkg/apis/serving",
+    "pkg/apis/serving/v1alpha1",
+    "pkg/client/clientset/versioned/scheme",
+    "pkg/client/clientset/versioned/typed/networking/v1alpha1",
+  ]
+  pruneopts = "UT"
+  revision = "5cbee406446031df3105ca2ac90ce4e9369207dd"
+  version = "v0.2.3"
+
+[[projects]]
   digest = "1:dfe5159383dfcd370555c35374ac99022906f987b55cc65a830fb9ced970b4b1"
   name = "github.com/lyft/protoc-gen-validate"
   packages = ["validate"]
@@ -804,6 +866,14 @@
   ]
   pruneopts = "UT"
   revision = "60711f1a8329503b04e1c88535f419d0bb440bff"
+
+[[projects]]
+  branch = "master"
+  digest = "1:fc2b04b0069d6b10bdef96d278fe20c345794009685ed3c8c7f1a6dc023eefec"
+  name = "github.com/mattbaird/jsonpatch"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "81af80346b1a01caae0cbc27fd3c1ba5b11e189f"
 
 [[projects]]
   digest = "1:c658e84ad3916da105a761660dcaeb01e63416c8ec7bc62256a9b411a05fcd67"
@@ -1140,7 +1210,7 @@
   revision = "241bc627d5400a0794853220df4fdefeeb2af0e0"
 
 [[projects]]
-  digest = "1:d1d58c46a9e300ea33377bb419f7b67d23a636f0623c6c19b2554bd88e8178b4"
+  digest = "1:c31680ef3b150171a1536909ee1b2e98e2109490385692f1ea76a61db4ce7f93"
   name = "github.com/solo-io/solo-kit"
   packages = [
     "pkg/api/v1/clients",
@@ -1193,8 +1263,7 @@
     "test/tests/typed",
   ]
   pruneopts = "UT"
-  revision = "f2b636e31041dfcad17ed8deb4f52c19d19840de"
-  version = "v0.2.12"
+  revision = "ad28b04f58d030111e655b9e73d817de8ef28967"
 
 [[projects]]
   digest = "1:645cabccbb4fa8aab25a956cbcbdf6a6845ca736b2c64e197ca7cbb9d210b939"
@@ -1528,8 +1597,7 @@
   version = "v2.2.1"
 
 [[projects]]
-  branch = "master"
-  digest = "1:b73534f8441bf1e20a5b77c55810c6f986d10bd9fb3d26a90f5c6c9dc517ec0f"
+  digest = "1:0d299a04c6472e4458461d7034c76d014cc6f632a3262cbf21d123b19ce13e65"
   name = "k8s.io/api"
   packages = [
     "admissionregistration/v1alpha1",
@@ -1566,7 +1634,8 @@
     "storage/v1beta1",
   ]
   pruneopts = "UT"
-  revision = "173ce66c1e39d1d0f56e0b3347ff2988068aecd0"
+  revision = "89a74a8d264df0e993299876a8cde88379b940ee"
+  version = "kubernetes-1.13.0"
 
 [[projects]]
   digest = "1:ace21b4261a9bc8d06b188f03ce48d1bed92ccba4890fad616cf283939f723c6"
@@ -1649,10 +1718,11 @@
   version = "kubernetes-1.13.0"
 
 [[projects]]
-  digest = "1:c4efe76be7ab545700a944bc19a6e15805ddab5a0bb044817ef6a073da5b039d"
+  digest = "1:4ef70ccfbf555d22e36e2ba9d45919550205fc812e4a30804955a86ea77c8902"
   name = "k8s.io/client-go"
   packages = [
     "discovery",
+    "dynamic",
     "informers",
     "informers/admissionregistration",
     "informers/admissionregistration/v1alpha1",
@@ -1898,6 +1968,8 @@
     "github.com/jhump/protoreflect/desc",
     "github.com/jhump/protoreflect/grpcreflect",
     "github.com/keybase/go-ps",
+    "github.com/knative/serving/pkg/apis/networking/v1alpha1",
+    "github.com/knative/serving/pkg/client/clientset/versioned/typed/networking/v1alpha1",
     "github.com/lyft/protoc-gen-validate/validate",
     "github.com/mitchellh/hashstructure",
     "github.com/olekukonko/tablewriter",

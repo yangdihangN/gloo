@@ -180,7 +180,7 @@ var _ = Describe("Translate", func() {
 				},
 			},
 		}
-		snap := &v1.ApiSnapshot{
+		snap := &v1.TranslatorSnapshot{
 			Ingresses: map[string]v1.IngressList{"hi": {ingressRes, ingressResTls, ingressResTls2}},
 			Secrets:   map[string]gloov1.SecretList{"hi": {secret}},
 			Upstreams: map[string]gloov1.UpstreamList{"hi": {us, usSubset}},

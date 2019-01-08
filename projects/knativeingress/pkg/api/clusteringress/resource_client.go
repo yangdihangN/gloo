@@ -9,7 +9,7 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"github.com/gogo/protobuf/types"
 	knativev1alpha1 "github.com/knative/serving/pkg/apis/networking/v1alpha1"
-	"github.com/knative/serving/pkg/client/clientset/versioned/typed/networking/v1alpha1"
+	knativeclientset "github.com/knative/serving/pkg/client/clientset/versioned"
 	"github.com/solo-io/gloo/projects/knativeingress/pkg/api/v1"
 	"github.com/solo-io/solo-kit/pkg/api/v1/clients"
 	"github.com/solo-io/solo-kit/pkg/api/v1/resources"
@@ -24,13 +24,13 @@ import (
 const typeUrl = "k8s.io/extensions.v1beta1/Ingress"
 
 type ResourceClient struct {
-	knative      v1alpha1.NetworkingV1alpha1Interface
+	knative      knativeclientset.Interface
 	ownerLabel   string
 	resourceName string
 	resourceType resources.Resource
 }
 
-func NewResourceClient(kube v1alpha1.NetworkingV1alpha1Interface, resourceType resources.Resource) *ResourceClient {
+func NewResourceClient(kube knativeclientset.Interface, resourceType resources.Resource) *ResourceClient {
 	return &ResourceClient{
 		knative:      kube,
 		resourceName: reflect.TypeOf(resourceType).String(),
@@ -72,15 +72,15 @@ func ToKube(resource resources.Resource) (*knativev1alpha1.ClusterIngress, error
 	if !ok {
 		return nil, errors.Errorf("internal error: invalid resource %v passed to ingress-only client", resources.Kind(resource))
 	}
-	if ingResource.KubeIngressSpec == nil {
+	if ingResource.ClusterIngressSpec == nil {
 		return nil, errors.Errorf("internal error: %v ingress spec cannot be nil", ingResource.GetMetadata().Ref())
 	}
 	var ingress knativev1alpha1.ClusterIngress
-	if err := json.Unmarshal(ingResource.KubeIngressSpec.Value, &ingress.Spec); err != nil {
+	if err := json.Unmarshal(ingResource.ClusterIngressSpec.Value, &ingress.Spec); err != nil {
 		return nil, errors.Wrapf(err, "unmarshalling knative ingress spec data")
 	}
-	if ingResource.KubeIngressStatus != nil {
-		if err := json.Unmarshal(ingResource.KubeIngressStatus.Value, &ingress.Status); err != nil {
+	if ingResource.ClusterIngressStatus != nil {
+		if err := json.Unmarshal(ingResource.ClusterIngressStatus.Value, &ingress.Status); err != nil {
 			return nil, errors.Wrapf(err, "unmarshalling knative ingress status data")
 		}
 	}
@@ -114,7 +114,7 @@ func (rc *ResourceClient) Read(namespace, name string, opts clients.ReadOpts) (r
 	opts = opts.WithDefaults()
 	namespace = clients.DefaultNamespaceIfEmpty(namespace)
 
-	ingressObj, err := rc.knative.ClusterIngresses().ExtensionsV1beta1().Ingresses(namespace).Get(name, metav1.GetOptions{})
+	ingressObj, err := rc.knative.NetworkingV1alpha1().ClusterIngresses().Get(name, metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			return nil, errors.NewNotExistErr(namespace, name, err)
@@ -157,11 +157,11 @@ func (rc *ResourceClient) Write(resource resources.Resource, opts clients.WriteO
 		if meta.ResourceVersion != original.GetMetadata().ResourceVersion {
 			return nil, errors.NewResourceVersionErr(meta.Namespace, meta.Name, meta.ResourceVersion, original.GetMetadata().ResourceVersion)
 		}
-		if _, err := rc.knative.ExtensionsV1beta1().Ingresses(ingressObj.Namespace).Update(ingressObj); err != nil {
+		if _, err := rc.knative.NetworkingV1alpha1().ClusterIngresses().Update(ingressObj); err != nil {
 			return nil, errors.Wrapf(err, "updating knative ingressObj %v", ingressObj.Name)
 		}
 	} else {
-		if _, err := rc.knative.ExtensionsV1beta1().Ingresses(ingressObj.Namespace).Create(ingressObj); err != nil {
+		if _, err := rc.knative.NetworkingV1alpha1().ClusterIngresses().Create(ingressObj); err != nil {
 			return nil, errors.Wrapf(err, "creating knative ingressObj %v", ingressObj.Name)
 		}
 	}
@@ -179,7 +179,7 @@ func (rc *ResourceClient) Delete(namespace, name string, opts clients.DeleteOpts
 		return nil
 	}
 
-	if err := rc.knative.ExtensionsV1beta1().Ingresses(namespace).Delete(name, nil); err != nil {
+	if err := rc.knative.NetworkingV1alpha1().ClusterIngresses().Delete(name, nil); err != nil {
 		return errors.Wrapf(err, "deleting ingressObj %v", name)
 	}
 	return nil
@@ -189,7 +189,7 @@ func (rc *ResourceClient) List(namespace string, opts clients.ListOpts) (resourc
 	opts = opts.WithDefaults()
 	namespace = clients.DefaultNamespaceIfEmpty(namespace)
 
-	ingressObjList, err := rc.knative.ExtensionsV1beta1().Ingresses(namespace).List(metav1.ListOptions{
+	ingressObjList, err := rc.knative.NetworkingV1alpha1().ClusterIngresses().List(metav1.ListOptions{
 		LabelSelector: labels.SelectorFromSet(opts.Selector).String(),
 	})
 	if err != nil {
@@ -217,7 +217,7 @@ func (rc *ResourceClient) List(namespace string, opts clients.ListOpts) (resourc
 func (rc *ResourceClient) Watch(namespace string, opts clients.WatchOpts) (<-chan resources.ResourceList, <-chan error, error) {
 	opts = opts.WithDefaults()
 	namespace = clients.DefaultNamespaceIfEmpty(namespace)
-	watch, err := rc.knative.ExtensionsV1beta1().Ingresses(namespace).Watch(metav1.ListOptions{
+	watch, err := rc.knative.NetworkingV1alpha1().ClusterIngresses().Watch(metav1.ListOptions{
 		LabelSelector: labels.SelectorFromSet(opts.Selector).String(),
 	})
 	if err != nil {
@@ -264,6 +264,6 @@ func (rc *ResourceClient) Watch(namespace string, opts clients.WatchOpts) (<-cha
 }
 
 func (rc *ResourceClient) exist(namespace, name string) bool {
-	_, err := rc.knative.ExtensionsV1beta1().Ingresses(namespace).Get(name, metav1.GetOptions{})
+	_, err := rc.knative.NetworkingV1alpha1().ClusterIngresses().Get(name, metav1.GetOptions{})
 	return err == nil
 }

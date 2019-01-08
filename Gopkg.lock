@@ -831,7 +831,7 @@
   revision = "08febf8f13246f4217581904dcfb25ffebf52814"
 
 [[projects]]
-  digest = "1:086cee678cb308797b42928049bfd98da9d43d7dd21d776cf11a557e789bb66f"
+  digest = "1:00fc30eb7d9bffb487263880b75883070c04d31469d38e5774a400bd3b55dc7a"
   name = "github.com/knative/serving"
   packages = [
     "pkg/apis/autoscaling",
@@ -840,8 +840,11 @@
     "pkg/apis/networking/v1alpha1",
     "pkg/apis/serving",
     "pkg/apis/serving/v1alpha1",
+    "pkg/client/clientset/versioned",
     "pkg/client/clientset/versioned/scheme",
+    "pkg/client/clientset/versioned/typed/autoscaling/v1alpha1",
     "pkg/client/clientset/versioned/typed/networking/v1alpha1",
+    "pkg/client/clientset/versioned/typed/serving/v1alpha1",
   ]
   pruneopts = "UT"
   revision = "5cbee406446031df3105ca2ac90ce4e9369207dd"
@@ -1969,6 +1972,7 @@
     "github.com/jhump/protoreflect/grpcreflect",
     "github.com/keybase/go-ps",
     "github.com/knative/serving/pkg/apis/networking/v1alpha1",
+    "github.com/knative/serving/pkg/client/clientset/versioned",
     "github.com/knative/serving/pkg/client/clientset/versioned/typed/networking/v1alpha1",
     "github.com/lyft/protoc-gen-validate/validate",
     "github.com/mitchellh/hashstructure",
@@ -1992,6 +1996,7 @@
     "github.com/solo-io/solo-kit/pkg/api/v1/clients/factory",
     "github.com/solo-io/solo-kit/pkg/api/v1/clients/kube",
     "github.com/solo-io/solo-kit/pkg/api/v1/clients/kube/crd",
+    "github.com/solo-io/solo-kit/pkg/api/v1/clients/kube/crd/client/clientset/versioned",
     "github.com/solo-io/solo-kit/pkg/api/v1/clients/memory",
     "github.com/solo-io/solo-kit/pkg/api/v1/control-plane/cache",
     "github.com/solo-io/solo-kit/pkg/api/v1/control-plane/server",

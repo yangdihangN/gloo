@@ -5,8 +5,8 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	. "github.com/solo-io/gloo/projects/ingress/pkg/api/ingress"
-	"github.com/solo-io/gloo/projects/ingress/pkg/api/v1"
+	. "github.com/solo-io/gloo/projects/knativeingress/pkg/api/clusteringress"
+	"github.com/solo-io/gloo/projects/knativeingress/pkg/api/v1"
 	"github.com/solo-io/solo-kit/pkg/api/v1/clients"
 	"github.com/solo-io/solo-kit/pkg/utils/kubeutils"
 	"github.com/solo-io/solo-kit/pkg/utils/log"

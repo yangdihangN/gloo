@@ -1,7 +1,6 @@
 package kube2e_test
 
 import (
-	"os"
 	"testing"
 	"time"
 
@@ -36,10 +35,8 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 	// build and push images for test
 	version := helpers.TestVersion()
-	if os.Getenv("BUILD") == "1" {
-		err = helpers.BuildPushContainers(version, true, true)
-		Expect(err).NotTo(HaveOccurred())
-	}
+	err = helpers.BuildPushContainers(version, true, true)
+	Expect(err).NotTo(HaveOccurred())
 	err = helpers.DeployGlooWithHelm(namespace, version, true)
 	Expect(err).NotTo(HaveOccurred())
 	err = helpers.WaitGlooPods(time.Minute, time.Second)

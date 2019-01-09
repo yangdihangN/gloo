@@ -1,6 +1,7 @@
 package kube2e_test
 
 import (
+	"github.com/solo-io/solo-kit/pkg/utils/log"
 	"testing"
 	"time"
 
@@ -45,5 +46,7 @@ var _ = BeforeSuite(func() {
 
 var _ = AfterSuite(func() {
 	err := setup.TeardownKube(namespace)
-	Expect(err).NotTo(HaveOccurred())
+	if err != nil {
+		log.Warnf("TEARDOWN ERROR!: %v", err)
+	}
 })

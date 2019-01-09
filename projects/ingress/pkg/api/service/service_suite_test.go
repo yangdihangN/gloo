@@ -5,10 +5,9 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 )
 
-func TestIngress(t *testing.T) {
+func TestService(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Ingress Suite")
+	RunSpecs(t, "Service Suite")
 }

@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/onsi/ginkgo"
-	"github.com/onsi/gomega"
 	"github.com/solo-io/solo-kit/pkg/utils/kubeutils"
+	"github.com/solo-io/solo-kit/pkg/utils/log"
 	"github.com/solo-io/solo-kit/test/setup"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -65,9 +64,8 @@ func DeployTestRunner(namespace, image string, port int32) error {
 		return err
 	}
 	go func() {
-		defer ginkgo.GinkgoRecover()
 		if err := StartSimpleHttpServer(port); err != nil {
-			gomega.Expect(err).NotTo(gomega.HaveOccurred())
+			log.Warnf("failed to start HTTP Server in Test Runner: %v", err)
 		}
 	}()
 	return nil

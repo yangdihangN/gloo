@@ -12,7 +12,6 @@ import "github.com/solo-io/solo-kit/api/v1/solo-kit.proto";
 /*
 @solo-kit:resource.short_name=ig
 @solo-kit:resource.plural_name=ingresses
-@solo-kit:resource.resource_groups=api.ingress.solo.io,status.ingress.solo.io
 
 A simple wrapper for a Kubernetes Ingress Object.
 */

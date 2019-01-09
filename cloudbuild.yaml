@@ -78,4 +78,4 @@ steps:
 # setting the version at compile time with a linker flag. Release binaries/images were
 # manually produced for 0.5.0
 
-timeout: 1800s
+timeout: 660s

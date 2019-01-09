@@ -97,89 +97,87 @@ func Setup(ctx context.Context, kubeCache *kube.KubeCache, inMemoryCache memory.
 		},
 	}
 
-	return RunIngress()(opts)
+	return RunIngress(opts)
 }
 
-func RunIngress() func(opts Opts) error {
-	return func(opts Opts) error {
-		opts.WatchOpts = opts.WatchOpts.WithDefaults()
-		opts.WatchOpts.Ctx = contextutils.WithLogger(opts.WatchOpts.Ctx, "ingress")
+func RunIngress(opts Opts) error {
+	opts.WatchOpts = opts.WatchOpts.WithDefaults()
+	opts.WatchOpts.Ctx = contextutils.WithLogger(opts.WatchOpts.Ctx, "ingress")
 
-		cfg, err := kubeutils.GetConfig("", "")
-		if err != nil {
-			return errors.Wrapf(err, "getting kube config")
-		}
-		kube, err := kubernetes.NewForConfig(cfg)
-		if err != nil {
-			return errors.Wrapf(err, "getting kube client")
-		}
-
-		baseIngressClient := ingress.NewResourceClient(kube, &v1.Ingress{})
-		ingressClient := v1.NewIngressClientWithBase(baseIngressClient)
-
-		upstreamClient, err := gloov1.NewUpstreamClient(opts.Upstreams)
-		if err != nil {
-			return err
-		}
-		if err := upstreamClient.Register(); err != nil {
-			return err
-		}
-
-		secretClient, err := gloov1.NewSecretClient(opts.Secrets)
-		if err != nil {
-			return err
-		}
-
-		proxyClient, err := gloov1.NewProxyClient(opts.Proxies)
-		if err != nil {
-			return err
-		}
-		if err := proxyClient.Register(); err != nil {
-			return err
-		}
-
-		rpt := reporter.NewReporter("ingress", ingressClient.BaseClient())
-		writeErrs := make(chan error)
-
-		translatorEmitter := v1.NewTranslatorEmitter(secretClient, upstreamClient, ingressClient)
-		translatorSync := translator.NewSyncer(opts.WriteNamespace, proxyClient, ingressClient, rpt, writeErrs)
-		translatorEventLoop := v1.NewTranslatorEventLoop(translatorEmitter, translatorSync)
-		translatorEventLoopErrs, err := translatorEventLoop.Run(opts.WatchNamespaces, opts.WatchOpts)
-		if err != nil {
-			return err
-		}
-		go errutils.AggregateErrs(opts.WatchOpts.Ctx, writeErrs, translatorEventLoopErrs, "translator_event_loop")
-
-		baseKubeServiceClient := service.NewResourceClient(kube, &v1.KubeService{})
-		kubeServiceClient := v1.NewKubeServiceClientWithBase(baseKubeServiceClient)
-		// note (ilackarms): we must set the selector correctly here or the status syncer will not work
-		// the selector should return exactly 1 service which is our <install-namespace>.ingress-proxy service
-		// TODO (ilackarms): make the service labels configurable
-		kubeServiceClient = service.NewClientWithSelector(kubeServiceClient, map[string]string{
-			"gloo": "ingress-proxy",
-		})
-		statusEmitter := v1.NewStatusEmitter(kubeServiceClient, ingressClient)
-		statusSync := status.NewSyncer(ingressClient)
-		statusEventLoop := v1.NewStatusEventLoop(statusEmitter, statusSync)
-		statusEventLoopErrs, err := statusEventLoop.Run(opts.WatchNamespaces, opts.WatchOpts)
-		if err != nil {
-			return err
-		}
-		go errutils.AggregateErrs(opts.WatchOpts.Ctx, writeErrs, statusEventLoopErrs, "status_event_loop")
-
-		logger := contextutils.LoggerFrom(opts.WatchOpts.Ctx)
-
-		go func() {
-			for {
-				select {
-				case err := <-writeErrs:
-					logger.Errorf("error: %v", err)
-				case <-opts.WatchOpts.Ctx.Done():
-					close(writeErrs)
-					return
-				}
-			}
-		}()
-		return nil
+	cfg, err := kubeutils.GetConfig("", "")
+	if err != nil {
+		return errors.Wrapf(err, "getting kube config")
 	}
+	kube, err := kubernetes.NewForConfig(cfg)
+	if err != nil {
+		return errors.Wrapf(err, "getting kube client")
+	}
+
+	baseIngressClient := ingress.NewResourceClient(kube, &v1.Ingress{})
+	ingressClient := v1.NewIngressClientWithBase(baseIngressClient)
+
+	upstreamClient, err := gloov1.NewUpstreamClient(opts.Upstreams)
+	if err != nil {
+		return err
+	}
+	if err := upstreamClient.Register(); err != nil {
+		return err
+	}
+
+	secretClient, err := gloov1.NewSecretClient(opts.Secrets)
+	if err != nil {
+		return err
+	}
+
+	proxyClient, err := gloov1.NewProxyClient(opts.Proxies)
+	if err != nil {
+		return err
+	}
+	if err := proxyClient.Register(); err != nil {
+		return err
+	}
+
+	rpt := reporter.NewReporter("ingress", ingressClient.BaseClient())
+	writeErrs := make(chan error)
+
+	translatorEmitter := v1.NewTranslatorEmitter(secretClient, upstreamClient, ingressClient)
+	translatorSync := translator.NewSyncer(opts.WriteNamespace, proxyClient, ingressClient, rpt, writeErrs)
+	translatorEventLoop := v1.NewTranslatorEventLoop(translatorEmitter, translatorSync)
+	translatorEventLoopErrs, err := translatorEventLoop.Run(opts.WatchNamespaces, opts.WatchOpts)
+	if err != nil {
+		return err
+	}
+	go errutils.AggregateErrs(opts.WatchOpts.Ctx, writeErrs, translatorEventLoopErrs, "translator_event_loop")
+
+	baseKubeServiceClient := service.NewResourceClient(kube, &v1.KubeService{})
+	kubeServiceClient := v1.NewKubeServiceClientWithBase(baseKubeServiceClient)
+	// note (ilackarms): we must set the selector correctly here or the status syncer will not work
+	// the selector should return exactly 1 service which is our <install-namespace>.ingress-proxy service
+	// TODO (ilackarms): make the service labels configurable
+	kubeServiceClient = service.NewClientWithSelector(kubeServiceClient, map[string]string{
+		"gloo": "ingress-proxy",
+	})
+	statusEmitter := v1.NewStatusEmitter(kubeServiceClient, ingressClient)
+	statusSync := status.NewSyncer(ingressClient)
+	statusEventLoop := v1.NewStatusEventLoop(statusEmitter, statusSync)
+	statusEventLoopErrs, err := statusEventLoop.Run(opts.WatchNamespaces, opts.WatchOpts)
+	if err != nil {
+		return err
+	}
+	go errutils.AggregateErrs(opts.WatchOpts.Ctx, writeErrs, statusEventLoopErrs, "status_event_loop")
+
+	logger := contextutils.LoggerFrom(opts.WatchOpts.Ctx)
+
+	go func() {
+		for {
+			select {
+			case err := <-writeErrs:
+				logger.Errorf("error: %v", err)
+			case <-opts.WatchOpts.Ctx.Done():
+				close(writeErrs)
+				return
+			}
+		}
+	}()
+	return nil
 }

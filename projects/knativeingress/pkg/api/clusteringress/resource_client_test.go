@@ -2,7 +2,10 @@ package clusteringress_test
 
 import (
 	"os"
+	"time"
 
+	"github.com/knative/serving/pkg/apis/networking/v1alpha1"
+	knativeclientset "github.com/knative/serving/pkg/client/clientset/versioned"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	. "github.com/solo-io/gloo/projects/knativeingress/pkg/api/clusteringress"
@@ -12,10 +15,8 @@ import (
 	"github.com/solo-io/solo-kit/pkg/utils/log"
 	"github.com/solo-io/solo-kit/test/helpers"
 	"github.com/solo-io/solo-kit/test/setup"
-	"k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"k8s.io/client-go/rest"
 )
@@ -42,39 +43,51 @@ var _ = Describe("ResourceClient", func() {
 	})
 
 	It("can CRUD on v1beta1 ingresses", func() {
-		kube, err := kubernetes.NewForConfig(cfg)
+		knative, err := knativeclientset.NewForConfig(cfg)
 		Expect(err).NotTo(HaveOccurred())
-		baseClient := NewResourceClient(kube, &v1.Ingress{})
-		ingressClient := v1.NewIngressClientWithBase(baseClient)
+		baseClient := NewResourceClient(knative, &v1.ClusterIngress{})
+		ingressClient := v1.NewClusterIngressClientWithBase(baseClient)
 		Expect(err).NotTo(HaveOccurred())
-		kubeIngressClient := kube.ExtensionsV1beta1().Ingresses(namespace)
-		backend := &v1beta1.IngressBackend{
-			ServiceName: "foo",
-			ServicePort: intstr.IntOrString{
-				IntVal: 8080,
-			},
-		}
-		kubeIng, err := kubeIngressClient.Create(&v1beta1.Ingress{
+		kubeIngressClient := knative.NetworkingV1alpha1().ClusterIngresses()
+		kubeIng, err := kubeIngressClient.Create(&v1alpha1.ClusterIngress{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "rusty",
 				Namespace: namespace,
 			},
-			Spec: v1beta1.IngressSpec{
-				Backend: backend,
-				TLS: []v1beta1.IngressTLS{
+			Spec: v1alpha1.IngressSpec{
+				Rules: []v1alpha1.ClusterIngressRule{
 					{
-						Hosts:      []string{"some.host"},
-						SecretName: "doesntexistanyway",
-					},
-				},
-				Rules: []v1beta1.IngressRule{
-					{
-						Host: "some.host",
-						IngressRuleValue: v1beta1.IngressRuleValue{
-							HTTP: &v1beta1.HTTPIngressRuleValue{
-								Paths: []v1beta1.HTTPIngressPath{
-									{
-										Backend: *backend,
+						Hosts: []string{
+							"helloworld-go.default.example.com",
+							"helloworld-go.default.svc.cluster.local",
+							"helloworld-go.default.svc",
+							"helloworld-go.default",
+						},
+						HTTP: &v1alpha1.HTTPClusterIngressRuleValue{
+							Paths: []v1alpha1.HTTPClusterIngressPath{
+								{
+									AppendHeaders: map[string]string{
+										"knative-serving-namespace": "default",
+										"knative-serving-revision":  "helloworld-go-00001",
+									},
+									Retries: &v1alpha1.HTTPRetry{
+										Attempts: 3,
+										PerTryTimeout: &metav1.Duration{
+											Duration: time.Minute,
+										},
+									},
+									Splits: []v1alpha1.ClusterIngressBackendSplit{
+										{
+											Percent: 100,
+											ClusterIngressBackend: v1alpha1.ClusterIngressBackend{
+												ServiceName:      "activator-service",
+												ServiceNamespace: "knative-serving",
+												ServicePort:      intstr.IntOrString{IntVal: 80},
+											},
+										},
+									},
+									Timeout: &metav1.Duration{
+										Duration: time.Minute,
 									},
 								},
 							},

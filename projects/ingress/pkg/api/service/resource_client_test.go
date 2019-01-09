@@ -1,20 +1,19 @@
 package service_test
 
 import (
+	kubev1 "k8s.io/api/core/v1"
 	"os"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	. "github.com/solo-io/gloo/projects/ingress/pkg/api/ingress"
+	. "github.com/solo-io/gloo/projects/ingress/pkg/api/service"
 	"github.com/solo-io/gloo/projects/ingress/pkg/api/v1"
 	"github.com/solo-io/solo-kit/pkg/api/v1/clients"
 	"github.com/solo-io/solo-kit/pkg/utils/kubeutils"
 	"github.com/solo-io/solo-kit/pkg/utils/log"
 	"github.com/solo-io/solo-kit/test/helpers"
 	"github.com/solo-io/solo-kit/test/setup"
-	"k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"k8s.io/client-go/rest"
@@ -41,53 +40,34 @@ var _ = Describe("ResourceClient", func() {
 		setup.TeardownKube(namespace)
 	})
 
-	It("can CRUD on v1beta1 ingresses", func() {
+	It("can CRUD on v1 Services", func() {
 		kube, err := kubernetes.NewForConfig(cfg)
 		Expect(err).NotTo(HaveOccurred())
 		baseClient := NewResourceClient(kube, &v1.Ingress{})
-		ingressClient := v1.NewIngressClientWithBase(baseClient)
+		svcClient := v1.NewKubeServiceClientWithBase(baseClient)
 		Expect(err).NotTo(HaveOccurred())
-		kubeIngressClient := kube.ExtensionsV1beta1().Ingresses(namespace)
-		backend := &v1beta1.IngressBackend{
-			ServiceName: "foo",
-			ServicePort: intstr.IntOrString{
-				IntVal: 8080,
-			},
-		}
-		kubeIng, err := kubeIngressClient.Create(&v1beta1.Ingress{
+		kubeSvcClient := kube.CoreV1().Services(namespace)
+		kubeSvc, err := kubeSvcClient.Create(&kubev1.Service{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "rusty",
+				Name:      "hi",
 				Namespace: namespace,
 			},
-			Spec: v1beta1.IngressSpec{
-				Backend: backend,
-				TLS: []v1beta1.IngressTLS{
+			Spec: kubev1.ServiceSpec{
+				Ports: []kubev1.ServicePort{
 					{
-						Hosts:      []string{"some.host"},
-						SecretName: "doesntexistanyway",
+						Name:     "http",
+						Protocol: kubev1.ProtocolTCP,
+						Port:     1234,
 					},
 				},
-				Rules: []v1beta1.IngressRule{
-					{
-						Host: "some.host",
-						IngressRuleValue: v1beta1.IngressRuleValue{
-							HTTP: &v1beta1.HTTPIngressRuleValue{
-								Paths: []v1beta1.HTTPIngressPath{
-									{
-										Backend: *backend,
-									},
-								},
-							},
-						},
-					},
-				},
+				Selector: map[string]string{"hi": "bye"},
 			},
 		})
 		Expect(err).NotTo(HaveOccurred())
-		ingressResource, err := ingressClient.Read(kubeIng.Namespace, kubeIng.Name, clients.ReadOpts{})
+		ingressResource, err := svcClient.Read(kubeSvc.Namespace, kubeSvc.Name, clients.ReadOpts{})
 		Expect(err).NotTo(HaveOccurred())
 		convertedIng, err := ToKube(ingressResource)
 		Expect(err).NotTo(HaveOccurred())
-		Expect(convertedIng.Spec).To(Equal(kubeIng.Spec))
+		Expect(convertedIng.Spec).To(Equal(kubeSvc.Spec))
 	})
 })

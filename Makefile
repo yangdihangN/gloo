@@ -37,7 +37,7 @@ clean:
 #----------------------------------------------------------------------------------
 
 .PHONY: generated-code
-generated-code: $(OUTPUT_DIR)/.generated-code
+generated-code:  manifest $(OUTPUT_DIR)/.generated-code
 
 SUBDIRS:=projects
 $(OUTPUT_DIR)/.generated-code:
@@ -186,7 +186,7 @@ build: gloo glooctl gateway discovery envoyinit
 #----------------------------------------------------------------------------------
 
 .PHONY: manifest bump-helm-version
-manifest: install/kube.yaml bump-helm-version
+manifest: bump-helm-version install/kube.yaml
 
 bump-helm-version:
 	sed -i 's/version: .*/version: $(VERSION)/g' install/helm/gloo/Chart.yaml

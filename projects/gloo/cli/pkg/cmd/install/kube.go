@@ -58,12 +58,13 @@ func UpdateBytesWithVersion(kubeManifestBytes []byte, version string) []byte {
 		return kubeManifestBytes
 	}
 	manifest := string(kubeManifestBytes)
-	imageNameRegexString := "image: soloio/(\\S+):"
-	fullRegexString := imageNameRegexString+"(.+)$"
-	fullRegex := regexp.MustCompile(fullRegexString)
-	match := fullRegex.FindString(manifest)
-	imageNameRegex := regexp.MustCompile(imageNameRegexString)
-	oldVersion := imageNameRegex.ReplaceAllString(match, "")
+	regexString := `image: soloio/\S+:(.+)`
+	regex := regexp.MustCompile(regexString)
+	matches := regex.FindStringSubmatch(manifest)
+	if len(matches) < 2 {
+		return kubeManifestBytes
+	}
+	oldVersion := matches[1]
 	updatedManifest := strings.Replace(manifest, oldVersion, version, -1)
 	return []byte(updatedManifest)
 }

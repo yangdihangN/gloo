@@ -257,7 +257,6 @@ endif
 #---------
 
 .PHONY: docker docker-push
-<<<<<<< HEAD
 docker: discovery-docker gateway-docker gloo-docker gloo-envoy-wrapper-docker ingress-docker
 docker-push: docker
 ifeq ($(RELEASE),"true")

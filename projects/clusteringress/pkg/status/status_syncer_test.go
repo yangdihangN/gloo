@@ -13,6 +13,7 @@ import (
 	"github.com/solo-io/gloo/projects/ingress/pkg/status"
 	"github.com/solo-io/solo-kit/pkg/api/v1/clients"
 	"github.com/solo-io/solo-kit/pkg/utils/kubeutils"
+	"github.com/solo-io/solo-kit/pkg/utils/log"
 	"github.com/solo-io/solo-kit/test/helpers"
 	"github.com/solo-io/solo-kit/test/setup"
 	kubev1 "k8s.io/api/core/v1"
@@ -25,15 +26,16 @@ import (
 )
 
 var _ = Describe("StatusSyncer", func() {
+	if os.Getenv("RUN_KUBE_TESTS") != "1" {
+		log.Printf("This test creates kubernetes resources and is disabled by default. To enable, set RUN_KUBE_TESTS=1 in your env.")
+		return
+	}
 	var (
 		namespace string
 		cfg       *rest.Config
 	)
 
 	BeforeEach(func() {
-		if os.Getenv("RUN_KUBE_TESTS") != "1" {
-			Skip("This test creates kubernetes resources and is disabled by default. To enable, set RUN_KUBE_TESTS=1 in your env.")
-		}
 		namespace = helpers.RandString(8)
 		err := setup.SetupKubeForTest(namespace)
 		Expect(err).NotTo(HaveOccurred())
@@ -160,6 +162,6 @@ var _ = Describe("StatusSyncer", func() {
 				return nil, err
 			}
 			return ing.Status.LoadBalancer.Ingress, nil
-		}, time.Second*10).Should(Equal(svc.Status.LoadBalancer.Ingress))
+		}, time.Second*50).Should(Equal(svc.Status.LoadBalancer.Ingress))
 	})
 })

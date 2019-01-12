@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/solo-io/gloo/test/helpers"
+	"github.com/solo-io/solo-kit/pkg/utils/log"
 	stringutils "github.com/solo-io/solo-kit/test/helpers"
 	"github.com/solo-io/solo-kit/test/setup"
 
@@ -19,6 +20,11 @@ const (
 )
 
 func TestKube2e(t *testing.T) {
+	if os.Getenv("RUN_KUBE2E_TESTS") != "1" {
+		log.Warnf("This test builds and deploys images to dockerhub and kubernetes, " +
+			"and is disabled by default. To enable, set RUN_KUBE2E_TESTS=1 in your env.")
+		return
+	}
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Kube2e Suite")
 }
@@ -26,10 +32,6 @@ func TestKube2e(t *testing.T) {
 var namespace string
 var testRunnerPort int32
 var _ = BeforeSuite(func() {
-	if os.Getenv("RUN_KUBE2E_TESTS") != "1" {
-		Skip("This test builds and deploys images to dockerhub and kubernetes, " +
-			"and is disabled by default. To enable, set RUN_KUBE2E_TESTS=1 in your env.")
-	}
 	// todo (ilackarms): move randstring to stringutils package
 	namespace = "a" + stringutils.RandString(8)
 	testRunnerPort = 1234

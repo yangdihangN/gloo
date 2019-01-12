@@ -26,7 +26,6 @@ const _ = proto.GoGoProtoPackageIsVersion2 // please upgrade the proto package
 //
 // @solo-kit:resource.short_name=ig
 // @solo-kit:resource.plural_name=ingresses
-// @solo-kit:resource.resource_groups=api.ingress.solo.io,status.ingress.solo.io
 //
 // A simple wrapper for a Kubernetes Ingress Object.
 type Ingress struct {
@@ -45,7 +44,7 @@ func (m *Ingress) Reset()         { *m = Ingress{} }
 func (m *Ingress) String() string { return proto.CompactTextString(m) }
 func (*Ingress) ProtoMessage()    {}
 func (*Ingress) Descriptor() ([]byte, []int) {
-	return fileDescriptor_ingress_ddf72e3f2de97c36, []int{0}
+	return fileDescriptor_ingress_5cd7fa485e370202, []int{0}
 }
 func (m *Ingress) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Ingress.Unmarshal(m, b)
@@ -124,10 +123,10 @@ func (this *Ingress) Equal(that interface{}) bool {
 }
 
 func init() {
-	proto.RegisterFile("github.com/solo-io/gloo/projects/ingress/api/v1/ingress.proto", fileDescriptor_ingress_ddf72e3f2de97c36)
+	proto.RegisterFile("github.com/solo-io/gloo/projects/ingress/api/v1/ingress.proto", fileDescriptor_ingress_5cd7fa485e370202)
 }
 
-var fileDescriptor_ingress_ddf72e3f2de97c36 = []byte{
+var fileDescriptor_ingress_5cd7fa485e370202 = []byte{
 	// 290 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xb2, 0x4d, 0xcf, 0x2c, 0xc9,
 	0x28, 0x4d, 0xd2, 0x4b, 0xce, 0xcf, 0xd5, 0x2f, 0xce, 0xcf, 0xc9, 0xd7, 0xcd, 0xcc, 0xd7, 0x4f,

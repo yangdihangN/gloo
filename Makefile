@@ -12,7 +12,7 @@ ifeq ($(TAGGED_VERSION),)
 	TAGGED_VERSION := vdev	
 	RELEASE := "false"
 endif
-VERSION := $(shell echo $(TAGGED_VERSION) | cut -c 2-)
+VERSION ?= $(shell echo $(TAGGED_VERSION) | cut -c 2-)
 
 LDFLAGS := "-X github.com/solo-io/gloo/pkg/version.Version=$(VERSION)"
 

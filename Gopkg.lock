@@ -1240,11 +1240,12 @@
   version = "0.0.4"
 
 [[projects]]
-  digest = "1:1fbae7b7218b4d4e8d417c12e0fa88936cca20a9f77a09b97ca6ecf14a5840b5"
+  digest = "1:b22d9a945287e14816151820b367e71d10020af8e1234267429c3ff04a703354"
   name = "github.com/solo-io/go-utils"
   packages = [
     "cliutils",
     "errors",
+    "kubeinstallutils",
     "kubeutils",
     "protoutils",
   ]
@@ -1260,7 +1261,7 @@
   revision = "241bc627d5400a0794853220df4fdefeeb2af0e0"
 
 [[projects]]
-  digest = "1:328d571dda4453896fc6a23517d53715a9b4d6280917fee8ffef1f5e4705d9fc"
+  digest = "1:1cac924dd0fe84da82093f1f435022d09df423f77d6a36bf45dd1aea1021783b"
   name = "github.com/solo-io/solo-kit"
   packages = [
     "pkg/api/v1/clients",
@@ -1303,6 +1304,7 @@
     "pkg/utils/errutils",
     "pkg/utils/fileutils",
     "pkg/utils/hashutils",
+    "pkg/utils/kubeinstallutils",
     "pkg/utils/kubeutils",
     "pkg/utils/log",
     "pkg/utils/protoutils",
@@ -1311,6 +1313,7 @@
     "test/helpers",
     "test/setup",
     "test/tests/typed",
+    "test/testutils",
   ]
   pruneopts = "UT"
   revision = "d6e3c25a4768bd9c496c8173cd83ce75b3c9cc82"
@@ -2042,6 +2045,7 @@
     "github.com/solo-io/go-checkpoint",
     "github.com/solo-io/go-utils/cliutils",
     "github.com/solo-io/go-utils/errors",
+    "github.com/solo-io/go-utils/kubeinstallutils",
     "github.com/solo-io/go-utils/kubeutils",
     "github.com/solo-io/kubecontroller",
     "github.com/solo-io/solo-kit/pkg/api/v1/clients",
@@ -2070,6 +2074,7 @@
     "github.com/solo-io/solo-kit/test/helpers",
     "github.com/solo-io/solo-kit/test/setup",
     "github.com/solo-io/solo-kit/test/tests/typed",
+    "github.com/solo-io/solo-kit/test/testutils",
     "github.com/spf13/cobra",
     "github.com/spf13/pflag",
     "go.opencensus.io/stats",

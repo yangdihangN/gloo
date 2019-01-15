@@ -1261,7 +1261,7 @@
   revision = "241bc627d5400a0794853220df4fdefeeb2af0e0"
 
 [[projects]]
-  digest = "1:1cac924dd0fe84da82093f1f435022d09df423f77d6a36bf45dd1aea1021783b"
+  digest = "1:1efc939e2d8e02f437802248a79cd753e1b50fbafd70927e3920568c07b390bf"
   name = "github.com/solo-io/solo-kit"
   packages = [
     "pkg/api/v1/clients",
@@ -1316,8 +1316,8 @@
     "test/testutils",
   ]
   pruneopts = "UT"
-  revision = "d6e3c25a4768bd9c496c8173cd83ce75b3c9cc82"
-  version = "v0.2.14"
+  revision = "b7c7c3251a51a872defdfd6f7846c368bd5e7153"
+  version = "v0.2.15"
 
 [[projects]]
   digest = "1:645cabccbb4fa8aab25a956cbcbdf6a6845ca736b2c64e197ca7cbb9d210b939"
@@ -2105,7 +2105,6 @@
     "k8s.io/client-go/plugin/pkg/client/auth/gcp",
     "k8s.io/client-go/rest",
     "k8s.io/client-go/tools/cache",
-    "k8s.io/client-go/tools/clientcmd",
     "k8s.io/kubernetes/pkg/apis/core",
     "k8s.io/kubernetes/pkg/apis/core/validation",
   ]

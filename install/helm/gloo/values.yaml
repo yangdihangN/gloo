@@ -5,9 +5,7 @@ rbac:
 
 settings:
   # namespaces that Gloo should watch. this includes watches set for pods, services, as well as CRD configuration objects
-  watchNamespaces:
-    - "gloo-system"
-    - "default"
+  watchNamespaces: []
   # the namespace that Gloo should write discovery data (Upstreams)
   writeNamespace: "gloo-system"
 

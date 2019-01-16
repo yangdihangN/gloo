@@ -14,7 +14,7 @@ spec:
     name: http
   - port: {{ .Values.settings.integrations.knative.proxy.httpsPort }}
     protocol: TCP
-    name: http
+    name: https
   selector:
     gloo: clusteringress-proxy
   type: LoadBalancer

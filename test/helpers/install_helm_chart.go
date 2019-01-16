@@ -22,7 +22,7 @@ func DeployGlooWithHelm(namespace, imageVersion string, verbose bool) error {
 		return err
 	}
 	defer os.Remove(values.Name())
-	if _, err := io.Copy(values, GlooHelmValues(imageVersion)); err != nil {
+	if _, err := io.Copy(values, GlooHelmValues(namespace, imageVersion)); err != nil {
 		return err
 	}
 	err = values.Close()
@@ -47,7 +47,7 @@ func DeployGlooWithHelm(namespace, imageVersion string, verbose bool) error {
 	return nil
 }
 
-func GlooHelmValues(version string) io.Reader {
+func GlooHelmValues(namespace, version string) io.Reader {
 	b := &bytes.Buffer{}
 
 	err := template.Must(template.New("gloo-helm-values").Parse(`
@@ -58,8 +58,23 @@ namespace:
 rbac:
   create: true
 
+settings:
+  integrations:
+    knative:
+      enabled: true
+      proxy:
+        image: soloio/gloo-envoy-wrapper:{{ .Version }}
+        httpPort: 80
+        httpsPort: 443
+        replicas: 1
+
+  # namespaces that Gloo should watch. this includes watches set for pods, services, as well as CRD configuration objects
+  watchNamespaces: []
+  # the namespace that Gloo should write discovery data (Upstreams)
+  writeNamespace: {{ .Namespace }}
+
 deployment:
-  imagePullPolicy: Always
+  imagePullPolicy: Never
   gloo:
     xdsPort: 9977
     image: soloio/gloo:{{ .Version }}
@@ -80,11 +95,14 @@ deployment:
   ingressProxy:
     image: soloio/gloo-envoy-wrapper:{{ .Version }}
     httpPort: 80
+    httpsPort: 443
     replicas: 1
 `)).Execute(b, struct {
-		Version string
+		Version   string
+		Namespace string
 	}{
-		Version: version,
+		Version:   version,
+		Namespace: namespace,
 	})
 	if err != nil {
 		panic(err)

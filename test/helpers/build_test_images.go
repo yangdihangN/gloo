@@ -9,12 +9,6 @@ import (
 	"github.com/solo-io/solo-kit/test/helpers"
 )
 
-var glooComponents = []string{
-	"gloo",
-	"discovery",
-	"gateway",
-	"ingress",
-}
 var versionTag = ""
 
 func TestVersion() string {
@@ -46,9 +40,7 @@ func BuildPushContainers(version string, push, verbose bool) error {
 		return nil
 	}
 	os.Setenv("VERSION", version)
-
-	// make the gloo containers
-	if err := RunCommand(verbose, "make", "docker", "VERSION="+version); err != nil {
+	if err := RunCommand(verbose, "make", "clean"); err != nil {
 		return err
 	}
 
@@ -61,9 +53,12 @@ func BuildPushContainers(version string, push, verbose bool) error {
 			}
 			kindContainer = containerId
 		}
-		if err := RunCommand(verbose, "make", "docker-kind", "KIND_CONTAINER_ID="+kindContainer, "VERSION="+version); err != nil {
-			return err
-		}
+		return RunCommand(verbose, "make", "docker-kind", "KIND_CONTAINER_ID="+kindContainer, "VERSION="+version)
+	}
+
+	// make the gloo containers
+	if err := RunCommand(verbose, "make", "docker", "VERSION="+version); err != nil {
+		return err
 	}
 
 	return nil

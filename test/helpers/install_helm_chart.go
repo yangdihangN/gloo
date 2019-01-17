@@ -111,65 +111,72 @@ deployment:
 	return b
 }
 
+var glooPodLabels = []string{
+	"gloo=gloo",
+	"gloo=discovery",
+	"gloo=gateway",
+	"gloo=ingress",
+}
+
 func WaitGlooPods(timeout, interval time.Duration) error {
-	if err := WaitPodsRunning(timeout, interval, glooComponents...); err != nil {
+	if err := WaitPodsRunning(timeout, interval, glooPodLabels...); err != nil {
 		return err
 	}
 	return nil
 }
 
-func WaitPodsRunning(timeout, interval time.Duration, podNames ...string) error {
+func WaitPodsRunning(timeout, interval time.Duration, labels ...string) error {
 	finished := func(output string) bool {
 		return strings.Contains(output, "Running") || strings.Contains(output, "ContainerCreating")
 	}
-	for _, pod := range podNames {
-		if err := WaitPodStatus(timeout, interval, pod, "Running", finished); err != nil {
+	for _, label := range labels {
+		if err := WaitPodStatus(timeout, interval, label, "Running", finished); err != nil {
 			return err
 		}
 	}
 	finished = func(output string) bool {
 		return strings.Contains(output, "Running")
 	}
-	for _, pod := range podNames {
-		if err := WaitPodStatus(timeout, interval, pod, "Running", finished); err != nil {
+	for _, label := range labels {
+		if err := WaitPodStatus(timeout, interval, label, "Running", finished); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func WaitPodsTerminated(timeout, interval time.Duration, podNames ...string) error {
-	for _, pod := range podNames {
+func WaitPodsTerminated(timeout, interval time.Duration, labels ...string) error {
+	for _, label := range labels {
 		finished := func(output string) bool {
-			return !strings.Contains(output, pod)
+			return !strings.Contains(output, label)
 		}
-		if err := WaitPodStatus(timeout, interval, pod, "terminated", finished); err != nil {
+		if err := WaitPodStatus(timeout, interval, label, "terminated", finished); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func WaitPodStatus(timeout, interval time.Duration, pod, status string, finished func(output string) bool) error {
+func WaitPodStatus(timeout, interval time.Duration, label, status string, finished func(output string) bool) error {
 	tick := time.Tick(interval)
 
-	log.Debugf("waiting %v for pod %v to be %v...", timeout, pod, status)
+	log.Debugf("waiting %v for pod %v to be %v...", timeout, label, status)
 	for {
 		select {
 		case <-time.After(timeout):
-			return fmt.Errorf("timed out waiting for %v to be %v", pod, status)
+			return fmt.Errorf("timed out waiting for %v to be %v", label, status)
 		case <-tick:
-			out, err := setup.KubectlOut("get", "pod", "-l", "gloo="+pod)
+			out, err := setup.KubectlOut("get", "pod", "-l", label)
 			if err != nil {
 				return fmt.Errorf("failed getting pod: %v", err)
 			}
 			if strings.Contains(out, "CrashLoopBackOff") {
-				out = KubeLogs(pod)
-				return errors.Errorf("%v in crash loop with logs %v", pod, out)
+				out = KubeLogs(label)
+				return errors.Errorf("%v in crash loop with logs %v", label, out)
 			}
 			if strings.Contains(out, "ErrImagePull") || strings.Contains(out, "ImagePullBackOff") {
-				out, _ = setup.KubectlOut("describe", "pod", "-l", "gloo="+pod)
-				return errors.Errorf("%v in ErrImagePull with description %v", pod, out)
+				out, _ = setup.KubectlOut("describe", "pod", "-l", "gloo="+label)
+				return errors.Errorf("%v in ErrImagePull with description %v", label, out)
 			}
 			if finished(out) {
 				return nil

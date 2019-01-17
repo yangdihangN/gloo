@@ -17,11 +17,20 @@ import (
 var _ = Describe("Kube2e: Knative-Ingress", func() {
 	BeforeEach(func() {
 		deployKnative()
+
+		// enable knative once crd has been applied
+		err := helpers.DeployGlooWithHelm(namespace, version, true, true)
+		Expect(err).NotTo(HaveOccurred())
+		err = helpers.WaitGlooPods(time.Minute, time.Second)
+		Expect(err).NotTo(HaveOccurred())
 	})
 	AfterEach(func() {
 		if err := deleteKnative(); err != nil {
 			log.Warnf("teardown failed %v", err)
 		}
+		// disable knative once crd has been removed
+		err := helpers.DeployGlooWithHelm(namespace, version, false, true)
+		Expect(err).NotTo(HaveOccurred())
 	})
 	It("works", func() {
 		clusterIngressProxy := "clusteringress-proxy"

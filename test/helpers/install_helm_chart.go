@@ -15,14 +15,14 @@ import (
 	"github.com/solo-io/solo-kit/test/setup"
 )
 
-func DeployGlooWithHelm(namespace, imageVersion string, verbose bool) error {
+func DeployGlooWithHelm(namespace, imageVersion string, enableKnative, verbose bool) error {
 	log.Printf("deploying gloo with version %v", imageVersion)
 	values, err := ioutil.TempFile("", "gloo-test-")
 	if err != nil {
 		return err
 	}
 	defer os.Remove(values.Name())
-	if _, err := io.Copy(values, GlooHelmValues(namespace, imageVersion)); err != nil {
+	if _, err := io.Copy(values, GlooHelmValues(namespace, imageVersion, enableKnative)); err != nil {
 		return err
 	}
 	err = values.Close()
@@ -47,7 +47,7 @@ func DeployGlooWithHelm(namespace, imageVersion string, verbose bool) error {
 	return nil
 }
 
-func GlooHelmValues(namespace, version string) io.Reader {
+func GlooHelmValues(namespace, version string, enableKnative bool) io.Reader {
 	b := &bytes.Buffer{}
 
 	err := template.Must(template.New("gloo-helm-values").Parse(`
@@ -61,7 +61,7 @@ rbac:
 settings:
   integrations:
     knative:
-      enabled: true
+      enabled: {{ .EnableKnative }}
       proxy:
         image: soloio/gloo-envoy-wrapper:{{ .Version }}
         httpPort: 80
@@ -74,7 +74,7 @@ settings:
   writeNamespace: {{ .Namespace }}
 
 deployment:
-  imagePullPolicy: Never
+  imagePullPolicy: IfNotPresent
   gloo:
     xdsPort: 9977
     image: soloio/gloo:{{ .Version }}
@@ -98,11 +98,13 @@ deployment:
     httpsPort: 443
     replicas: 1
 `)).Execute(b, struct {
-		Version   string
-		Namespace string
+		Version       string
+		Namespace     string
+		EnableKnative bool
 	}{
-		Version:   version,
-		Namespace: namespace,
+		Version:       version,
+		Namespace:     namespace,
+		EnableKnative: enableKnative,
 	})
 	if err != nil {
 		panic(err)

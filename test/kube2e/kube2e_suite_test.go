@@ -29,11 +29,11 @@ func TestKube2e(t *testing.T) {
 	RunSpecs(t, "Kube2e Suite")
 }
 
-var namespace string
+var namespace, version string
 var testRunnerPort int32
 var _ = BeforeSuite(func() {
 	// build and push images for test
-	version := helpers.TestVersion()
+	version = helpers.TestVersion()
 	err := helpers.BuildPushContainers(version, true, true)
 	Expect(err).NotTo(HaveOccurred())
 
@@ -45,7 +45,7 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 	err = helpers.DeployTestRunner(namespace, defaultTestRunnerImage, testRunnerPort)
 	Expect(err).NotTo(HaveOccurred())
-	err = helpers.DeployGlooWithHelm(namespace, version, true)
+	err = helpers.DeployGlooWithHelm(namespace, version, false, true)
 	Expect(err).NotTo(HaveOccurred())
 	err = helpers.WaitGlooPods(time.Minute, time.Second)
 	Expect(err).NotTo(HaveOccurred())

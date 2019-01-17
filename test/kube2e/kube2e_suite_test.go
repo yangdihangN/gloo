@@ -32,17 +32,18 @@ func TestKube2e(t *testing.T) {
 var namespace string
 var testRunnerPort int32
 var _ = BeforeSuite(func() {
+	// build and push images for test
+	version := helpers.TestVersion()
+	err := helpers.BuildPushContainers(version, true, true)
+	Expect(err).NotTo(HaveOccurred())
+
 	// todo (ilackarms): move randstring to stringutils package
 	namespace = "a" + stringutils.RandString(8)
 	testRunnerPort = 1234
 
-	err := setup.SetupKubeForTest(namespace)
+	err = setup.SetupKubeForTest(namespace)
 	Expect(err).NotTo(HaveOccurred())
 	err = helpers.DeployTestRunner(namespace, defaultTestRunnerImage, testRunnerPort)
-	Expect(err).NotTo(HaveOccurred())
-	// build and push images for test
-	version := helpers.TestVersion()
-	err = helpers.BuildPushContainers(version, true, true)
 	Expect(err).NotTo(HaveOccurred())
 	err = helpers.DeployGlooWithHelm(namespace, version, true)
 	Expect(err).NotTo(HaveOccurred())

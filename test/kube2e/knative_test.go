@@ -1,14 +1,17 @@
 package kube2e_test
 
 import (
+	"io/ioutil"
+	"path/filepath"
+	"time"
+
+	"github.com/solo-io/solo-kit/pkg/utils/log"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/solo-io/gloo/test/helpers"
 	"github.com/solo-io/go-utils/testutils"
-	"io/ioutil"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
-	"path/filepath"
-	"time"
 )
 
 var _ = Describe("Kube2e: Knative-Ingress", func() {
@@ -16,7 +19,9 @@ var _ = Describe("Kube2e: Knative-Ingress", func() {
 		deployKnative()
 	})
 	AfterEach(func() {
-		deleteKnative()
+		if err := deleteKnative(); err != nil {
+			log.Warnf("teardown failed %v", err)
+		}
 	})
 	It("works", func() {
 		clusterIngressProxy := "clusteringress-proxy"

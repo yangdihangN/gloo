@@ -201,6 +201,9 @@ rules:
 - apiGroups: ["extensions", ""]
   resources: ["ingresses"]
   verbs: ["*"]
+- apiGroups: ["networking.internal.knative.dev"]
+  resources: ["clusteringresses"]
+  verbs: ["get", "list", "watch"]
 ---
 # Source: gloo/templates/2-namespace-clusterrolebinding.yaml
 
@@ -234,7 +237,7 @@ spec:
     name: http
   - port: 443
     protocol: TCP
-    name: http
+    name: https
   selector:
     gloo: ingress-proxy
   type: LoadBalancer
@@ -257,7 +260,7 @@ spec:
     name: http
   - port: 443
     protocol: TCP
-    name: http
+    name: https
   selector:
     gloo: clusteringress-proxy
   type: LoadBalancer
@@ -323,6 +326,9 @@ spec:
         imagePullPolicy: Always
         name: ingress
         args: ["--namespace", "gloo-system" ]
+        env:
+        - name: "ENABLE_KNATIVE_INGRESS"
+          value: "true"
 
 ---
 # Source: gloo/templates/11-ingress-proxy-deployment.yaml
@@ -363,7 +369,7 @@ spec:
           name: http
           protocol: TCP
         - containerPort: 443
-          name: http
+          name: https
           protocol: TCP
         volumeMounts:
         - mountPath: /etc/envoy
@@ -413,7 +419,7 @@ spec:
           name: http
           protocol: TCP
         - containerPort: 443
-          name: http
+          name: https
           protocol: TCP
         volumeMounts:
         - mountPath: /etc/envoy
@@ -477,7 +483,7 @@ spec:
       - image: soloio/discovery:0.5.0
         imagePullPolicy: Always
         name: discovery
-        args: ["--namespace", "gloo-system" ]
+        args: ["--namespace=gloo-system" ]
 
 
 ---

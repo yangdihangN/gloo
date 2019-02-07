@@ -40,7 +40,7 @@ func Translate(ctx context.Context, namespace string, snap *v1.ApiSnapshot) ([]P
 		proxyResourceErrs := make(reporter.ResourceErrors)
 		proxyResourceErrs.Accept(gateways.AsInputResources()...)
 
-		validateGateways(snap.Gateways.List(), proxyResourceErrs)
+		validateGateways(gateways, proxyResourceErrs)
 		var listeners []*gloov1.Listener
 		for _, gateway := range gateways {
 			virtualServices := getVirtualServiceForGateway(gateway, snap.VirtualServices.List(), proxyResourceErrs)

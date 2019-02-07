@@ -81,6 +81,8 @@ func (s *translatorSyncer) Sync(ctx context.Context, snap *v1.ApiSnapshot) error
 		desiredResources = append(desiredResources, proxy)
 	}
 
+	// TODO(yuval-k): some of the proxies have errors from invalid gateways. can we not reconciler their new
+	// version, and keep the old version until the gateways \ vhosts are error free?
 	if err := s.proxyReconciler.Reconcile(s.writeNamespace, desiredResources, utils.TransitionFunction, clients.ListOpts{
 		Ctx:      ctx,
 		Selector: labels,

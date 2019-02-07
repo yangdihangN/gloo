@@ -76,6 +76,7 @@ func GatewayClientTest(namespace string, client GatewayClient, name1, name2, nam
 	Expect(r1.BindAddress).To(Equal(input.BindAddress))
 	Expect(r1.BindPort).To(Equal(input.BindPort))
 	Expect(r1.Plugins).To(Equal(input.Plugins))
+	Expect(r1.ProxyName).To(Equal(input.ProxyName))
 	Expect(r1.Status).To(Equal(input.Status))
 
 	_, err = client.Write(input, clients.WriteOpts{

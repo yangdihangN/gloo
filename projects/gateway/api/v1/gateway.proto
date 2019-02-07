@@ -33,6 +33,11 @@ message Gateway {
     // top level plugin configuration for all routes on the gateway
     gloo.solo.io.ListenerPlugins plugins = 5;
 
+    // Which proxy object should be create for this gateway. defaults to "gateway-proxy".
+    // Multiple gateways with the same proxy name, will be aggregated into the same proxy object
+    // and should have a different bind address and\or bind port.
+    string proxy_name = 8;
+
     // Status indicates the validation status of this resource.
     // Status is read-only by clients, and set by gloo during validation
     core.solo.io.Status status = 6 [(gogoproto.nullable) = false, (gogoproto.moretags) = "testdiff:\"ignore\""];

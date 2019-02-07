@@ -3,6 +3,7 @@ package translator
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/solo-io/solo-kit/pkg/utils/contextutils"
 
@@ -68,13 +69,47 @@ func Translate(ctx context.Context, namespace string, snap *v1.ApiSnapshot) ([]P
 	return proxiesAndErrors, resourceErrs
 }
 
-// TODO(ilackarms): implement validation func
 func validateGateways(gateways v1.GatewayList, resourceErrs reporter.ResourceErrors) {
+	bindAddresses := map[string]v1.GatewayList{}
+	// if any of the vhosts in the gateway (=listener) share a domain, the gateway is invalid
+	for _, gw := range gateways {
+		bindAddress := fmt.Sprintf("%s:%d", gw.BindAddress, gw.BindPort)
+		bindAddresses[bindAddress] = append(bindAddresses[bindAddress], gw)
+	}
 
+	for addr, gateways := range bindAddresses {
+		if len(gateways) > 1 {
+			for _, gw := range gateways {
+				resourceErrs.AddError(gw, fmt.Errorf("bind-addres %s is not unique in a proxy. gateways: %s", addr, strings.Join(gatewaysRefsToString(gateways), ",")))
+			}
+		}
+	}
 }
 
-func validateVirtualServices(gateways *v1.Gateway, virtualServices v1.VirtualServiceList, resourceErrs reporter.ResourceErrors) {
+func gatewaysRefsToString(gateways v1.GatewayList) []string {
+	var ret []string
+	for _, gw := range gateways {
+		ret = append(ret, gw.Metadata.Ref().Key())
+	}
+	return ret
+}
 
+func 
+
+func validateVirtualServices(gateway *v1.Gateway, virtualServices v1.VirtualServiceList, resourceErrs reporter.ResourceErrors) {
+	domainSet := map[string]bool{}
+	// if any of the vhosts in the gateway (=listener) share a domain, the gateway is invalid
+	for _, vs := range virtualServices {
+		if vs.VirtualHost == nil {
+			continue
+		}
+		for _, d := range vs.VirtualHost.Domains {
+			if domainSet[d] == true {
+				resourceErrs.AddError(gateway, fmt.Errorf("domain %s is present in more than one vhost in this gateway", d))
+			}
+			domainSet[d] = true
+		}
+	}
 }
 
 func groupGatwaysPerProxy(gatewayList v1.GatewayList) map[string]v1.GatewayList {

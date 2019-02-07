@@ -3,6 +3,7 @@ package translator
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/solo-io/solo-kit/pkg/utils/contextutils"
@@ -11,6 +12,8 @@ import (
 	gloov1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
 	"github.com/solo-io/solo-kit/pkg/api/v1/reporter"
 	"github.com/solo-io/solo-kit/pkg/api/v1/resources/core"
+
+	glooutils "github.com/solo-io/gloo/projects/gloo/pkg/utils"
 )
 
 const DefaultProxyName = "gateway-proxy"
@@ -47,8 +50,9 @@ func Translate(ctx context.Context, namespace string, snap *v1.ApiSnapshot) ([]P
 			virtualServices := getVirtualServiceForGateway(gateway, snap.VirtualServices.List(), proxyResourceErrs)
 			proxyResourceErrs.Accept(virtualServices.AsInputResources()...)
 			validateVirtualServices(gateway, virtualServices, proxyResourceErrs)
+			mergedVirtualServices := merge(gateway, virtualServices, proxyResourceErrs)
 
-			listener := desiredListener(gateway, virtualServices)
+			listener := desiredListener(gateway, mergedVirtualServices)
 			listeners = append(listeners, listener)
 		}
 		proxy := &gloov1.Proxy{
@@ -71,7 +75,8 @@ func Translate(ctx context.Context, namespace string, snap *v1.ApiSnapshot) ([]P
 
 func validateGateways(gateways v1.GatewayList, resourceErrs reporter.ResourceErrors) {
 	bindAddresses := map[string]v1.GatewayList{}
-	// if any of the vhosts in the gateway (=listener) share a domain, the gateway is invalid
+	// if two gateway (=listener) that belong to the same proxy share the same bind address,
+	// they are invalid.
 	for _, gw := range gateways {
 		bindAddress := fmt.Sprintf("%s:%d", gw.BindAddress, gw.BindPort)
 		bindAddresses[bindAddress] = append(bindAddresses[bindAddress], gw)
@@ -94,22 +99,68 @@ func gatewaysRefsToString(gateways v1.GatewayList) []string {
 	return ret
 }
 
-func 
+func merge(gateway *v1.Gateway, virtualServices v1.VirtualServiceList, resourceErrs reporter.ResourceErrors) v1.VirtualServiceList {
+
+	return nil
+}
 
 func validateVirtualServices(gateway *v1.Gateway, virtualServices v1.VirtualServiceList, resourceErrs reporter.ResourceErrors) {
-	domainSet := map[string]bool{}
-	// if any of the vhosts in the gateway (=listener) share a domain, the gateway is invalid
+
+	domainKeysSets := map[string]v1.VirtualServiceList{}
 	for _, vs := range virtualServices {
 		if vs.VirtualHost == nil {
 			continue
 		}
-		for _, d := range vs.VirtualHost.Domains {
-			if domainSet[d] == true {
-				resourceErrs.AddError(gateway, fmt.Errorf("domain %s is present in more than one vhost in this gateway", d))
-			}
-			domainSet[d] = true
+		domainsKey := domainsToKey(vs.VirtualHost.Domains)
+		domainKeysSets[domainsKey] = append(domainKeysSets[domainsKey], vs)
+	}
+
+	domainSet := map[string][]string{}
+	// make sure each domain is only in one domain set
+	for k, vslist := range domainKeysSets {
+		// take the first one as they are all the same
+		domains := vslist[0].VirtualHost.Domains
+		for _, d := range domains {
+			domainSet[d] = append(domainSet[d], k)
 		}
 	}
+
+	// report errors
+	for domain, domainSetKeys := range domainSet {
+		if len(domainSetKeys) > 1 {
+			resourceErrs.AddError(gateway, fmt.Errorf("domain %s is present in more than one vservice set in this gateway", domain))
+		}
+	}
+	// return merged list
+	var ret v1.VirtualServiceList
+	for _, vslist := range domainKeysSets {
+		// take the first one as they are all the same
+		var routes []*gloov1.Route
+		for _, vs := range vslist {
+			routes = append(routes, vs.VirtualHost.Routes...)
+		}
+		glooutils.SortRoutesByPath(routes)
+		mergedVs := &v1.VirtualService{
+			VirtualHost: &gloov1.VirtualHost{
+				Domains:            vslist[0].VirtualHost.Domains,
+				Routes:             routes,
+				Name:               "TODO get merged name",
+				VirtualHostPlugins: nil, /* MAJOR TODO what todo!?*/
+			},
+			SslConfig: nil,             /* MAJOR TODO what todo!?*/
+			Metadata:  core.Metadata{}, /* MAJOR TODO what todo!?*/
+		}
+		ret = append(ret, mergedVs)
+	}
+
+}
+
+func domainsToKey(domains []string) string {
+	// copy before mutating for good measure
+	domains = append([]string{}, domains...)
+	// sort, and join all domains with an out of band character, like |
+	sort.Strings(domains)
+	return strings.Join(domains, "|")
 }
 
 func groupGatwaysPerProxy(gatewayList v1.GatewayList) map[string]v1.GatewayList {
@@ -166,6 +217,7 @@ func desiredListener(gateway *v1.Gateway, virtualServicesForGateway v1.VirtualSe
 		virtualService.VirtualHost.Name = fmt.Sprintf("%v.%v", ref.Namespace, ref.Name)
 		virtualHosts = append(virtualHosts, virtualService.VirtualHost)
 	}
+	// TODO: fix with ssl
 	return &gloov1.Listener{
 		Name:        gateway.Metadata.Name,
 		BindAddress: gateway.BindAddress,

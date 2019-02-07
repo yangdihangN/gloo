@@ -30,11 +30,11 @@ type translatorSyncer struct {
 func NewTranslatorSyncer(writeNamespace string, proxyClient gloov1.ProxyClient, gwClient v1.GatewayClient, vsClient v1.VirtualServiceClient, reporter reporter.Reporter, propagator *propagator.Propagator) v1.ApiSyncer {
 	return NewTranslatorSyncerWithReconciler(
 		writeNamespace,
-		reporter,
-		propagator,
 		proxyClient,
 		gwClient,
 		vsClient,
+		reporter,
+		propagator,
 		gloov1.NewProxyReconciler(proxyClient),
 	)
 }

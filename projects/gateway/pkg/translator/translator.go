@@ -3,7 +3,6 @@ package translator
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/solo-io/solo-kit/pkg/utils/contextutils"
 
@@ -13,7 +12,14 @@ import (
 	"github.com/solo-io/solo-kit/pkg/api/v1/resources/core"
 )
 
-func Translate(ctx context.Context, namespace string, snap *v1.ApiSnapshot) (*gloov1.Proxy, reporter.ResourceErrors) {
+const DefaultProxyName = "gateway-proxy"
+
+type ProxyWithResourceErrors struct {
+	Proxy          *gloov1.Proxy
+	ResourceErrors reporter.ResourceErrors
+}
+
+func Translate(ctx context.Context, namespace string, snap *v1.ApiSnapshot) ([]ProxyWithResourceErrors, reporter.ResourceErrors) {
 	logger := contextutils.LoggerFrom(ctx)
 
 	resourceErrs := make(reporter.ResourceErrors)
@@ -27,28 +33,39 @@ func Translate(ctx context.Context, namespace string, snap *v1.ApiSnapshot) (*gl
 		logger.Debugf("%v had no virtual services", snap.Hash())
 		return nil, resourceErrs
 	}
-	validateGateways(snap.Gateways.List(), resourceErrs)
-	validateVirtualServices(snap.VirtualServices.List(), resourceErrs)
-	var listeners []*gloov1.Listener
-	for _, gateway := range snap.Gateways.List() {
-		listener := desiredListener(gateway, snap.VirtualServices.List(), resourceErrs)
-		listeners = append(listeners, listener)
-	}
-	return &gloov1.Proxy{
-		Metadata: core.Metadata{
-			Name:      joinGatewayNames(snap.Gateways.List()) + "-proxy",
-			Namespace: namespace,
-		},
-		Listeners: listeners,
-	}, resourceErrs
-}
 
-func joinGatewayNames(gateways v1.GatewayList) string {
-	var names []string
-	for _, gw := range gateways {
-		names = append(names, gw.Metadata.Name)
+	var proxiesAndErrors []ProxyWithResourceErrors
+
+	for proxyName, gateways := range groupGatwaysPerProxy(snap.Gateways.List()) {
+		proxyResourceErrs := make(reporter.ResourceErrors)
+		proxyResourceErrs.Accept(gateways.AsInputResources()...)
+
+		validateGateways(snap.Gateways.List(), proxyResourceErrs)
+		var listeners []*gloov1.Listener
+		for _, gateway := range gateways {
+			virtualServices := getVirtualServiceForGateway(gateway, snap.VirtualServices.List(), proxyResourceErrs)
+			proxyResourceErrs.Accept(virtualServices.AsInputResources()...)
+			validateVirtualServices(gateway, virtualServices, proxyResourceErrs)
+
+			listener := desiredListener(gateway, virtualServices, proxyResourceErrs)
+			listeners = append(listeners, listener)
+		}
+		proxy := &gloov1.Proxy{
+			Metadata: core.Metadata{
+				Name:      proxyName,
+				Namespace: namespace,
+			},
+			Listeners: listeners,
+		}
+
+		for k, v := range proxyResourceErrs {
+			resourceErrs.AddError(k, v)
+		}
+
+		proxiesAndErrors = append(proxiesAndErrors, ProxyWithResourceErrors{Proxy: proxy, ResourceErrors: proxyResourceErrs})
 	}
-	return strings.Join(names, ".")
+
+	return proxiesAndErrors, resourceErrs
 }
 
 // TODO(ilackarms): implement validation func
@@ -56,11 +73,25 @@ func validateGateways(gateways v1.GatewayList, resourceErrs reporter.ResourceErr
 
 }
 
-func validateVirtualServices(virtualServices v1.VirtualServiceList, resourceErrs reporter.ResourceErrors) {
+func validateVirtualServices(gateways *v1.Gateway, virtualServices v1.VirtualServiceList, resourceErrs reporter.ResourceErrors) {
 
 }
 
-func desiredListener(gateway *v1.Gateway, virtualServices v1.VirtualServiceList, resourceErrs reporter.ResourceErrors) *gloov1.Listener {
+func groupGatwaysPerProxy(gatewayList v1.GatewayList) map[string]v1.GatewayList {
+	proxyToGateway := make(map[string]v1.GatewayList)
+
+	for _, gw := range gatewayList {
+		name := gw.ProxyName
+		if name == "" {
+			name = DefaultProxyName
+		}
+		proxyToGateway[name] = append(proxyToGateway[name], gw)
+	}
+
+	return proxyToGateway
+}
+
+func getVirtualServiceForGateway(gateway *v1.Gateway, virtualServices v1.VirtualServiceList, resourceErrs reporter.ResourceErrors) v1.VirtualServiceList {
 	virtualServicesForGateway := gateway.VirtualServices
 	// add all virtual services if empty
 	if len(gateway.VirtualServices) == 0 {
@@ -72,17 +103,30 @@ func desiredListener(gateway *v1.Gateway, virtualServices v1.VirtualServiceList,
 		}
 	}
 
-	var (
-		virtualHosts []*gloov1.VirtualHost
-		sslConfigs   []*gloov1.SslConfig
-	)
-
+	var ret v1.VirtualServiceList
 	for _, ref := range virtualServicesForGateway {
 		// virtual service must live in the same namespace as gateway
 		virtualService, err := virtualServices.Find(ref.Strings())
 		if err != nil {
 			resourceErrs.AddError(gateway, err)
 			continue
+		}
+		ret = append(ret, virtualService)
+	}
+	return ret
+}
+
+func desiredListener(gateway *v1.Gateway, virtualServicesForGateway v1.VirtualServiceList, resourceErrs reporter.ResourceErrors) *gloov1.Listener {
+
+	var (
+		virtualHosts []*gloov1.VirtualHost
+		sslConfigs   []*gloov1.SslConfig
+	)
+
+	for _, virtualService := range virtualServicesForGateway {
+		ref := virtualService.Metadata.Ref()
+		if virtualService.VirtualHost == nil {
+			virtualService.VirtualHost = &gloov1.VirtualHost{}
 		}
 		virtualService.VirtualHost.Name = fmt.Sprintf("%v.%v", ref.Namespace, ref.Name)
 		virtualHosts = append(virtualHosts, virtualService.VirtualHost)

@@ -3,6 +3,7 @@ package syncer
 import (
 	"context"
 
+	multierror "github.com/hashicorp/go-multierror"
 	v1 "github.com/solo-io/gloo/projects/gateway/pkg/api/v1"
 	"github.com/solo-io/gloo/projects/gateway/pkg/propagator"
 	"github.com/solo-io/gloo/projects/gateway/pkg/translator"
@@ -27,6 +28,18 @@ type translatorSyncer struct {
 }
 
 func NewTranslatorSyncer(writeNamespace string, proxyClient gloov1.ProxyClient, gwClient v1.GatewayClient, vsClient v1.VirtualServiceClient, reporter reporter.Reporter, propagator *propagator.Propagator) v1.ApiSyncer {
+	return NewTranslatorSyncerWithReconciler(
+		writeNamespace,
+		reporter,
+		propagator,
+		proxyClient,
+		gwClient,
+		vsClient,
+		gloov1.NewProxyReconciler(proxyClient),
+	)
+}
+
+func NewTranslatorSyncerWithReconciler(writeNamespace string, proxyClient gloov1.ProxyClient, gwClient v1.GatewayClient, vsClient v1.VirtualServiceClient, reporter reporter.Reporter, propagator *propagator.Propagator, proxyReconciler gloov1.ProxyReconciler) v1.ApiSyncer {
 	return &translatorSyncer{
 		writeNamespace:  writeNamespace,
 		reporter:        reporter,
@@ -34,7 +47,7 @@ func NewTranslatorSyncer(writeNamespace string, proxyClient gloov1.ProxyClient, 
 		proxyClient:     proxyClient,
 		gwClient:        gwClient,
 		vsClient:        vsClient,
-		proxyReconciler: gloov1.NewProxyReconciler(proxyClient),
+		proxyReconciler: proxyReconciler,
 	}
 }
 
@@ -48,7 +61,7 @@ func (s *translatorSyncer) Sync(ctx context.Context, snap *v1.ApiSnapshot) error
 	defer logger.Infof("end sync %v", snap.Hash())
 	logger.Debugf("%v", snap)
 
-	proxy, resourceErrs := translator.Translate(ctx, s.writeNamespace, snap)
+	desiredResourcesAndErrors, resourceErrs := translator.Translate(ctx, s.writeNamespace, snap)
 	if err := resourceErrs.Validate(); err != nil {
 		if err := s.reporter.WriteReports(ctx, resourceErrs, nil); err != nil {
 			contextutils.LoggerFrom(ctx).Errorf("failed to write reports: %v", err)
@@ -60,12 +73,12 @@ func (s *translatorSyncer) Sync(ctx context.Context, snap *v1.ApiSnapshot) error
 	labels := map[string]string{
 		"created_by": "gateway",
 	}
-
 	var desiredResources gloov1.ProxyList
-	if proxy != nil {
-		logger.Infof("creating proxy %v", proxy.Metadata.Ref())
+	for _, proxyAndError := range desiredResourcesAndErrors {
+		proxy := proxyAndError.Proxy
+		logger.Infof("reconciling proxy %v", proxy.Metadata.Ref())
 		proxy.Metadata.Labels = labels
-		desiredResources = gloov1.ProxyList{proxy}
+		desiredResources = append(desiredResources, proxy)
 	}
 
 	if err := s.proxyReconciler.Reconcile(s.writeNamespace, desiredResources, utils.TransitionFunction, clients.ListOpts{
@@ -76,11 +89,14 @@ func (s *translatorSyncer) Sync(ctx context.Context, snap *v1.ApiSnapshot) error
 	}
 
 	// start propagating for new set of resources
-	if err := s.propagateProxyStatus(ctx, snap, proxy, resourceErrs); err != nil {
-		return err
+	var errs *multierror.Error
+	for _, proxyAndError := range desiredResourcesAndErrors {
+		if err := s.propagateProxyStatus(ctx, snap, proxyAndError.Proxy, proxyAndError.ResourceErrors); err != nil {
+			errs = multierror.Append(errs, err)
+		}
 	}
 
-	return nil
+	return errs.ErrorOrNil()
 }
 
 func (s *translatorSyncer) propagateProxyStatus(ctx context.Context, snap *v1.ApiSnapshot, proxy *gloov1.Proxy, resourceErrs reporter.ResourceErrors) error {

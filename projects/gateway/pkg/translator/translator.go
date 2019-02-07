@@ -47,7 +47,7 @@ func Translate(ctx context.Context, namespace string, snap *v1.ApiSnapshot) ([]P
 			proxyResourceErrs.Accept(virtualServices.AsInputResources()...)
 			validateVirtualServices(gateway, virtualServices, proxyResourceErrs)
 
-			listener := desiredListener(gateway, virtualServices, proxyResourceErrs)
+			listener := desiredListener(gateway, virtualServices)
 			listeners = append(listeners, listener)
 		}
 		proxy := &gloov1.Proxy{
@@ -116,7 +116,7 @@ func getVirtualServiceForGateway(gateway *v1.Gateway, virtualServices v1.Virtual
 	return ret
 }
 
-func desiredListener(gateway *v1.Gateway, virtualServicesForGateway v1.VirtualServiceList, resourceErrs reporter.ResourceErrors) *gloov1.Listener {
+func desiredListener(gateway *v1.Gateway, virtualServicesForGateway v1.VirtualServiceList) *gloov1.Listener {
 
 	var (
 		virtualHosts []*gloov1.VirtualHost

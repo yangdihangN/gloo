@@ -10,6 +10,15 @@
 An Envoy-Powered API Gateway
 ============================
 
+.. toctree::
+   :hidden:
+
+   about/about
+   introduction/concepts
+   introduction/architecture
+   cli/index
+
+
 Gloo is a feature-rich, Kubernetes-native ingress controller, and next-generation API gateway.
 Gloo is exceptional in its function-level routing; its support for legacy apps, microservices and serverless;
 its discovery capabilities; its numerous features; and its tight integration with leading open-source projects.
@@ -26,4 +35,3 @@ Thanks
 
 **Gloo** would not be possible without the valuable open-source work of projects in the community.
 We would like to extend a special thank-you to `Envoy <https://www.envoyproxy.io>`_.
-

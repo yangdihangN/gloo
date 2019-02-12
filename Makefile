@@ -69,11 +69,7 @@ $(OUTPUT_DIR)/.generated-code:
 	mkdir -p $(OUTPUT_DIR)
 	touch $@
 
-.PHONY: docs/index.md
-docs/index.md: 
-	cat README.md | sed 's@docs/@@g' > $@
-
-site: docs/index.md docs/cli/glooctl.md
+site: docs/cli/glooctl.md
 	sphinx-build -W --keep-going -b html docs site
 
 .PHONY: install-sphinx

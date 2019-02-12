@@ -74,7 +74,11 @@ docs/index.md:
 	cat README.md | sed 's@docs/@@g' > $@
 
 site: docs/index.md docs/cli/glooctl.md
-	mkdocs build
+	sphinx-build -W --keep-going -b html docs site
+
+.PHONY: install-sphinx
+install-sphinx:
+	pip install --upgrade --user recommonmark Sphinx sphinx_rtd_theme
 
 docs/cli/glooctl.md: $(shell find projects/gloo/cli -name "*.go" | grep -v test.go | grep -v '\.\#*')
 	go run projects/gloo/cli/cmd/docs/main.go
@@ -86,7 +90,7 @@ ifeq ($(RELEASE),"true")
 	firebase deploy --only hosting:gloo-docs
 endif
 
-serve-site: site
+serve-site:
 	cd site && python -m SimpleHTTPServer
 
 #----------------------------------------------------------------------------------

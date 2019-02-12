@@ -15,7 +15,7 @@ TODO: to solo-kit/api/envoy
 **Types:**
 
 
-- :ref:`transformation.plugins.gloo.solo.io.PrefixRewrite`
+- :ref:`message.transformation.plugins.gloo.solo.io.PrefixRewrite`
   
 
 
@@ -25,8 +25,7 @@ TODO: to solo-kit/api/envoy
 
 
 
-
-.. _transformation.plugins.gloo.solo.io.PrefixRewrite:
+.. _message.transformation.plugins.gloo.solo.io.PrefixRewrite:
 
 PrefixRewrite
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -40,12 +39,19 @@ if set, prefix_rewrite will be used to rewrite the matched HTTP Path prefix on r
 
    "prefix_rewrite": string
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `prefix_rewrite` | `string` | Set to an empty string to remove the matched HTTP Path prefix | 
+.. _field.transformation.plugins.gloo.solo.io.PrefixRewrite.prefix_rewrite:
+
+prefix_rewrite
+++++++++++++++++++++++++++
+
+Type: `string` 
+
+Description: Set to an empty string to remove the matched HTTP Path prefix 
+
+
+
 
 
 

@@ -35,5 +35,5 @@ Options inherited from parent commands
 SEE ALSO
 ~~~~~~~~
 
-* `glooctl install <glooctl_install.rst>`_ 	 - install gloo on different platforms
+* :ref:`glooctl install <glooctl_install>` 	 - install gloo on different platforms
 

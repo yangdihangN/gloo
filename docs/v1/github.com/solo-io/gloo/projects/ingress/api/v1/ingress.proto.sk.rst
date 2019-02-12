@@ -9,7 +9,7 @@ Package: `ingress.solo.io`
 **Types:**
 
 
-- :ref:`ingress.solo.io.Ingress` **Top-Level Resource**
+- :ref:`message.ingress.solo.io.Ingress` **Top-Level Resource**
   
 
 
@@ -19,8 +19,7 @@ Package: `ingress.solo.io`
 
 
 
-
-.. _ingress.solo.io.Ingress:
+.. _message.ingress.solo.io.Ingress:
 
 Ingress
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -37,14 +36,41 @@ A simple wrapper for a Kubernetes Ingress Object.
    "kube_ingress_status": .google.protobuf.Any
    "metadata": .core.solo.io.Metadata
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `kube_ingress_spec` | `.google.protobuf.Any<https://developers.google.com/protocol-buffers/docs/reference/csharp/class/google/protobuf/well-known-types/any>`_ | a raw byte representation of the kubernetes ingress this resource wraps | 
-   `kube_ingress_status` | `.google.protobuf.Any<https://developers.google.com/protocol-buffers/docs/reference/csharp/class/google/protobuf/well-known-types/any>`_ | a raw byte representation of the ingress status of the kubernetes ingress object | 
-   `metadata` | :ref:`core.solo.io.Metadata` | Metadata contains the object metadata for this resource | 
+.. _field.ingress.solo.io.Ingress.kube_ingress_spec:
+
+kube_ingress_spec
+++++++++++++++++++++++++++
+
+Type: `.google.protobuf.Any<https://developers.google.com/protocol-buffers/docs/reference/csharp/class/google/protobuf/well-known-types/any>`_ 
+
+Description: a raw byte representation of the kubernetes ingress this resource wraps 
+
+
+
+.. _field.ingress.solo.io.Ingress.kube_ingress_status:
+
+kube_ingress_status
+++++++++++++++++++++++++++
+
+Type: `.google.protobuf.Any<https://developers.google.com/protocol-buffers/docs/reference/csharp/class/google/protobuf/well-known-types/any>`_ 
+
+Description: a raw byte representation of the ingress status of the kubernetes ingress object 
+
+
+
+.. _field.ingress.solo.io.Ingress.metadata:
+
+metadata
+++++++++++++++++++++++++++
+
+Type: :ref:`message.core.solo.io.Metadata` 
+
+Description: Metadata contains the object metadata for this resource 
+
+
+
 
 
 

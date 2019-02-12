@@ -9,9 +9,9 @@ Package: `grpc.plugins.gloo.solo.io`
 **Types:**
 
 
-- :ref:`grpc.plugins.gloo.solo.io.ServiceSpec`
-- :ref:`grpc.plugins.gloo.solo.io.ServiceSpec.GrpcService`
-- :ref:`grpc.plugins.gloo.solo.io.DestinationSpec`
+- :ref:`message.grpc.plugins.gloo.solo.io.ServiceSpec`
+- :ref:`message.grpc.plugins.gloo.solo.io.ServiceSpec.GrpcService`
+- :ref:`message.grpc.plugins.gloo.solo.io.DestinationSpec`
   
 
 
@@ -21,8 +21,7 @@ Package: `grpc.plugins.gloo.solo.io`
 
 
 
-
-.. _grpc.plugins.gloo.solo.io.ServiceSpec:
+.. _message.grpc.plugins.gloo.solo.io.ServiceSpec:
 
 ServiceSpec
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -40,17 +39,34 @@ spec is fine), to make sure that traffic to it is routed with http2.
    "descriptors": bytes
    "grpc_services": []grpc.plugins.gloo.solo.io.ServiceSpec.GrpcService
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `descriptors` | `bytes` | Descriptors that contain information of the services listed below. this is a serialized google.protobuf.FileDescriptorSet | 
-   `grpc_services` | :ref:`[]grpc.plugins.gloo.solo.io.ServiceSpec.GrpcService` | List of services used by this upstream. For a grpc upstream where you don't need to use Gloo's function routing, this can be an empty list. These services must be present in the descriptors. | 
+.. _field.grpc.plugins.gloo.solo.io.ServiceSpec.descriptors:
+
+descriptors
+++++++++++++++++++++++++++
+
+Type: `bytes` 
+
+Description: Descriptors that contain information of the services listed below. this is a serialized google.protobuf.FileDescriptorSet 
 
 
 
-.. _grpc.plugins.gloo.solo.io.ServiceSpec.GrpcService:
+.. _field.grpc.plugins.gloo.solo.io.ServiceSpec.grpc_services:
+
+grpc_services
+++++++++++++++++++++++++++
+
+Type: :ref:`message.grpc.plugins.gloo.solo.io.ServiceSpec.GrpcService` 
+
+Description: List of services used by this upstream. For a grpc upstream where you don't need to use Gloo's function routing, this can be an empty list. These services must be present in the descriptors. 
+
+
+
+
+
+
+.. _message.grpc.plugins.gloo.solo.io.ServiceSpec.GrpcService:
 
 GrpcService
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -66,18 +82,45 @@ Describes a grpc service
    "service_name": string
    "function_names": []string
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `package_name` | `string` | The package of this service. | 
-   `service_name` | `string` | The service name of this service. | 
-   `function_names` | `[]string` | The functions available in this service. | 
+.. _field.grpc.plugins.gloo.solo.io.ServiceSpec.GrpcService.package_name:
+
+package_name
+++++++++++++++++++++++++++
+
+Type: `string` 
+
+Description: The package of this service. 
 
 
 
-.. _grpc.plugins.gloo.solo.io.DestinationSpec:
+.. _field.grpc.plugins.gloo.solo.io.ServiceSpec.GrpcService.service_name:
+
+service_name
+++++++++++++++++++++++++++
+
+Type: `string` 
+
+Description: The service name of this service. 
+
+
+
+.. _field.grpc.plugins.gloo.solo.io.ServiceSpec.GrpcService.function_names:
+
+function_names
+++++++++++++++++++++++++++
+
+Type: `[]string` 
+
+Description: The functions available in this service. 
+
+
+
+
+
+
+.. _message.grpc.plugins.gloo.solo.io.DestinationSpec:
 
 DestinationSpec
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -94,15 +137,52 @@ This is only for upstream with Grpc service spec.
    "function": string
    "parameters": .transformation.plugins.gloo.solo.io.Parameters
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `package` | `string` | The proto package of the function. | 
-   `service` | `string` | The name of the service of the function. | 
-   `function` | `string` | The name of the function. | 
-   `parameters` | :ref:`transformation.plugins.gloo.solo.io.Parameters` | Parameters describe how to extract the function parameters from the request. | 
+.. _field.grpc.plugins.gloo.solo.io.DestinationSpec.package:
+
+package
+++++++++++++++++++++++++++
+
+Type: `string` 
+
+Description: The proto package of the function. 
+
+
+
+.. _field.grpc.plugins.gloo.solo.io.DestinationSpec.service:
+
+service
+++++++++++++++++++++++++++
+
+Type: `string` 
+
+Description: The name of the service of the function. 
+
+
+
+.. _field.grpc.plugins.gloo.solo.io.DestinationSpec.function:
+
+function
+++++++++++++++++++++++++++
+
+Type: `string` 
+
+Description: The name of the function. 
+
+
+
+.. _field.grpc.plugins.gloo.solo.io.DestinationSpec.parameters:
+
+parameters
+++++++++++++++++++++++++++
+
+Type: :ref:`message.transformation.plugins.gloo.solo.io.Parameters` 
+
+Description: Parameters describe how to extract the function parameters from the request. 
+
+
+
 
 
 

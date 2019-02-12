@@ -34,5 +34,5 @@ Options inherited from parent commands
 SEE ALSO
 ~~~~~~~~
 
-* `glooctl delete <glooctl_delete.rst>`_ 	 - Delete a Gloo resource
+* :ref:`glooctl delete <glooctl_delete>` 	 - Delete a Gloo resource
 

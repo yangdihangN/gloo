@@ -34,5 +34,5 @@ Options inherited from parent commands
 SEE ALSO
 ~~~~~~~~
 
-* `glooctl <glooctl.rst>`_ 	 - CLI for Gloo
+* :ref:`glooctl <glooctl>` 	 - CLI for Gloo
 

@@ -9,7 +9,7 @@ Package: `transformation.plugins.gloo.solo.io`
 **Types:**
 
 
-- :ref:`transformation.plugins.gloo.solo.io.Parameters`
+- :ref:`message.transformation.plugins.gloo.solo.io.Parameters`
   
 
 
@@ -19,8 +19,7 @@ Package: `transformation.plugins.gloo.solo.io`
 
 
 
-
-.. _transformation.plugins.gloo.solo.io.Parameters:
+.. _message.transformation.plugins.gloo.solo.io.Parameters:
 
 Parameters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -33,13 +32,30 @@ Parameters
    "headers": map<string, string>
    "path": .google.protobuf.StringValue
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `headers` | `map<string, string>` | headers that will be used to extract data for processing output templates Gloo will search for parameters by their name in header value strings, enclosed in single curly braces Example: extensions: parameters: headers: x-user-id: { userId } | 
-   `path` | `.google.protobuf.StringValue<https://developers.google.com/protocol-buffers/docs/reference/csharp/class/google/protobuf/well-known-types/string-value>`_ | part of the (or the entire) path that will be used extract data for processing output templates Gloo will search for parameters by their name in header value strings, enclosed in single curly braces Example: extensions: parameters: path: /users/{ userId } | 
+.. _field.transformation.plugins.gloo.solo.io.Parameters.headers:
+
+headers
+++++++++++++++++++++++++++
+
+Type: `map<string, string>` 
+
+Description: headers that will be used to extract data for processing output templates Gloo will search for parameters by their name in header value strings, enclosed in single curly braces Example: extensions: parameters: headers: x-user-id: { userId } 
+
+
+
+.. _field.transformation.plugins.gloo.solo.io.Parameters.path:
+
+path
+++++++++++++++++++++++++++
+
+Type: `.google.protobuf.StringValue<https://developers.google.com/protocol-buffers/docs/reference/csharp/class/google/protobuf/well-known-types/string-value>`_ 
+
+Description: part of the (or the entire) path that will be used extract data for processing output templates Gloo will search for parameters by their name in header value strings, enclosed in single curly braces Example: extensions: parameters: path: /users/{ userId } 
+
+
+
 
 
 

@@ -37,10 +37,10 @@ Options inherited from parent commands
 SEE ALSO
 ~~~~~~~~
 
-* `glooctl create <glooctl_create.rst>`_ 	 - Create a Gloo resource
-* `glooctl create upstream aws <glooctl_create_upstream_aws.rst>`_ 	 - Create an Aws Upstream
-* `glooctl create upstream azure <glooctl_create_upstream_azure.rst>`_ 	 - Create an Azure Upstream
-* `glooctl create upstream consul <glooctl_create_upstream_consul.rst>`_ 	 - Create a Consul Upstream
-* `glooctl create upstream kube <glooctl_create_upstream_kube.rst>`_ 	 - Create a Kubernetes Upstream
-* `glooctl create upstream static <glooctl_create_upstream_static.rst>`_ 	 - Create a Static Upstream
+* :ref:`glooctl create <glooctl_create>` 	 - Create a Gloo resource
+* :ref:`glooctl create upstream aws <glooctl_create_upstream_aws>` 	 - Create an Aws Upstream
+* :ref:`glooctl create upstream azure <glooctl_create_upstream_azure>` 	 - Create an Azure Upstream
+* :ref:`glooctl create upstream consul <glooctl_create_upstream_consul>` 	 - Create a Consul Upstream
+* :ref:`glooctl create upstream kube <glooctl_create_upstream_kube>` 	 - Create a Kubernetes Upstream
+* :ref:`glooctl create upstream static <glooctl_create_upstream_static>` 	 - Create a Static Upstream
 

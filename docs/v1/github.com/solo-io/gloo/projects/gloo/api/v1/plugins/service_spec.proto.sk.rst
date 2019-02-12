@@ -9,7 +9,7 @@ Package: `plugins.gloo.solo.io`
 **Types:**
 
 
-- :ref:`plugins.gloo.solo.io.ServiceSpec`
+- :ref:`message.plugins.gloo.solo.io.ServiceSpec`
   
 
 
@@ -19,8 +19,7 @@ Package: `plugins.gloo.solo.io`
 
 
 
-
-.. _plugins.gloo.solo.io.ServiceSpec:
+.. _message.plugins.gloo.solo.io.ServiceSpec:
 
 ServiceSpec
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -38,13 +37,30 @@ ServiceSpec configuration is opaque to Gloo and handled by Service Plugins.
    "rest": .rest.plugins.gloo.solo.io.ServiceSpec
    "grpc": .grpc.plugins.gloo.solo.io.ServiceSpec
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `rest` | :ref:`rest.plugins.gloo.solo.io.ServiceSpec` |  | 
-   `grpc` | :ref:`grpc.plugins.gloo.solo.io.ServiceSpec` |  | 
+.. _field.plugins.gloo.solo.io.ServiceSpec.rest:
+
+rest
+++++++++++++++++++++++++++
+
+Type: :ref:`message.rest.plugins.gloo.solo.io.ServiceSpec` 
+
+Description:  
+
+
+
+.. _field.plugins.gloo.solo.io.ServiceSpec.grpc:
+
+grpc
+++++++++++++++++++++++++++
+
+Type: :ref:`message.grpc.plugins.gloo.solo.io.ServiceSpec` 
+
+Description:  
+
+
+
 
 
 

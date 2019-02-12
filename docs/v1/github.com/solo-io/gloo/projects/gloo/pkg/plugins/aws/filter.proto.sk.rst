@@ -9,8 +9,8 @@ Package: `envoy.config.filter.http.aws.v2`
 **Types:**
 
 
-- :ref:`envoy.config.filter.http.aws.v2.LambdaPerRoute`
-- :ref:`envoy.config.filter.http.aws.v2.LambdaProtocolExtension`
+- :ref:`message.envoy.config.filter.http.aws.v2.LambdaPerRoute`
+- :ref:`message.envoy.config.filter.http.aws.v2.LambdaProtocolExtension`
   
 
 
@@ -20,8 +20,7 @@ Package: `envoy.config.filter.http.aws.v2`
 
 
 
-
-.. _envoy.config.filter.http.aws.v2.LambdaPerRoute:
+.. _message.envoy.config.filter.http.aws.v2.LambdaPerRoute:
 
 LambdaPerRoute
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -38,18 +37,45 @@ AWS Lambda invocations.
    "qualifier": string
    "async": bool
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `name` | `string` | The name of the function | 
-   `qualifier` | `string` | The qualifier of the function (defaults to $LATEST if not specified) | 
-   `async` | `bool` | Invocation type - async or regular. | 
+.. _field.envoy.config.filter.http.aws.v2.LambdaPerRoute.name:
+
+name
+++++++++++++++++++++++++++
+
+Type: `string` 
+
+Description: The name of the function 
 
 
 
-.. _envoy.config.filter.http.aws.v2.LambdaProtocolExtension:
+.. _field.envoy.config.filter.http.aws.v2.LambdaPerRoute.qualifier:
+
+qualifier
+++++++++++++++++++++++++++
+
+Type: `string` 
+
+Description: The qualifier of the function (defaults to $LATEST if not specified) 
+
+
+
+.. _field.envoy.config.filter.http.aws.v2.LambdaPerRoute.async:
+
+async
+++++++++++++++++++++++++++
+
+Type: `bool` 
+
+Description: Invocation type - async or regular. 
+
+
+
+
+
+
+.. _message.envoy.config.filter.http.aws.v2.LambdaProtocolExtension:
 
 LambdaProtocolExtension
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -64,15 +90,52 @@ LambdaProtocolExtension
    "access_key": string
    "secret_key": string
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `host` | `string` | The host header for AWS this cluster | 
-   `region` | `string` | The region for this cluster | 
-   `access_key` | `string` | The access_key for AWS this cluster | 
-   `secret_key` | `string` | The secret_key for AWS this cluster | 
+.. _field.envoy.config.filter.http.aws.v2.LambdaProtocolExtension.host:
+
+host
+++++++++++++++++++++++++++
+
+Type: `string` 
+
+Description: The host header for AWS this cluster 
+
+
+
+.. _field.envoy.config.filter.http.aws.v2.LambdaProtocolExtension.region:
+
+region
+++++++++++++++++++++++++++
+
+Type: `string` 
+
+Description: The region for this cluster 
+
+
+
+.. _field.envoy.config.filter.http.aws.v2.LambdaProtocolExtension.access_key:
+
+access_key
+++++++++++++++++++++++++++
+
+Type: `string` 
+
+Description: The access_key for AWS this cluster 
+
+
+
+.. _field.envoy.config.filter.http.aws.v2.LambdaProtocolExtension.secret_key:
+
+secret_key
+++++++++++++++++++++++++++
+
+Type: `string` 
+
+Description: The secret_key for AWS this cluster 
+
+
+
 
 
 

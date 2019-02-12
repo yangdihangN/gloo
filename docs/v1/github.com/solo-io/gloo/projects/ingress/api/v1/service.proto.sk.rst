@@ -9,7 +9,7 @@ Package: `ingress.solo.io`
 **Types:**
 
 
-- :ref:`ingress.solo.io.KubeService` **Top-Level Resource**
+- :ref:`message.ingress.solo.io.KubeService` **Top-Level Resource**
   
 
 
@@ -19,8 +19,7 @@ Package: `ingress.solo.io`
 
 
 
-
-.. _ingress.solo.io.KubeService:
+.. _message.ingress.solo.io.KubeService:
 
 KubeService
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -37,14 +36,41 @@ A simple wrapper for a Kubernetes Service Object.
    "kube_service_status": .google.protobuf.Any
    "metadata": .core.solo.io.Metadata
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `kube_service_spec` | `.google.protobuf.Any<https://developers.google.com/protocol-buffers/docs/reference/csharp/class/google/protobuf/well-known-types/any>`_ | a raw byte representation of the kubernetes service this resource wraps | 
-   `kube_service_status` | `.google.protobuf.Any<https://developers.google.com/protocol-buffers/docs/reference/csharp/class/google/protobuf/well-known-types/any>`_ | a raw byte representation of the service status of the kubernetes service object | 
-   `metadata` | :ref:`core.solo.io.Metadata` | Metadata contains the object metadata for this resource | 
+.. _field.ingress.solo.io.KubeService.kube_service_spec:
+
+kube_service_spec
+++++++++++++++++++++++++++
+
+Type: `.google.protobuf.Any<https://developers.google.com/protocol-buffers/docs/reference/csharp/class/google/protobuf/well-known-types/any>`_ 
+
+Description: a raw byte representation of the kubernetes service this resource wraps 
+
+
+
+.. _field.ingress.solo.io.KubeService.kube_service_status:
+
+kube_service_status
+++++++++++++++++++++++++++
+
+Type: `.google.protobuf.Any<https://developers.google.com/protocol-buffers/docs/reference/csharp/class/google/protobuf/well-known-types/any>`_ 
+
+Description: a raw byte representation of the service status of the kubernetes service object 
+
+
+
+.. _field.ingress.solo.io.KubeService.metadata:
+
+metadata
+++++++++++++++++++++++++++
+
+Type: :ref:`message.core.solo.io.Metadata` 
+
+Description: Metadata contains the object metadata for this resource 
+
+
+
 
 
 

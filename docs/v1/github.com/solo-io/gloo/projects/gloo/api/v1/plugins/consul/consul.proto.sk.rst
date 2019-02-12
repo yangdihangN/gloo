@@ -9,7 +9,7 @@ Package: `consul.plugins.gloo.solo.io`
 **Types:**
 
 
-- :ref:`consul.plugins.gloo.solo.io.UpstreamSpec`
+- :ref:`message.consul.plugins.gloo.solo.io.UpstreamSpec`
   
 
 
@@ -19,8 +19,7 @@ Package: `consul.plugins.gloo.solo.io`
 
 
 
-
-.. _consul.plugins.gloo.solo.io.UpstreamSpec:
+.. _message.consul.plugins.gloo.solo.io.UpstreamSpec:
 
 UpstreamSpec
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -41,15 +40,52 @@ consul Upstreams are typically generated automatically by Gloo from the consul A
    "service_spec": .plugins.gloo.solo.io.ServiceSpec
    "connect_enabled": bool
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `service_name` | `string` | The name of the Consul Service | 
-   `service_tags` | `[]string` | The list of service tags Gloo should search for on a service instance before deciding whether or not to include the instance as part of this upstream | 
-   `service_spec` | :ref:`plugins.gloo.solo.io.ServiceSpec` | An optional Service Spec describing the service listening at this address | 
-   `connect_enabled` | `bool` | is this consul service connect enabled. | 
+.. _field.consul.plugins.gloo.solo.io.UpstreamSpec.service_name:
+
+service_name
+++++++++++++++++++++++++++
+
+Type: `string` 
+
+Description: The name of the Consul Service 
+
+
+
+.. _field.consul.plugins.gloo.solo.io.UpstreamSpec.service_tags:
+
+service_tags
+++++++++++++++++++++++++++
+
+Type: `[]string` 
+
+Description: The list of service tags Gloo should search for on a service instance before deciding whether or not to include the instance as part of this upstream 
+
+
+
+.. _field.consul.plugins.gloo.solo.io.UpstreamSpec.service_spec:
+
+service_spec
+++++++++++++++++++++++++++
+
+Type: :ref:`message.plugins.gloo.solo.io.ServiceSpec` 
+
+Description: An optional Service Spec describing the service listening at this address 
+
+
+
+.. _field.consul.plugins.gloo.solo.io.UpstreamSpec.connect_enabled:
+
+connect_enabled
+++++++++++++++++++++++++++
+
+Type: `bool` 
+
+Description: is this consul service connect enabled. 
+
+
+
 
 
 

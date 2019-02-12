@@ -40,5 +40,5 @@ Options inherited from parent commands
 SEE ALSO
 ~~~~~~~~
 
-* `glooctl create upstream <glooctl_create_upstream.rst>`_ 	 - Create an Upstream Interactively
+* :ref:`glooctl create upstream <glooctl_create_upstream>` 	 - Create an Upstream Interactively
 

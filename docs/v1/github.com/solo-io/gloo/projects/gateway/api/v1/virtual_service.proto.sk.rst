@@ -9,7 +9,7 @@ Package: `gateway.solo.io`
 **Types:**
 
 
-- :ref:`gateway.solo.io.VirtualService` **Top-Level Resource**
+- :ref:`message.gateway.solo.io.VirtualService` **Top-Level Resource**
   
 
 
@@ -19,8 +19,7 @@ Package: `gateway.solo.io`
 
 
 
-
-.. _gateway.solo.io.VirtualService:
+.. _message.gateway.solo.io.VirtualService:
 
 VirtualService
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -39,16 +38,63 @@ Domains must be unique across all virtual services within a gateway (i.e. no ove
    "status": .core.solo.io.Status
    "metadata": .core.solo.io.Metadata
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `virtual_host` | :ref:`gloo.solo.io.VirtualHost` |  | 
-   `ssl_config` | :ref:`gloo.solo.io.SslConfig` | If provided, the Gateway will serve TLS/SSL traffic for this set of routes | 
-   `display_name` | `string` | Display only, optional descriptive name. Unlike metadata.name, DisplayName can be changed without deleting the resource. | 
-   `status` | :ref:`core.solo.io.Status` | Status indicates the validation status of this resource. Status is read-only by clients, and set by gloo during validation | 
-   `metadata` | :ref:`core.solo.io.Metadata` | Metadata contains the object metadata for this resource | 
+.. _field.gateway.solo.io.VirtualService.virtual_host:
+
+virtual_host
+++++++++++++++++++++++++++
+
+Type: :ref:`message.gloo.solo.io.VirtualHost` 
+
+Description:  
+
+
+
+.. _field.gateway.solo.io.VirtualService.ssl_config:
+
+ssl_config
+++++++++++++++++++++++++++
+
+Type: :ref:`message.gloo.solo.io.SslConfig` 
+
+Description: If provided, the Gateway will serve TLS/SSL traffic for this set of routes 
+
+
+
+.. _field.gateway.solo.io.VirtualService.display_name:
+
+display_name
+++++++++++++++++++++++++++
+
+Type: `string` 
+
+Description: Display only, optional descriptive name. Unlike metadata.name, DisplayName can be changed without deleting the resource. 
+
+
+
+.. _field.gateway.solo.io.VirtualService.status:
+
+status
+++++++++++++++++++++++++++
+
+Type: :ref:`message.core.solo.io.Status` 
+
+Description: Status indicates the validation status of this resource. Status is read-only by clients, and set by gloo during validation 
+
+
+
+.. _field.gateway.solo.io.VirtualService.metadata:
+
+metadata
+++++++++++++++++++++++++++
+
+Type: :ref:`message.core.solo.io.Metadata` 
+
+Description: Metadata contains the object metadata for this resource 
+
+
+
 
 
 

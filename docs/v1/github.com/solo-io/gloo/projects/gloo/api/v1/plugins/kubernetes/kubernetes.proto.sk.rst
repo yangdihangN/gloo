@@ -9,7 +9,7 @@ Package: `kubernetes.plugins.gloo.solo.io`
 **Types:**
 
 
-- :ref:`kubernetes.plugins.gloo.solo.io.UpstreamSpec`
+- :ref:`message.kubernetes.plugins.gloo.solo.io.UpstreamSpec`
   
 
 
@@ -19,8 +19,7 @@ Package: `kubernetes.plugins.gloo.solo.io`
 
 
 
-
-.. _kubernetes.plugins.gloo.solo.io.UpstreamSpec:
+.. _message.kubernetes.plugins.gloo.solo.io.UpstreamSpec:
 
 UpstreamSpec
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -42,16 +41,63 @@ Kubernetes Upstreams are typically generated automatically by Gloo from the Kube
    "selector": map<string, string>
    "service_spec": .plugins.gloo.solo.io.ServiceSpec
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `service_name` | `string` | The name of the Kubernetes Service | 
-   `service_namespace` | `string` | The namespace where the Service lives | 
-   `service_port` | `int` | The access port port of the kubernetes service is listening. This port is used by Gloo to look up the corresponding port on the pod for routing. | 
-   `selector` | `map<string, string>` | Allows finer-grained filtering of pods for the Upstream. Gloo will select pods based on their labels if any are provided here. (see [Kubernetes labels and selectors](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/) | 
-   `service_spec` | :ref:`plugins.gloo.solo.io.ServiceSpec` | An optional Service Spec describing the service listening at this address | 
+.. _field.kubernetes.plugins.gloo.solo.io.UpstreamSpec.service_name:
+
+service_name
+++++++++++++++++++++++++++
+
+Type: `string` 
+
+Description: The name of the Kubernetes Service 
+
+
+
+.. _field.kubernetes.plugins.gloo.solo.io.UpstreamSpec.service_namespace:
+
+service_namespace
+++++++++++++++++++++++++++
+
+Type: `string` 
+
+Description: The namespace where the Service lives 
+
+
+
+.. _field.kubernetes.plugins.gloo.solo.io.UpstreamSpec.service_port:
+
+service_port
+++++++++++++++++++++++++++
+
+Type: `int` 
+
+Description: The access port port of the kubernetes service is listening. This port is used by Gloo to look up the corresponding port on the pod for routing. 
+
+
+
+.. _field.kubernetes.plugins.gloo.solo.io.UpstreamSpec.selector:
+
+selector
+++++++++++++++++++++++++++
+
+Type: `map<string, string>` 
+
+Description: Allows finer-grained filtering of pods for the Upstream. Gloo will select pods based on their labels if any are provided here. (see [Kubernetes labels and selectors](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/) 
+
+
+
+.. _field.kubernetes.plugins.gloo.solo.io.UpstreamSpec.service_spec:
+
+service_spec
+++++++++++++++++++++++++++
+
+Type: :ref:`message.plugins.gloo.solo.io.ServiceSpec` 
+
+Description: An optional Service Spec describing the service listening at this address 
+
+
+
 
 
 

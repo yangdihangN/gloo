@@ -15,14 +15,14 @@ TODO: to solo-kit/api/envoy
 **Types:**
 
 
-- :ref:`transformation.plugins.gloo.solo.io.RouteTransformations`
-- :ref:`transformation.plugins.gloo.solo.io.Transformation`
-- :ref:`transformation.plugins.gloo.solo.io.Extraction`
-- :ref:`transformation.plugins.gloo.solo.io.TransformationTemplate`
-- :ref:`transformation.plugins.gloo.solo.io.InjaTemplate`
-- :ref:`transformation.plugins.gloo.solo.io.Passthrough`
-- :ref:`transformation.plugins.gloo.solo.io.MergeExtractorsToBody`
-- :ref:`transformation.plugins.gloo.solo.io.HeaderBodyTransform`
+- :ref:`message.transformation.plugins.gloo.solo.io.RouteTransformations`
+- :ref:`message.transformation.plugins.gloo.solo.io.Transformation`
+- :ref:`message.transformation.plugins.gloo.solo.io.Extraction`
+- :ref:`message.transformation.plugins.gloo.solo.io.TransformationTemplate`
+- :ref:`message.transformation.plugins.gloo.solo.io.InjaTemplate`
+- :ref:`message.transformation.plugins.gloo.solo.io.Passthrough`
+- :ref:`message.transformation.plugins.gloo.solo.io.MergeExtractorsToBody`
+- :ref:`message.transformation.plugins.gloo.solo.io.HeaderBodyTransform`
   
 
 
@@ -32,8 +32,7 @@ TODO: to solo-kit/api/envoy
 
 
 
-
-.. _transformation.plugins.gloo.solo.io.RouteTransformations:
+.. _message.transformation.plugins.gloo.solo.io.RouteTransformations:
 
 RouteTransformations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -46,17 +45,34 @@ RouteTransformations
    "request_transformation": .transformation.plugins.gloo.solo.io.Transformation
    "response_transformation": .transformation.plugins.gloo.solo.io.Transformation
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `request_transformation` | :ref:`transformation.plugins.gloo.solo.io.Transformation` |  | 
-   `response_transformation` | :ref:`transformation.plugins.gloo.solo.io.Transformation` |  | 
+.. _field.transformation.plugins.gloo.solo.io.RouteTransformations.request_transformation:
+
+request_transformation
+++++++++++++++++++++++++++
+
+Type: :ref:`message.transformation.plugins.gloo.solo.io.Transformation` 
+
+Description:  
 
 
 
-.. _transformation.plugins.gloo.solo.io.Transformation:
+.. _field.transformation.plugins.gloo.solo.io.RouteTransformations.response_transformation:
+
+response_transformation
+++++++++++++++++++++++++++
+
+Type: :ref:`message.transformation.plugins.gloo.solo.io.Transformation` 
+
+Description:  
+
+
+
+
+
+
+.. _message.transformation.plugins.gloo.solo.io.Transformation:
 
 Transformation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -71,17 +87,34 @@ Transformation
    "transformation_template": .transformation.plugins.gloo.solo.io.TransformationTemplate
    "header_body_transform": .transformation.plugins.gloo.solo.io.HeaderBodyTransform
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `transformation_template` | :ref:`transformation.plugins.gloo.solo.io.TransformationTemplate` |  | 
-   `header_body_transform` | :ref:`transformation.plugins.gloo.solo.io.HeaderBodyTransform` |  | 
+.. _field.transformation.plugins.gloo.solo.io.Transformation.transformation_template:
+
+transformation_template
+++++++++++++++++++++++++++
+
+Type: :ref:`message.transformation.plugins.gloo.solo.io.TransformationTemplate` 
+
+Description:  
 
 
 
-.. _transformation.plugins.gloo.solo.io.Extraction:
+.. _field.transformation.plugins.gloo.solo.io.Transformation.header_body_transform:
+
+header_body_transform
+++++++++++++++++++++++++++
+
+Type: :ref:`message.transformation.plugins.gloo.solo.io.HeaderBodyTransform` 
+
+Description:  
+
+
+
+
+
+
+.. _message.transformation.plugins.gloo.solo.io.Extraction:
 
 Extraction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -95,18 +128,45 @@ Extraction
    "regex": string
    "subgroup": int
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `header` | `string` |  | 
-   `regex` | `string` | what information to extract. if extraction fails the result is an empty value. | 
-   `subgroup` | `int` |  | 
+.. _field.transformation.plugins.gloo.solo.io.Extraction.header:
+
+header
+++++++++++++++++++++++++++
+
+Type: `string` 
+
+Description:  
 
 
 
-.. _transformation.plugins.gloo.solo.io.TransformationTemplate:
+.. _field.transformation.plugins.gloo.solo.io.Extraction.regex:
+
+regex
+++++++++++++++++++++++++++
+
+Type: `string` 
+
+Description: what information to extract. if extraction fails the result is an empty value. 
+
+
+
+.. _field.transformation.plugins.gloo.solo.io.Extraction.subgroup:
+
+subgroup
+++++++++++++++++++++++++++
+
+Type: `int` 
+
+Description:  
+
+
+
+
+
+
+.. _message.transformation.plugins.gloo.solo.io.TransformationTemplate:
 
 TransformationTemplate
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -123,21 +183,78 @@ TransformationTemplate
    "passthrough": .transformation.plugins.gloo.solo.io.Passthrough
    "merge_extractors_to_body": .transformation.plugins.gloo.solo.io.MergeExtractorsToBody
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `advanced_templates` | `bool` |  | 
-   `extractors` | `map<string, .transformation.plugins.gloo.solo.io.Extraction>` | Extractors are in the origin request language domain | 
-   `headers` | `map<string, string>` |  | 
-   `body` | :ref:`transformation.plugins.gloo.solo.io.InjaTemplate` |  | 
-   `passthrough` | :ref:`transformation.plugins.gloo.solo.io.Passthrough` |  | 
-   `merge_extractors_to_body` | :ref:`transformation.plugins.gloo.solo.io.MergeExtractorsToBody` |  | 
+.. _field.transformation.plugins.gloo.solo.io.TransformationTemplate.advanced_templates:
+
+advanced_templates
+++++++++++++++++++++++++++
+
+Type: `bool` 
+
+Description:  
 
 
 
-.. _transformation.plugins.gloo.solo.io.InjaTemplate:
+.. _field.transformation.plugins.gloo.solo.io.TransformationTemplate.extractors:
+
+extractors
+++++++++++++++++++++++++++
+
+Type: `map<string, .transformation.plugins.gloo.solo.io.Extraction>` 
+
+Description: Extractors are in the origin request language domain 
+
+
+
+.. _field.transformation.plugins.gloo.solo.io.TransformationTemplate.headers:
+
+headers
+++++++++++++++++++++++++++
+
+Type: `map<string, string>` 
+
+Description:  
+
+
+
+.. _field.transformation.plugins.gloo.solo.io.TransformationTemplate.body:
+
+body
+++++++++++++++++++++++++++
+
+Type: :ref:`message.transformation.plugins.gloo.solo.io.InjaTemplate` 
+
+Description:  
+
+
+
+.. _field.transformation.plugins.gloo.solo.io.TransformationTemplate.passthrough:
+
+passthrough
+++++++++++++++++++++++++++
+
+Type: :ref:`message.transformation.plugins.gloo.solo.io.Passthrough` 
+
+Description:  
+
+
+
+.. _field.transformation.plugins.gloo.solo.io.TransformationTemplate.merge_extractors_to_body:
+
+merge_extractors_to_body
+++++++++++++++++++++++++++
+
+Type: :ref:`message.transformation.plugins.gloo.solo.io.MergeExtractorsToBody` 
+
+Description:  
+
+
+
+
+
+
+.. _message.transformation.plugins.gloo.solo.io.InjaTemplate:
 
 InjaTemplate
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -153,16 +270,23 @@ extracted_value(name, index) -> from the extracted values
 
    "text": string
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `text` | `string` |  | 
+.. _field.transformation.plugins.gloo.solo.io.InjaTemplate.text:
+
+text
+++++++++++++++++++++++++++
+
+Type: `string` 
+
+Description:  
 
 
 
-.. _transformation.plugins.gloo.solo.io.Passthrough:
+
+
+
+.. _message.transformation.plugins.gloo.solo.io.Passthrough:
 
 Passthrough
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -173,15 +297,12 @@ Passthrough
 
 
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
 
 
 
-.. _transformation.plugins.gloo.solo.io.MergeExtractorsToBody:
+.. _message.transformation.plugins.gloo.solo.io.MergeExtractorsToBody:
 
 MergeExtractorsToBody
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -192,15 +313,12 @@ MergeExtractorsToBody
 
 
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
 
 
 
-.. _transformation.plugins.gloo.solo.io.HeaderBodyTransform:
+.. _message.transformation.plugins.gloo.solo.io.HeaderBodyTransform:
 
 HeaderBodyTransform
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -211,9 +329,6 @@ HeaderBodyTransform
 
 
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
 

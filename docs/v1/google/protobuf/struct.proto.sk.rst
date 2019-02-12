@@ -41,9 +41,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **Types:**
 
 
-- :ref:`google.protobuf.Struct`
-- :ref:`google.protobuf.Value`
-- :ref:`google.protobuf.ListValue`
+- :ref:`message.google.protobuf.Struct`
+- :ref:`message.google.protobuf.Value`
+- :ref:`message.google.protobuf.ListValue`
   
 
  
@@ -60,8 +60,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 
-
-.. _google.protobuf.Struct:
+.. _message.google.protobuf.Struct:
 
 Struct
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -82,16 +81,23 @@ The JSON representation for `Struct` is JSON object.
 
    "fields": map<string, .google.protobuf.Value>
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `fields` | `map<string, .google.protobuf.Value>` | Unordered map of dynamically typed values. | 
+.. _field.google.protobuf.Struct.fields:
+
+fields
+++++++++++++++++++++++++++
+
+Type: `map<string, .google.protobuf.Value>` 
+
+Description: Unordered map of dynamically typed values. 
 
 
 
-.. _google.protobuf.Value:
+
+
+
+.. _message.google.protobuf.Value:
 
 Value
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -115,21 +121,78 @@ The JSON representation for `Value` is JSON value.
    "struct_value": .google.protobuf.Struct
    "list_value": .google.protobuf.ListValue
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `null_value` | `.google.protobuf.NullValue<https://developers.google.com/protocol-buffers/docs/reference/csharp/class/google/protobuf/well-known-types/null-value>`_ | Represents a null value. | 
-   `number_value` | `float` | Represents a double value. | 
-   `string_value` | `string` | Represents a string value. | 
-   `bool_value` | `bool` | Represents a boolean value. | 
-   `struct_value` | `.google.protobuf.Struct<https://developers.google.com/protocol-buffers/docs/reference/csharp/class/google/protobuf/well-known-types/struct>`_ | Represents a structured value. | 
-   `list_value` | `.google.protobuf.ListValue<https://developers.google.com/protocol-buffers/docs/reference/csharp/class/google/protobuf/well-known-types/list-value>`_ | Represents a repeated `Value`. | 
+.. _field.google.protobuf.Value.null_value:
+
+null_value
+++++++++++++++++++++++++++
+
+Type: `.google.protobuf.NullValue<https://developers.google.com/protocol-buffers/docs/reference/csharp/class/google/protobuf/well-known-types/null-value>`_ 
+
+Description: Represents a null value. 
 
 
 
-.. _google.protobuf.ListValue:
+.. _field.google.protobuf.Value.number_value:
+
+number_value
+++++++++++++++++++++++++++
+
+Type: `float` 
+
+Description: Represents a double value. 
+
+
+
+.. _field.google.protobuf.Value.string_value:
+
+string_value
+++++++++++++++++++++++++++
+
+Type: `string` 
+
+Description: Represents a string value. 
+
+
+
+.. _field.google.protobuf.Value.bool_value:
+
+bool_value
+++++++++++++++++++++++++++
+
+Type: `bool` 
+
+Description: Represents a boolean value. 
+
+
+
+.. _field.google.protobuf.Value.struct_value:
+
+struct_value
+++++++++++++++++++++++++++
+
+Type: `.google.protobuf.Struct<https://developers.google.com/protocol-buffers/docs/reference/csharp/class/google/protobuf/well-known-types/struct>`_ 
+
+Description: Represents a structured value. 
+
+
+
+.. _field.google.protobuf.Value.list_value:
+
+list_value
+++++++++++++++++++++++++++
+
+Type: `.google.protobuf.ListValue<https://developers.google.com/protocol-buffers/docs/reference/csharp/class/google/protobuf/well-known-types/list-value>`_ 
+
+Description: Represents a repeated `Value`. 
+
+
+
+
+
+
+.. _message.google.protobuf.ListValue:
 
 ListValue
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -145,12 +208,19 @@ The JSON representation for `ListValue` is JSON array.
 
    "values": []google.protobuf.Value
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `values` | :ref:`[]google.protobuf.Value` | Repeated field of dynamically typed values. | 
+.. _field.google.protobuf.ListValue.values:
+
+values
+++++++++++++++++++++++++++
+
+Type: :ref:`message.google.protobuf.Value` 
+
+Description: Repeated field of dynamically typed values. 
+
+
+
 
 
 

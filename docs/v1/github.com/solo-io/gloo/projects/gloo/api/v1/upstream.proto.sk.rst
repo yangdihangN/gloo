@@ -9,8 +9,8 @@ Package: `gloo.solo.io`
 **Types:**
 
 
-- :ref:`gloo.solo.io.Upstream` **Top-Level Resource**
-- :ref:`gloo.solo.io.DiscoveryMetadata`
+- :ref:`message.gloo.solo.io.Upstream` **Top-Level Resource**
+- :ref:`message.gloo.solo.io.DiscoveryMetadata`
   
 
 
@@ -20,8 +20,7 @@ Package: `gloo.solo.io`
 
 
 
-
-.. _gloo.solo.io.Upstream:
+.. _message.gloo.solo.io.Upstream:
 
 Upstream
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -42,19 +41,56 @@ Each upstream type is handled by a corresponding Gloo plugin.
    "metadata": .core.solo.io.Metadata
    "discovery_metadata": .gloo.solo.io.DiscoveryMetadata
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `upstream_spec` | :ref:`gloo.solo.io.UpstreamSpec` | Type-specific configuration. Examples include static, kubernetes, and aws. The type-specific config for the upstream is called a spec. | 
-   `status` | :ref:`core.solo.io.Status` | Status indicates the validation status of the resource. Status is read-only by clients, and set by gloo during validation | 
-   `metadata` | :ref:`core.solo.io.Metadata` | Metadata contains the object metadata for this resource | 
-   `discovery_metadata` | :ref:`gloo.solo.io.DiscoveryMetadata` | Upstreams and their configuration can be automatically by Gloo Discovery if this upstream is created or modified by Discovery, metadata about the operation will be placed here. | 
+.. _field.gloo.solo.io.Upstream.upstream_spec:
+
+upstream_spec
+++++++++++++++++++++++++++
+
+Type: :ref:`message.gloo.solo.io.UpstreamSpec` 
+
+Description: Type-specific configuration. Examples include static, kubernetes, and aws. The type-specific config for the upstream is called a spec. 
 
 
 
-.. _gloo.solo.io.DiscoveryMetadata:
+.. _field.gloo.solo.io.Upstream.status:
+
+status
+++++++++++++++++++++++++++
+
+Type: :ref:`message.core.solo.io.Status` 
+
+Description: Status indicates the validation status of the resource. Status is read-only by clients, and set by gloo during validation 
+
+
+
+.. _field.gloo.solo.io.Upstream.metadata:
+
+metadata
+++++++++++++++++++++++++++
+
+Type: :ref:`message.core.solo.io.Metadata` 
+
+Description: Metadata contains the object metadata for this resource 
+
+
+
+.. _field.gloo.solo.io.Upstream.discovery_metadata:
+
+discovery_metadata
+++++++++++++++++++++++++++
+
+Type: :ref:`message.gloo.solo.io.DiscoveryMetadata` 
+
+Description: Upstreams and their configuration can be automatically by Gloo Discovery if this upstream is created or modified by Discovery, metadata about the operation will be placed here. 
+
+
+
+
+
+
+.. _message.gloo.solo.io.DiscoveryMetadata:
 
 DiscoveryMetadata
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -67,9 +103,6 @@ created by discovery services
 
 
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
 

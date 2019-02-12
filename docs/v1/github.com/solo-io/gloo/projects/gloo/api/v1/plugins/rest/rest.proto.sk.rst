@@ -9,9 +9,9 @@ Package: `rest.plugins.gloo.solo.io`
 **Types:**
 
 
-- :ref:`rest.plugins.gloo.solo.io.ServiceSpec`
-- :ref:`rest.plugins.gloo.solo.io.ServiceSpec.SwaggerInfo`
-- :ref:`rest.plugins.gloo.solo.io.DestinationSpec`
+- :ref:`message.rest.plugins.gloo.solo.io.ServiceSpec`
+- :ref:`message.rest.plugins.gloo.solo.io.ServiceSpec.SwaggerInfo`
+- :ref:`message.rest.plugins.gloo.solo.io.DestinationSpec`
   
 
 
@@ -21,8 +21,7 @@ Package: `rest.plugins.gloo.solo.io`
 
 
 
-
-.. _rest.plugins.gloo.solo.io.ServiceSpec:
+.. _message.rest.plugins.gloo.solo.io.ServiceSpec:
 
 ServiceSpec
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -35,17 +34,34 @@ ServiceSpec
    "transformations": map<string, .transformation.plugins.gloo.solo.io.TransformationTemplate>
    "swagger_info": .rest.plugins.gloo.solo.io.ServiceSpec.SwaggerInfo
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `transformations` | `map<string, .transformation.plugins.gloo.solo.io.TransformationTemplate>` |  | 
-   `swagger_info` | :ref:`rest.plugins.gloo.solo.io.ServiceSpec.SwaggerInfo` |  | 
+.. _field.rest.plugins.gloo.solo.io.ServiceSpec.transformations:
+
+transformations
+++++++++++++++++++++++++++
+
+Type: `map<string, .transformation.plugins.gloo.solo.io.TransformationTemplate>` 
+
+Description:  
 
 
 
-.. _rest.plugins.gloo.solo.io.ServiceSpec.SwaggerInfo:
+.. _field.rest.plugins.gloo.solo.io.ServiceSpec.swagger_info:
+
+swagger_info
+++++++++++++++++++++++++++
+
+Type: :ref:`message.rest.plugins.gloo.solo.io.ServiceSpec.SwaggerInfo` 
+
+Description:  
+
+
+
+
+
+
+.. _message.rest.plugins.gloo.solo.io.ServiceSpec.SwaggerInfo:
 
 SwaggerInfo
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -58,17 +74,34 @@ SwaggerInfo
    "url": string
    "inline": string
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `url` | `string` |  | 
-   `inline` | `string` |  | 
+.. _field.rest.plugins.gloo.solo.io.ServiceSpec.SwaggerInfo.url:
+
+url
+++++++++++++++++++++++++++
+
+Type: `string` 
+
+Description:  
 
 
 
-.. _rest.plugins.gloo.solo.io.DestinationSpec:
+.. _field.rest.plugins.gloo.solo.io.ServiceSpec.SwaggerInfo.inline:
+
+inline
+++++++++++++++++++++++++++
+
+Type: `string` 
+
+Description:  
+
+
+
+
+
+
+.. _message.rest.plugins.gloo.solo.io.DestinationSpec:
 
 DestinationSpec
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -84,14 +117,41 @@ This is only for upstream with REST service spec
    "parameters": .transformation.plugins.gloo.solo.io.Parameters
    "response_transformation": .transformation.plugins.gloo.solo.io.TransformationTemplate
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `function_name` | `string` |  | 
-   `parameters` | :ref:`transformation.plugins.gloo.solo.io.Parameters` |  | 
-   `response_transformation` | :ref:`transformation.plugins.gloo.solo.io.TransformationTemplate` |  | 
+.. _field.rest.plugins.gloo.solo.io.DestinationSpec.function_name:
+
+function_name
+++++++++++++++++++++++++++
+
+Type: `string` 
+
+Description:  
+
+
+
+.. _field.rest.plugins.gloo.solo.io.DestinationSpec.parameters:
+
+parameters
+++++++++++++++++++++++++++
+
+Type: :ref:`message.transformation.plugins.gloo.solo.io.Parameters` 
+
+Description:  
+
+
+
+.. _field.rest.plugins.gloo.solo.io.DestinationSpec.response_transformation:
+
+response_transformation
+++++++++++++++++++++++++++
+
+Type: :ref:`message.transformation.plugins.gloo.solo.io.TransformationTemplate` 
+
+Description:  
+
+
+
 
 
 

@@ -9,7 +9,7 @@ Package: `clusteringress.gloo.solo.io`
 **Types:**
 
 
-- :ref:`clusteringress.gloo.solo.io.ClusterIngress` **Top-Level Resource**
+- :ref:`message.clusteringress.gloo.solo.io.ClusterIngress` **Top-Level Resource**
   
 
 
@@ -19,8 +19,7 @@ Package: `clusteringress.gloo.solo.io`
 
 
 
-
-.. _clusteringress.gloo.solo.io.ClusterIngress:
+.. _message.clusteringress.gloo.solo.io.ClusterIngress:
 
 ClusterIngress
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -37,15 +36,52 @@ A simple wrapper for a kNative ClusterIngress Object.
    "cluster_ingress_spec": .google.protobuf.Any
    "cluster_ingress_status": .google.protobuf.Any
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `metadata` | :ref:`core.solo.io.Metadata` |  | 
-   `status` | :ref:`core.solo.io.Status` |  | 
-   `cluster_ingress_spec` | `.google.protobuf.Any<https://developers.google.com/protocol-buffers/docs/reference/csharp/class/google/protobuf/well-known-types/any>`_ | a raw byte representation of the cluster ingress this resource wraps | 
-   `cluster_ingress_status` | `.google.protobuf.Any<https://developers.google.com/protocol-buffers/docs/reference/csharp/class/google/protobuf/well-known-types/any>`_ | a raw byte representation of the ingress status of the cluster ingress object | 
+.. _field.clusteringress.gloo.solo.io.ClusterIngress.metadata:
+
+metadata
+++++++++++++++++++++++++++
+
+Type: :ref:`message.core.solo.io.Metadata` 
+
+Description:  
+
+
+
+.. _field.clusteringress.gloo.solo.io.ClusterIngress.status:
+
+status
+++++++++++++++++++++++++++
+
+Type: :ref:`message.core.solo.io.Status` 
+
+Description:  
+
+
+
+.. _field.clusteringress.gloo.solo.io.ClusterIngress.cluster_ingress_spec:
+
+cluster_ingress_spec
+++++++++++++++++++++++++++
+
+Type: `.google.protobuf.Any<https://developers.google.com/protocol-buffers/docs/reference/csharp/class/google/protobuf/well-known-types/any>`_ 
+
+Description: a raw byte representation of the cluster ingress this resource wraps 
+
+
+
+.. _field.clusteringress.gloo.solo.io.ClusterIngress.cluster_ingress_status:
+
+cluster_ingress_status
+++++++++++++++++++++++++++
+
+Type: `.google.protobuf.Any<https://developers.google.com/protocol-buffers/docs/reference/csharp/class/google/protobuf/well-known-types/any>`_ 
+
+Description: a raw byte representation of the ingress status of the cluster ingress object 
+
+
+
 
 
 

@@ -9,7 +9,7 @@ Package: `core.solo.io`
 **Types:**
 
 
-- :ref:`core.solo.io.Resource`
+- :ref:`message.core.solo.io.Resource`
   
 
 
@@ -19,8 +19,7 @@ Package: `core.solo.io`
 
 
 
-
-.. _core.solo.io.Resource:
+.. _message.core.solo.io.Resource:
 
 Resource
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -35,15 +34,52 @@ Resource
    "cluster_scoped": bool
    "skip_docs_gen": bool
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `short_name` | `string` | becomes the kubernetes short name for the generated crd | 
-   `plural_name` | `string` | becomes the kubernetes plural name for the generated crd | 
-   `cluster_scoped` | `bool` | the resource lives at the cluster level, namespace is ignored by the server | 
-   `skip_docs_gen` | `bool` | indicates whether documentation generation has to be skipped for the given resource, defaults to false | 
+.. _field.core.solo.io.Resource.short_name:
+
+short_name
+++++++++++++++++++++++++++
+
+Type: `string` 
+
+Description: becomes the kubernetes short name for the generated crd 
+
+
+
+.. _field.core.solo.io.Resource.plural_name:
+
+plural_name
+++++++++++++++++++++++++++
+
+Type: `string` 
+
+Description: becomes the kubernetes plural name for the generated crd 
+
+
+
+.. _field.core.solo.io.Resource.cluster_scoped:
+
+cluster_scoped
+++++++++++++++++++++++++++
+
+Type: `bool` 
+
+Description: the resource lives at the cluster level, namespace is ignored by the server 
+
+
+
+.. _field.core.solo.io.Resource.skip_docs_gen:
+
+skip_docs_gen
+++++++++++++++++++++++++++
+
+Type: `bool` 
+
+Description: indicates whether documentation generation has to be skipped for the given resource, defaults to false 
+
+
+
 
 
 

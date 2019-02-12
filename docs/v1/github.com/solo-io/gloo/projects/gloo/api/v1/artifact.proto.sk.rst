@@ -9,7 +9,7 @@ Package: `gloo.solo.io`
 **Types:**
 
 
-- :ref:`gloo.solo.io.Artifact` **Top-Level Resource**
+- :ref:`message.gloo.solo.io.Artifact` **Top-Level Resource**
   
 
 
@@ -19,8 +19,7 @@ Package: `gloo.solo.io`
 
 
 
-
-.. _gloo.solo.io.Artifact:
+.. _message.gloo.solo.io.Artifact:
 
 Artifact
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -43,13 +42,30 @@ Supported artifact backends can be selected in Gloo's boostrap options.
    "data": string
    "metadata": .core.solo.io.Metadata
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `data` | `string` | Raw data data being stored | 
-   `metadata` | :ref:`core.solo.io.Metadata` | Metadata contains the object metadata for this resource | 
+.. _field.gloo.solo.io.Artifact.data:
+
+data
+++++++++++++++++++++++++++
+
+Type: `string` 
+
+Description: Raw data data being stored 
+
+
+
+.. _field.gloo.solo.io.Artifact.metadata:
+
+metadata
+++++++++++++++++++++++++++
+
+Type: :ref:`message.core.solo.io.Metadata` 
+
+Description: Metadata contains the object metadata for this resource 
+
+
+
 
 
 

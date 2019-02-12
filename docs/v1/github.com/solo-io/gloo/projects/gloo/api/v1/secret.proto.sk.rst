@@ -9,10 +9,10 @@ Package: `gloo.solo.io`
 **Types:**
 
 
-- :ref:`gloo.solo.io.Secret` **Top-Level Resource**
-- :ref:`gloo.solo.io.AwsSecret`
-- :ref:`gloo.solo.io.AzureSecret`
-- :ref:`gloo.solo.io.TlsSecret`
+- :ref:`message.gloo.solo.io.Secret` **Top-Level Resource**
+- :ref:`message.gloo.solo.io.AwsSecret`
+- :ref:`message.gloo.solo.io.AzureSecret`
+- :ref:`message.gloo.solo.io.TlsSecret`
   
 
 
@@ -22,8 +22,7 @@ Package: `gloo.solo.io`
 
 
 
-
-.. _gloo.solo.io.Secret:
+.. _message.gloo.solo.io.Secret:
 
 Secret
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -51,20 +50,67 @@ Gloo's secret backend can be configured in Gloo's bootstrap options
    "extension": .gloo.solo.io.Extension
    "metadata": .core.solo.io.Metadata
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `aws` | :ref:`gloo.solo.io.AwsSecret` |  | 
-   `azure` | :ref:`gloo.solo.io.AzureSecret` |  | 
-   `tls` | :ref:`gloo.solo.io.TlsSecret` |  | 
-   `extension` | :ref:`gloo.solo.io.Extension` |  | 
-   `metadata` | :ref:`core.solo.io.Metadata` | Metadata contains the object metadata for this resource | 
+.. _field.gloo.solo.io.Secret.aws:
+
+aws
+++++++++++++++++++++++++++
+
+Type: :ref:`message.gloo.solo.io.AwsSecret` 
+
+Description:  
 
 
 
-.. _gloo.solo.io.AwsSecret:
+.. _field.gloo.solo.io.Secret.azure:
+
+azure
+++++++++++++++++++++++++++
+
+Type: :ref:`message.gloo.solo.io.AzureSecret` 
+
+Description:  
+
+
+
+.. _field.gloo.solo.io.Secret.tls:
+
+tls
+++++++++++++++++++++++++++
+
+Type: :ref:`message.gloo.solo.io.TlsSecret` 
+
+Description:  
+
+
+
+.. _field.gloo.solo.io.Secret.extension:
+
+extension
+++++++++++++++++++++++++++
+
+Type: :ref:`message.gloo.solo.io.Extension` 
+
+Description:  
+
+
+
+.. _field.gloo.solo.io.Secret.metadata:
+
+metadata
+++++++++++++++++++++++++++
+
+Type: :ref:`message.core.solo.io.Metadata` 
+
+Description: Metadata contains the object metadata for this resource 
+
+
+
+
+
+
+.. _message.gloo.solo.io.AwsSecret:
 
 AwsSecret
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -77,17 +123,34 @@ AwsSecret
    "access_key": string
    "secret_key": string
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `access_key` | `string` |  | 
-   `secret_key` | `string` |  | 
+.. _field.gloo.solo.io.AwsSecret.access_key:
+
+access_key
+++++++++++++++++++++++++++
+
+Type: `string` 
+
+Description:  
 
 
 
-.. _gloo.solo.io.AzureSecret:
+.. _field.gloo.solo.io.AwsSecret.secret_key:
+
+secret_key
+++++++++++++++++++++++++++
+
+Type: `string` 
+
+Description:  
+
+
+
+
+
+
+.. _message.gloo.solo.io.AzureSecret:
 
 AzureSecret
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -99,16 +162,23 @@ AzureSecret
 
    "api_keys": map<string, string>
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `api_keys` | `map<string, string>` |  | 
+.. _field.gloo.solo.io.AzureSecret.api_keys:
+
+api_keys
+++++++++++++++++++++++++++
+
+Type: `map<string, string>` 
+
+Description:  
 
 
 
-.. _gloo.solo.io.TlsSecret:
+
+
+
+.. _message.gloo.solo.io.TlsSecret:
 
 TlsSecret
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -122,14 +192,41 @@ TlsSecret
    "private_key": string
    "root_ca": string
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `cert_chain` | `string` |  | 
-   `private_key` | `string` |  | 
-   `root_ca` | `string` |  | 
+.. _field.gloo.solo.io.TlsSecret.cert_chain:
+
+cert_chain
+++++++++++++++++++++++++++
+
+Type: `string` 
+
+Description:  
+
+
+
+.. _field.gloo.solo.io.TlsSecret.private_key:
+
+private_key
+++++++++++++++++++++++++++
+
+Type: `string` 
+
+Description:  
+
+
+
+.. _field.gloo.solo.io.TlsSecret.root_ca:
+
+root_ca
+++++++++++++++++++++++++++
+
+Type: `string` 
+
+Description:  
+
+
+
 
 
 

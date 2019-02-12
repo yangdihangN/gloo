@@ -37,5 +37,5 @@ Options inherited from parent commands
 SEE ALSO
 ~~~~~~~~
 
-* `glooctl route <glooctl_route.rst>`_ 	 - subcommands for interacting with routes within virtual services
+* :ref:`glooctl route <glooctl_route>` 	 - subcommands for interacting with routes within virtual services
 

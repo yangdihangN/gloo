@@ -30,9 +30,9 @@ Options inherited from parent commands
 SEE ALSO
 ~~~~~~~~
 
-* `glooctl <glooctl.rst>`_ 	 - CLI for Gloo
-* `glooctl proxy dump <glooctl_proxy_dump.rst>`_ 	 - dump Envoy config from one of the proxy instances
-* `glooctl proxy logs <glooctl_proxy_logs.rst>`_ 	 - dump Envoy logs from one of the proxy instancesNote: this will enable verbose logging on Envoy
-* `glooctl proxy stats <glooctl_proxy_stats.rst>`_ 	 - stats for one of the proxy instances
-* `glooctl proxy url <glooctl_proxy_url.rst>`_ 	 - print the http endpoint for a proxy
+* :ref:`glooctl <glooctl>` 	 - CLI for Gloo
+* :ref:`glooctl proxy dump <glooctl_proxy_dump>` 	 - dump Envoy config from one of the proxy instances
+* :ref:`glooctl proxy logs <glooctl_proxy_logs>` 	 - dump Envoy logs from one of the proxy instancesNote: this will enable verbose logging on Envoy
+* :ref:`glooctl proxy stats <glooctl_proxy_stats>` 	 - stats for one of the proxy instances
+* :ref:`glooctl proxy url <glooctl_proxy_url>` 	 - print the http endpoint for a proxy
 

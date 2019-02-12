@@ -30,6 +30,6 @@ Options inherited from parent commands
 SEE ALSO
 ~~~~~~~~
 
-* `glooctl <glooctl.rst>`_ 	 - CLI for Gloo
-* `glooctl route sort <glooctl_route_sort.rst>`_ 	 - sort routes on an existing virtual service
+* :ref:`glooctl <glooctl>` 	 - CLI for Gloo
+* :ref:`glooctl route sort <glooctl_route_sort>` 	 - sort routes on an existing virtual service
 

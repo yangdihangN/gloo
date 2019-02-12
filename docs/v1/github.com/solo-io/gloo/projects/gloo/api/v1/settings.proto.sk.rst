@@ -9,12 +9,12 @@ Package: `gloo.solo.io`
 **Types:**
 
 
-- :ref:`gloo.solo.io.Settings` **Top-Level Resource**
-- :ref:`gloo.solo.io.Settings.KubernetesCrds`
-- :ref:`gloo.solo.io.Settings.KubernetesSecrets`
-- :ref:`gloo.solo.io.Settings.VaultSecrets`
-- :ref:`gloo.solo.io.Settings.KubernetesConfigmaps`
-- :ref:`gloo.solo.io.Settings.Directory`
+- :ref:`message.gloo.solo.io.Settings` **Top-Level Resource**
+- :ref:`message.gloo.solo.io.Settings.KubernetesCrds`
+- :ref:`message.gloo.solo.io.Settings.KubernetesSecrets`
+- :ref:`message.gloo.solo.io.Settings.VaultSecrets`
+- :ref:`message.gloo.solo.io.Settings.KubernetesConfigmaps`
+- :ref:`message.gloo.solo.io.Settings.Directory`
   
 
 
@@ -24,8 +24,7 @@ Package: `gloo.solo.io`
 
 
 
-
-.. _gloo.solo.io.Settings:
+.. _message.gloo.solo.io.Settings:
 
 Settings
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -53,30 +52,177 @@ Settings
    "metadata": .core.solo.io.Metadata
    "status": .core.solo.io.Status
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `discovery_namespace` | `string` | namespace to write discovered data | 
-   `watch_namespaces` | `[]string` | namespaces to watch for user config as well as services TODO(ilackarms): split out watch_namespaces and service_discovery_namespaces... | 
-   `kubernetes_config_source` | :ref:`gloo.solo.io.Settings.KubernetesCrds` |  | 
-   `directory_config_source` | :ref:`gloo.solo.io.Settings.Directory` |  | 
-   `kubernetes_secret_source` | :ref:`gloo.solo.io.Settings.KubernetesSecrets` |  | 
-   `vault_secret_source` | :ref:`gloo.solo.io.Settings.VaultSecrets` |  | 
-   `directory_secret_source` | :ref:`gloo.solo.io.Settings.Directory` |  | 
-   `kubernetes_artifact_source` | :ref:`gloo.solo.io.Settings.KubernetesConfigmaps` |  | 
-   `directory_artifact_source` | :ref:`gloo.solo.io.Settings.Directory` |  | 
-   `bind_addr` | `string` | where the gloo xds server should bind (should not need configuration by user) | 
-   `refresh_rate` | `.google.protobuf.Duration<https://developers.google.com/protocol-buffers/docs/reference/csharp/class/google/protobuf/well-known-types/duration>`_ | how frequently to resync watches, etc | 
-   `dev_mode` | `bool` | enable serving debug data on port 9090 | 
-   `extensions` | :ref:`gloo.solo.io.Extensions` | Settings for extensions | 
-   `metadata` | :ref:`core.solo.io.Metadata` | Metadata contains the object metadata for this resource | 
-   `status` | :ref:`core.solo.io.Status` | Status indicates the validation status of this resource. Status is read-only by clients, and set by gloo during validation | 
+.. _field.gloo.solo.io.Settings.discovery_namespace:
+
+discovery_namespace
+++++++++++++++++++++++++++
+
+Type: `string` 
+
+Description: namespace to write discovered data 
 
 
 
-.. _gloo.solo.io.Settings.KubernetesCrds:
+.. _field.gloo.solo.io.Settings.watch_namespaces:
+
+watch_namespaces
+++++++++++++++++++++++++++
+
+Type: `[]string` 
+
+Description: namespaces to watch for user config as well as services TODO(ilackarms): split out watch_namespaces and service_discovery_namespaces... 
+
+
+
+.. _field.gloo.solo.io.Settings.kubernetes_config_source:
+
+kubernetes_config_source
+++++++++++++++++++++++++++
+
+Type: :ref:`message.gloo.solo.io.Settings.KubernetesCrds` 
+
+Description:  
+
+
+
+.. _field.gloo.solo.io.Settings.directory_config_source:
+
+directory_config_source
+++++++++++++++++++++++++++
+
+Type: :ref:`message.gloo.solo.io.Settings.Directory` 
+
+Description:  
+
+
+
+.. _field.gloo.solo.io.Settings.kubernetes_secret_source:
+
+kubernetes_secret_source
+++++++++++++++++++++++++++
+
+Type: :ref:`message.gloo.solo.io.Settings.KubernetesSecrets` 
+
+Description:  
+
+
+
+.. _field.gloo.solo.io.Settings.vault_secret_source:
+
+vault_secret_source
+++++++++++++++++++++++++++
+
+Type: :ref:`message.gloo.solo.io.Settings.VaultSecrets` 
+
+Description:  
+
+
+
+.. _field.gloo.solo.io.Settings.directory_secret_source:
+
+directory_secret_source
+++++++++++++++++++++++++++
+
+Type: :ref:`message.gloo.solo.io.Settings.Directory` 
+
+Description:  
+
+
+
+.. _field.gloo.solo.io.Settings.kubernetes_artifact_source:
+
+kubernetes_artifact_source
+++++++++++++++++++++++++++
+
+Type: :ref:`message.gloo.solo.io.Settings.KubernetesConfigmaps` 
+
+Description:  
+
+
+
+.. _field.gloo.solo.io.Settings.directory_artifact_source:
+
+directory_artifact_source
+++++++++++++++++++++++++++
+
+Type: :ref:`message.gloo.solo.io.Settings.Directory` 
+
+Description:  
+
+
+
+.. _field.gloo.solo.io.Settings.bind_addr:
+
+bind_addr
+++++++++++++++++++++++++++
+
+Type: `string` 
+
+Description: where the gloo xds server should bind (should not need configuration by user) 
+
+
+
+.. _field.gloo.solo.io.Settings.refresh_rate:
+
+refresh_rate
+++++++++++++++++++++++++++
+
+Type: `.google.protobuf.Duration<https://developers.google.com/protocol-buffers/docs/reference/csharp/class/google/protobuf/well-known-types/duration>`_ 
+
+Description: how frequently to resync watches, etc 
+
+
+
+.. _field.gloo.solo.io.Settings.dev_mode:
+
+dev_mode
+++++++++++++++++++++++++++
+
+Type: `bool` 
+
+Description: enable serving debug data on port 9090 
+
+
+
+.. _field.gloo.solo.io.Settings.extensions:
+
+extensions
+++++++++++++++++++++++++++
+
+Type: :ref:`message.gloo.solo.io.Extensions` 
+
+Description: Settings for extensions 
+
+
+
+.. _field.gloo.solo.io.Settings.metadata:
+
+metadata
+++++++++++++++++++++++++++
+
+Type: :ref:`message.core.solo.io.Metadata` 
+
+Description: Metadata contains the object metadata for this resource 
+
+
+
+.. _field.gloo.solo.io.Settings.status:
+
+status
+++++++++++++++++++++++++++
+
+Type: :ref:`message.core.solo.io.Status` 
+
+Description: Status indicates the validation status of this resource. Status is read-only by clients, and set by gloo during validation 
+
+
+
+
+
+
+.. _message.gloo.solo.io.Settings.KubernetesCrds:
 
 KubernetesCrds
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -89,15 +235,12 @@ ilackarms(todo: make sure these are configurable)
 
 
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
 
 
 
-.. _gloo.solo.io.Settings.KubernetesSecrets:
+.. _message.gloo.solo.io.Settings.KubernetesSecrets:
 
 KubernetesSecrets
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -108,15 +251,12 @@ KubernetesSecrets
 
 
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
 
 
 
-.. _gloo.solo.io.Settings.VaultSecrets:
+.. _message.gloo.solo.io.Settings.VaultSecrets:
 
 VaultSecrets
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -127,15 +267,12 @@ VaultSecrets
 
 
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
 
 
 
-.. _gloo.solo.io.Settings.KubernetesConfigmaps:
+.. _message.gloo.solo.io.Settings.KubernetesConfigmaps:
 
 KubernetesConfigmaps
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -146,15 +283,12 @@ KubernetesConfigmaps
 
 
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
 
 
 
-.. _gloo.solo.io.Settings.Directory:
+.. _message.gloo.solo.io.Settings.Directory:
 
 Directory
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -166,12 +300,19 @@ Directory
 
    "directory": string
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `directory` | `string` |  | 
+.. _field.gloo.solo.io.Settings.Directory.directory:
+
+directory
+++++++++++++++++++++++++++
+
+Type: `string` 
+
+Description:  
+
+
+
 
 
 

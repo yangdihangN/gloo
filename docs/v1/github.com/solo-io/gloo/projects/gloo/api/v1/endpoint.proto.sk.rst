@@ -9,7 +9,7 @@ Package: `gloo.solo.io`
 **Types:**
 
 
-- :ref:`gloo.solo.io.Endpoint` **Top-Level Resource**
+- :ref:`message.gloo.solo.io.Endpoint` **Top-Level Resource**
   
 
 
@@ -19,8 +19,7 @@ Package: `gloo.solo.io`
 
 
 
-
-.. _gloo.solo.io.Endpoint:
+.. _message.gloo.solo.io.Endpoint:
 
 Endpoint
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -38,15 +37,52 @@ Endpoints represent dynamically discovered address/ports where an upstream servi
    "port": int
    "metadata": .core.solo.io.Metadata
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `upstreams` | :ref:`[]core.solo.io.ResourceRef` | List of the upstreams the endpoint belongs to | 
-   `address` | `string` | Address of the endpoint (ip or hostname) | 
-   `port` | `int` | listening port for the endpoint | 
-   `metadata` | :ref:`core.solo.io.Metadata` | Metadata contains the object metadata for this resource | 
+.. _field.gloo.solo.io.Endpoint.upstreams:
+
+upstreams
+++++++++++++++++++++++++++
+
+Type: :ref:`message.core.solo.io.ResourceRef` 
+
+Description: List of the upstreams the endpoint belongs to 
+
+
+
+.. _field.gloo.solo.io.Endpoint.address:
+
+address
+++++++++++++++++++++++++++
+
+Type: `string` 
+
+Description: Address of the endpoint (ip or hostname) 
+
+
+
+.. _field.gloo.solo.io.Endpoint.port:
+
+port
+++++++++++++++++++++++++++
+
+Type: `int` 
+
+Description: listening port for the endpoint 
+
+
+
+.. _field.gloo.solo.io.Endpoint.metadata:
+
+metadata
+++++++++++++++++++++++++++
+
+Type: :ref:`message.core.solo.io.Metadata` 
+
+Description: Metadata contains the object metadata for this resource 
+
+
+
 
 
 

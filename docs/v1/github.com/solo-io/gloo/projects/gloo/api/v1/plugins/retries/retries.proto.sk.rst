@@ -15,7 +15,7 @@ TODO: to solo-kit/api/envoy
 **Types:**
 
 
-- :ref:`retries.plugins.gloo.solo.io.RetryPolicy`
+- :ref:`message.retries.plugins.gloo.solo.io.RetryPolicy`
   
 
 
@@ -25,8 +25,7 @@ TODO: to solo-kit/api/envoy
 
 
 
-
-.. _retries.plugins.gloo.solo.io.RetryPolicy:
+.. _message.retries.plugins.gloo.solo.io.RetryPolicy:
 
 RetryPolicy
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -42,14 +41,41 @@ Retry Policy applied to a route
    "num_retries": int
    "per_try_timeout": .google.protobuf.Duration
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `retry_on` | `string` | Specifies the conditions under which retry takes place. These are the same conditions [documented for Envoy](https://www.envoyproxy.io/docs/envoy/latest/configuration/http_filters/router_filter#config-http-filters-router-x-envoy-retry-on) | 
-   `num_retries` | `int` | Specifies the allowed number of retries. This parameter is optional and defaults to 1. These are the same conditions [documented for Envoy](https://www.envoyproxy.io/docs/envoy/latest/configuration/http_filters/router_filter#config-http-filters-router-x-envoy-retry-on) | 
-   `per_try_timeout` | `.google.protobuf.Duration<https://developers.google.com/protocol-buffers/docs/reference/csharp/class/google/protobuf/well-known-types/duration>`_ | Specifies a non-zero upstream timeout per retry attempt. This parameter is optional. | 
+.. _field.retries.plugins.gloo.solo.io.RetryPolicy.retry_on:
+
+retry_on
+++++++++++++++++++++++++++
+
+Type: `string` 
+
+Description: Specifies the conditions under which retry takes place. These are the same conditions [documented for Envoy](https://www.envoyproxy.io/docs/envoy/latest/configuration/http_filters/router_filter#config-http-filters-router-x-envoy-retry-on) 
+
+
+
+.. _field.retries.plugins.gloo.solo.io.RetryPolicy.num_retries:
+
+num_retries
+++++++++++++++++++++++++++
+
+Type: `int` 
+
+Description: Specifies the allowed number of retries. This parameter is optional and defaults to 1. These are the same conditions [documented for Envoy](https://www.envoyproxy.io/docs/envoy/latest/configuration/http_filters/router_filter#config-http-filters-router-x-envoy-retry-on) 
+
+
+
+.. _field.retries.plugins.gloo.solo.io.RetryPolicy.per_try_timeout:
+
+per_try_timeout
+++++++++++++++++++++++++++
+
+Type: `.google.protobuf.Duration<https://developers.google.com/protocol-buffers/docs/reference/csharp/class/google/protobuf/well-known-types/duration>`_ 
+
+Description: Specifies a non-zero upstream timeout per retry attempt. This parameter is optional. 
+
+
+
 
 
 

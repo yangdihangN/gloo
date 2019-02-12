@@ -45,15 +45,15 @@ typed field and its default value.
 **Types:**
 
 
-- :ref:`google.protobuf.DoubleValue`
-- :ref:`google.protobuf.FloatValue`
-- :ref:`google.protobuf.Int64Value`
-- :ref:`google.protobuf.UInt64Value`
-- :ref:`google.protobuf.Int32Value`
-- :ref:`google.protobuf.UInt32Value`
-- :ref:`google.protobuf.BoolValue`
-- :ref:`google.protobuf.StringValue`
-- :ref:`google.protobuf.BytesValue`
+- :ref:`message.google.protobuf.DoubleValue`
+- :ref:`message.google.protobuf.FloatValue`
+- :ref:`message.google.protobuf.Int64Value`
+- :ref:`message.google.protobuf.UInt64Value`
+- :ref:`message.google.protobuf.Int32Value`
+- :ref:`message.google.protobuf.UInt32Value`
+- :ref:`message.google.protobuf.BoolValue`
+- :ref:`message.google.protobuf.StringValue`
+- :ref:`message.google.protobuf.BytesValue`
   
 
 
@@ -63,8 +63,7 @@ typed field and its default value.
 
 
 
-
-.. _google.protobuf.DoubleValue:
+.. _message.google.protobuf.DoubleValue:
 
 DoubleValue
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -80,16 +79,23 @@ The JSON representation for `DoubleValue` is JSON number.
 
    "value": float
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `value` | `float` | The double value. | 
+.. _field.google.protobuf.DoubleValue.value:
+
+value
+++++++++++++++++++++++++++
+
+Type: `float` 
+
+Description: The double value. 
 
 
 
-.. _google.protobuf.FloatValue:
+
+
+
+.. _message.google.protobuf.FloatValue:
 
 FloatValue
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -105,16 +111,23 @@ The JSON representation for `FloatValue` is JSON number.
 
    "value": float
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `value` | `float` | The float value. | 
+.. _field.google.protobuf.FloatValue.value:
+
+value
+++++++++++++++++++++++++++
+
+Type: `float` 
+
+Description: The float value. 
 
 
 
-.. _google.protobuf.Int64Value:
+
+
+
+.. _message.google.protobuf.Int64Value:
 
 Int64Value
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -130,16 +143,23 @@ The JSON representation for `Int64Value` is JSON string.
 
    "value": int
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `value` | `int` | The int64 value. | 
+.. _field.google.protobuf.Int64Value.value:
+
+value
+++++++++++++++++++++++++++
+
+Type: `int` 
+
+Description: The int64 value. 
 
 
 
-.. _google.protobuf.UInt64Value:
+
+
+
+.. _message.google.protobuf.UInt64Value:
 
 UInt64Value
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -155,16 +175,23 @@ The JSON representation for `UInt64Value` is JSON string.
 
    "value": int
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `value` | `int` | The uint64 value. | 
+.. _field.google.protobuf.UInt64Value.value:
+
+value
+++++++++++++++++++++++++++
+
+Type: `int` 
+
+Description: The uint64 value. 
 
 
 
-.. _google.protobuf.Int32Value:
+
+
+
+.. _message.google.protobuf.Int32Value:
 
 Int32Value
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -180,16 +207,23 @@ The JSON representation for `Int32Value` is JSON number.
 
    "value": int
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `value` | `int` | The int32 value. | 
+.. _field.google.protobuf.Int32Value.value:
+
+value
+++++++++++++++++++++++++++
+
+Type: `int` 
+
+Description: The int32 value. 
 
 
 
-.. _google.protobuf.UInt32Value:
+
+
+
+.. _message.google.protobuf.UInt32Value:
 
 UInt32Value
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -205,16 +239,23 @@ The JSON representation for `UInt32Value` is JSON number.
 
    "value": int
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `value` | `int` | The uint32 value. | 
+.. _field.google.protobuf.UInt32Value.value:
+
+value
+++++++++++++++++++++++++++
+
+Type: `int` 
+
+Description: The uint32 value. 
 
 
 
-.. _google.protobuf.BoolValue:
+
+
+
+.. _message.google.protobuf.BoolValue:
 
 BoolValue
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -230,16 +271,23 @@ The JSON representation for `BoolValue` is JSON `true` and `false`.
 
    "value": bool
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `value` | `bool` | The bool value. | 
+.. _field.google.protobuf.BoolValue.value:
+
+value
+++++++++++++++++++++++++++
+
+Type: `bool` 
+
+Description: The bool value. 
 
 
 
-.. _google.protobuf.StringValue:
+
+
+
+.. _message.google.protobuf.StringValue:
 
 StringValue
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -255,16 +303,23 @@ The JSON representation for `StringValue` is JSON string.
 
    "value": string
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `value` | `string` | The string value. | 
+.. _field.google.protobuf.StringValue.value:
+
+value
+++++++++++++++++++++++++++
+
+Type: `string` 
+
+Description: The string value. 
 
 
 
-.. _google.protobuf.BytesValue:
+
+
+
+.. _message.google.protobuf.BytesValue:
 
 BytesValue
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -280,12 +335,19 @@ The JSON representation for `BytesValue` is JSON string.
 
    "value": bytes
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `value` | `bytes` | The bytes value. | 
+.. _field.google.protobuf.BytesValue.value:
+
+value
+++++++++++++++++++++++++++
+
+Type: `bytes` 
+
+Description: The bytes value. 
+
+
+
 
 
 

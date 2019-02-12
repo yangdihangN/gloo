@@ -38,5 +38,5 @@ Options inherited from parent commands
 SEE ALSO
 ~~~~~~~~
 
-* `glooctl create secret <glooctl_create_secret.rst>`_ 	 - Create a secret
+* :ref:`glooctl create secret <glooctl_create_secret>` 	 - Create a secret
 

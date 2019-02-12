@@ -9,7 +9,7 @@ Package: `core.solo.io`
 **Types:**
 
 
-- :ref:`core.solo.io.ResourceRef`
+- :ref:`message.core.solo.io.ResourceRef`
   
 
 
@@ -19,8 +19,7 @@ Package: `core.solo.io`
 
 
 
-
-.. _core.solo.io.ResourceRef:
+.. _message.core.solo.io.ResourceRef:
 
 ResourceRef
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -36,13 +35,30 @@ TODO(ilackarms): make upstreamname and secretref into ResourceRefs
    "name": string
    "namespace": string
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `name` | `string` |  | 
-   `namespace` | `string` |  | 
+.. _field.core.solo.io.ResourceRef.name:
+
+name
+++++++++++++++++++++++++++
+
+Type: `string` 
+
+Description:  
+
+
+
+.. _field.core.solo.io.ResourceRef.namespace:
+
+namespace
+++++++++++++++++++++++++++
+
+Type: `string` 
+
+Description:  
+
+
+
 
 
 

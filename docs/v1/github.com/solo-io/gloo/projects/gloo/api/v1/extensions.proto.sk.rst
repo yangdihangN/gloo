@@ -9,8 +9,8 @@ Package: `gloo.solo.io`
 **Types:**
 
 
-- :ref:`gloo.solo.io.Extensions`
-- :ref:`gloo.solo.io.Extension`
+- :ref:`message.gloo.solo.io.Extensions`
+- :ref:`message.gloo.solo.io.Extension`
   
 
 
@@ -20,8 +20,7 @@ Package: `gloo.solo.io`
 
 
 
-
-.. _gloo.solo.io.Extensions:
+.. _message.gloo.solo.io.Extensions:
 
 Extensions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -33,16 +32,23 @@ Extensions
 
    "configs": map<string, .google.protobuf.Struct>
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `configs` | `map<string, .google.protobuf.Struct>` |  | 
+.. _field.gloo.solo.io.Extensions.configs:
+
+configs
+++++++++++++++++++++++++++
+
+Type: `map<string, .google.protobuf.Struct>` 
+
+Description:  
 
 
 
-.. _gloo.solo.io.Extension:
+
+
+
+.. _message.gloo.solo.io.Extension:
 
 Extension
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -54,12 +60,19 @@ Extension
 
    "config": .google.protobuf.Struct
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `config` | `.google.protobuf.Struct<https://developers.google.com/protocol-buffers/docs/reference/csharp/class/google/protobuf/well-known-types/struct>`_ |  | 
+.. _field.gloo.solo.io.Extension.config:
+
+config
+++++++++++++++++++++++++++
+
+Type: `.google.protobuf.Struct<https://developers.google.com/protocol-buffers/docs/reference/csharp/class/google/protobuf/well-known-types/struct>`_ 
+
+Description:  
+
+
+
 
 
 

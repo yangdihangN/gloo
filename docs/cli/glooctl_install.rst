@@ -28,8 +28,8 @@ Options inherited from parent commands
 SEE ALSO
 ~~~~~~~~
 
-* `glooctl <glooctl.rst>`_ 	 - CLI for Gloo
-* `glooctl install gateway <glooctl_install_gateway.rst>`_ 	 - install the Gloo Gateway on kubernetes
-* `glooctl install ingress <glooctl_install_ingress.rst>`_ 	 - install the Gloo Ingress Controller on kubernetes
-* `glooctl install knative <glooctl_install_knative.rst>`_ 	 - install Knative with Gloo on kubernetes
+* :ref:`glooctl <glooctl>` 	 - CLI for Gloo
+* :ref:`glooctl install gateway <glooctl_install_gateway>` 	 - install the Gloo Gateway on kubernetes
+* :ref:`glooctl install ingress <glooctl_install_ingress>` 	 - install the Gloo Ingress Controller on kubernetes
+* :ref:`glooctl install knative <glooctl_install_knative>` 	 - install Knative with Gloo on kubernetes
 

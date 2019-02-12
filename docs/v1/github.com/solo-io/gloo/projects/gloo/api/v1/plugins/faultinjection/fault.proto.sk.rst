@@ -15,9 +15,9 @@ TODO: to solo-kit/api/envoy
 **Types:**
 
 
-- :ref:`fault.plugins.gloo.solo.io.RouteAbort`
-- :ref:`fault.plugins.gloo.solo.io.RouteDelay`
-- :ref:`fault.plugins.gloo.solo.io.RouteFaults`
+- :ref:`message.fault.plugins.gloo.solo.io.RouteAbort`
+- :ref:`message.fault.plugins.gloo.solo.io.RouteDelay`
+- :ref:`message.fault.plugins.gloo.solo.io.RouteFaults`
   
 
 
@@ -27,8 +27,7 @@ TODO: to solo-kit/api/envoy
 
 
 
-
-.. _fault.plugins.gloo.solo.io.RouteAbort:
+.. _message.fault.plugins.gloo.solo.io.RouteAbort:
 
 RouteAbort
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -41,17 +40,34 @@ RouteAbort
    "percentage": float
    "http_status": int
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `percentage` | `float` | Percentage of requests that should be aborted, defaulting to 0. This should be a value between 0.0 and 100.0, with up to 6 significant digits. | 
-   `http_status` | `int` | This should be a standard HTTP status, i.e. 503. Defaults to 0. | 
+.. _field.fault.plugins.gloo.solo.io.RouteAbort.percentage:
+
+percentage
+++++++++++++++++++++++++++
+
+Type: `float` 
+
+Description: Percentage of requests that should be aborted, defaulting to 0. This should be a value between 0.0 and 100.0, with up to 6 significant digits. 
 
 
 
-.. _fault.plugins.gloo.solo.io.RouteDelay:
+.. _field.fault.plugins.gloo.solo.io.RouteAbort.http_status:
+
+http_status
+++++++++++++++++++++++++++
+
+Type: `int` 
+
+Description: This should be a standard HTTP status, i.e. 503. Defaults to 0. 
+
+
+
+
+
+
+.. _message.fault.plugins.gloo.solo.io.RouteDelay:
 
 RouteDelay
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -64,17 +80,34 @@ RouteDelay
    "percentage": float
    "fixed_delay": .google.protobuf.Duration
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `percentage` | `float` | Percentage of requests that should be delayed, defaulting to 0. This should be a value between 0.0 and 100.0, with up to 6 significant digits. | 
-   `fixed_delay` | `.google.protobuf.Duration<https://developers.google.com/protocol-buffers/docs/reference/csharp/class/google/protobuf/well-known-types/duration>`_ | Fixed delay, defaulting to 0. | 
+.. _field.fault.plugins.gloo.solo.io.RouteDelay.percentage:
+
+percentage
+++++++++++++++++++++++++++
+
+Type: `float` 
+
+Description: Percentage of requests that should be delayed, defaulting to 0. This should be a value between 0.0 and 100.0, with up to 6 significant digits. 
 
 
 
-.. _fault.plugins.gloo.solo.io.RouteFaults:
+.. _field.fault.plugins.gloo.solo.io.RouteDelay.fixed_delay:
+
+fixed_delay
+++++++++++++++++++++++++++
+
+Type: `.google.protobuf.Duration<https://developers.google.com/protocol-buffers/docs/reference/csharp/class/google/protobuf/well-known-types/duration>`_ 
+
+Description: Fixed delay, defaulting to 0. 
+
+
+
+
+
+
+.. _message.fault.plugins.gloo.solo.io.RouteFaults:
 
 RouteFaults
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -87,13 +120,30 @@ RouteFaults
    "abort": .fault.plugins.gloo.solo.io.RouteAbort
    "delay": .fault.plugins.gloo.solo.io.RouteDelay
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `abort` | :ref:`fault.plugins.gloo.solo.io.RouteAbort` |  | 
-   `delay` | :ref:`fault.plugins.gloo.solo.io.RouteDelay` |  | 
+.. _field.fault.plugins.gloo.solo.io.RouteFaults.abort:
+
+abort
+++++++++++++++++++++++++++
+
+Type: :ref:`message.fault.plugins.gloo.solo.io.RouteAbort` 
+
+Description:  
+
+
+
+.. _field.fault.plugins.gloo.solo.io.RouteFaults.delay:
+
+delay
+++++++++++++++++++++++++++
+
+Type: :ref:`message.fault.plugins.gloo.solo.io.RouteDelay` 
+
+Description:  
+
+
+
 
 
 

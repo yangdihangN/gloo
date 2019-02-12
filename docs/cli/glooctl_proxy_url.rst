@@ -36,5 +36,5 @@ Options inherited from parent commands
 SEE ALSO
 ~~~~~~~~
 
-* `glooctl proxy <glooctl_proxy.rst>`_ 	 - interact with proxy instances managed by Gloo
+* :ref:`glooctl proxy <glooctl_proxy>` 	 - interact with proxy instances managed by Gloo
 

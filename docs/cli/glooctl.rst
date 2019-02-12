@@ -23,14 +23,14 @@ Options
 SEE ALSO
 ~~~~~~~~
 
-* `glooctl add <glooctl_add.rst>`_ 	 - adds configuration to a top-level Gloo resource
-* `glooctl create <glooctl_create.rst>`_ 	 - Create a Gloo resource
-* `glooctl delete <glooctl_delete.rst>`_ 	 - Delete a Gloo resource
-* `glooctl get <glooctl_get.rst>`_ 	 - Display one or a list of Gloo resources
-* `glooctl install <glooctl_install.rst>`_ 	 - install gloo on different platforms
-* `glooctl proxy <glooctl_proxy.rst>`_ 	 - interact with proxy instances managed by Gloo
-* `glooctl remove <glooctl_remove.rst>`_ 	 - remove configuration items from a top-level Gloo resource
-* `glooctl route <glooctl_route.rst>`_ 	 - subcommands for interacting with routes within virtual services
-* `glooctl uninstall <glooctl_uninstall.rst>`_ 	 - uninstall gloo
-* `glooctl upgrade <glooctl_upgrade.rst>`_ 	 - upgrade glooctl binary
+* :ref:`glooctl add <glooctl_add>` 	 - adds configuration to a top-level Gloo resource
+* :ref:`glooctl create <glooctl_create>` 	 - Create a Gloo resource
+* :ref:`glooctl delete <glooctl_delete>` 	 - Delete a Gloo resource
+* :ref:`glooctl get <glooctl_get>` 	 - Display one or a list of Gloo resources
+* :ref:`glooctl install <glooctl_install>` 	 - install gloo on different platforms
+* :ref:`glooctl proxy <glooctl_proxy>` 	 - interact with proxy instances managed by Gloo
+* :ref:`glooctl remove <glooctl_remove>` 	 - remove configuration items from a top-level Gloo resource
+* :ref:`glooctl route <glooctl_route>` 	 - subcommands for interacting with routes within virtual services
+* :ref:`glooctl uninstall <glooctl_uninstall>` 	 - uninstall gloo
+* :ref:`glooctl upgrade <glooctl_upgrade>` 	 - upgrade glooctl binary
 

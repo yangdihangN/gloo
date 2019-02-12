@@ -41,7 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **Types:**
 
 
-- :ref:`google.protobuf.Timestamp`
+- :ref:`message.google.protobuf.Timestamp`
   
 
 
@@ -51,8 +51,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 
-
-.. _google.protobuf.Timestamp:
+.. _message.google.protobuf.Timestamp:
 
 Timestamp
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -142,13 +141,30 @@ to obtain a formatter capable of generating timestamps in this format.
    "seconds": int
    "nanos": int
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `seconds` | `int` | Represents seconds of UTC time since Unix epoch 1970-01-01T00:00:00Z. Must be from 0001-01-01T00:00:00Z to 9999-12-31T23:59:59Z inclusive. | 
-   `nanos` | `int` | Non-negative fractions of a second at nanosecond resolution. Negative second values with fractions must still have non-negative nanos values that count forward in time. Must be from 0 to 999,999,999 inclusive. | 
+.. _field.google.protobuf.Timestamp.seconds:
+
+seconds
+++++++++++++++++++++++++++
+
+Type: `int` 
+
+Description: Represents seconds of UTC time since Unix epoch 1970-01-01T00:00:00Z. Must be from 0001-01-01T00:00:00Z to 9999-12-31T23:59:59Z inclusive. 
+
+
+
+.. _field.google.protobuf.Timestamp.nanos:
+
+nanos
+++++++++++++++++++++++++++
+
+Type: `int` 
+
+Description: Non-negative fractions of a second at nanosecond resolution. Negative second values with fractions must still have non-negative nanos values that count forward in time. Must be from 0 to 999,999,999 inclusive. 
+
+
+
 
 
 

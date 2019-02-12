@@ -33,8 +33,8 @@ Options inherited from parent commands
 SEE ALSO
 ~~~~~~~~
 
-* `glooctl create <glooctl_create.rst>`_ 	 - Create a Gloo resource
-* `glooctl create secret aws <glooctl_create_secret_aws.rst>`_ 	 - Create an AWS secret with the given name
-* `glooctl create secret azure <glooctl_create_secret_azure.rst>`_ 	 - Create an Azure secret with the given name
-* `glooctl create secret tls <glooctl_create_secret_tls.rst>`_ 	 - Create a secret with the given name
+* :ref:`glooctl create <glooctl_create>` 	 - Create a Gloo resource
+* :ref:`glooctl create secret aws <glooctl_create_secret_aws>` 	 - Create an AWS secret with the given name
+* :ref:`glooctl create secret azure <glooctl_create_secret_azure>` 	 - Create an Azure secret with the given name
+* :ref:`glooctl create secret tls <glooctl_create_secret_tls>` 	 - Create a secret with the given name
 

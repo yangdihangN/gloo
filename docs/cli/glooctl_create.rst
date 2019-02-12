@@ -34,8 +34,8 @@ Options inherited from parent commands
 SEE ALSO
 ~~~~~~~~
 
-* `glooctl <glooctl.rst>`_ 	 - CLI for Gloo
-* `glooctl create secret <glooctl_create_secret.rst>`_ 	 - Create a secret
-* `glooctl create upstream <glooctl_create_upstream.rst>`_ 	 - Create an Upstream Interactively
-* `glooctl create virtualservice <glooctl_create_virtualservice.rst>`_ 	 - Create a Virtual Service
+* :ref:`glooctl <glooctl>` 	 - CLI for Gloo
+* :ref:`glooctl create secret <glooctl_create_secret>` 	 - Create a secret
+* :ref:`glooctl create upstream <glooctl_create_upstream>` 	 - Create an Upstream Interactively
+* :ref:`glooctl create virtualservice <glooctl_create_virtualservice>` 	 - Create a Virtual Service
 

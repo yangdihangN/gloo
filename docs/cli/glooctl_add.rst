@@ -30,6 +30,6 @@ Options inherited from parent commands
 SEE ALSO
 ~~~~~~~~
 
-* `glooctl <glooctl.rst>`_ 	 - CLI for Gloo
-* `glooctl add route <glooctl_add_route.rst>`_ 	 - Add a Route to a Virtual Service
+* :ref:`glooctl <glooctl>` 	 - CLI for Gloo
+* :ref:`glooctl add route <glooctl_add_route>` 	 - Add a Route to a Virtual Service
 

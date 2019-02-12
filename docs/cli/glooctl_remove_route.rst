@@ -40,5 +40,5 @@ Options inherited from parent commands
 SEE ALSO
 ~~~~~~~~
 
-* `glooctl remove <glooctl_remove.rst>`_ 	 - remove configuration items from a top-level Gloo resource
+* :ref:`glooctl remove <glooctl_remove>` 	 - remove configuration items from a top-level Gloo resource
 

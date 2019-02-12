@@ -9,8 +9,8 @@ Package: `static.plugins.gloo.solo.io`
 **Types:**
 
 
-- :ref:`static.plugins.gloo.solo.io.UpstreamSpec`
-- :ref:`static.plugins.gloo.solo.io.Host`
+- :ref:`message.static.plugins.gloo.solo.io.UpstreamSpec`
+- :ref:`message.static.plugins.gloo.solo.io.Host`
   
 
 
@@ -20,8 +20,7 @@ Package: `static.plugins.gloo.solo.io`
 
 
 
-
-.. _static.plugins.gloo.solo.io.UpstreamSpec:
+.. _message.static.plugins.gloo.solo.io.UpstreamSpec:
 
 UpstreamSpec
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -41,19 +40,56 @@ Unlike upstreams created by service discovery, Static Upstreams must be created 
    "service_spec": .plugins.gloo.solo.io.ServiceSpec
    "use_http2": bool
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `hosts` | :ref:`[]static.plugins.gloo.solo.io.Host` | A list of addresses and ports at least one must be specified | 
-   `use_tls` | `bool` | Attempt to use outbound TLS Gloo will automatically set this to true for port 443 | 
-   `service_spec` | :ref:`plugins.gloo.solo.io.ServiceSpec` | An optional Service Spec describing the service listening at this address | 
-   `use_http2` | `bool` | Use http2 when communicating with this upstream | 
+.. _field.static.plugins.gloo.solo.io.UpstreamSpec.hosts:
+
+hosts
+++++++++++++++++++++++++++
+
+Type: :ref:`message.static.plugins.gloo.solo.io.Host` 
+
+Description: A list of addresses and ports at least one must be specified 
 
 
 
-.. _static.plugins.gloo.solo.io.Host:
+.. _field.static.plugins.gloo.solo.io.UpstreamSpec.use_tls:
+
+use_tls
+++++++++++++++++++++++++++
+
+Type: `bool` 
+
+Description: Attempt to use outbound TLS Gloo will automatically set this to true for port 443 
+
+
+
+.. _field.static.plugins.gloo.solo.io.UpstreamSpec.service_spec:
+
+service_spec
+++++++++++++++++++++++++++
+
+Type: :ref:`message.plugins.gloo.solo.io.ServiceSpec` 
+
+Description: An optional Service Spec describing the service listening at this address 
+
+
+
+.. _field.static.plugins.gloo.solo.io.UpstreamSpec.use_http2:
+
+use_http2
+++++++++++++++++++++++++++
+
+Type: `bool` 
+
+Description: Use http2 when communicating with this upstream 
+
+
+
+
+
+
+.. _message.static.plugins.gloo.solo.io.Host:
 
 Host
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -68,13 +104,30 @@ Represents a single instance of an upstream
    "addr": string
    "port": int
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `addr` | `string` | Address (hostname or IP) | 
-   `port` | `int` | Port the instance is listening on | 
+.. _field.static.plugins.gloo.solo.io.Host.addr:
+
+addr
+++++++++++++++++++++++++++
+
+Type: `string` 
+
+Description: Address (hostname or IP) 
+
+
+
+.. _field.static.plugins.gloo.solo.io.Host.port:
+
+port
+++++++++++++++++++++++++++
+
+Type: `int` 
+
+Description: Port the instance is listening on 
+
+
+
 
 
 

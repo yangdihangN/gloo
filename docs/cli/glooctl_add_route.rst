@@ -56,5 +56,5 @@ Options inherited from parent commands
 SEE ALSO
 ~~~~~~~~
 
-* `glooctl add <glooctl_add.rst>`_ 	 - adds configuration to a top-level Gloo resource
+* :ref:`glooctl add <glooctl_add>` 	 - adds configuration to a top-level Gloo resource
 

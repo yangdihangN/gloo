@@ -9,7 +9,7 @@ Package: `core.solo.io`
 **Types:**
 
 
-- :ref:`core.solo.io.Status`
+- :ref:`message.core.solo.io.Status`
 - [State](#State)
   
 
@@ -20,8 +20,7 @@ Package: `core.solo.io`
 
 
 
-
-.. _core.solo.io.Status:
+.. _message.core.solo.io.Status:
 
 Status
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -40,15 +39,52 @@ Statuses are meant to be read-only by users
    "reported_by": string
    "subresource_statuses": map<string, .core.solo.io.Status>
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `state` | :ref:`core.solo.io.Status.State` | State is the enum indicating the state of the resource | 
-   `reason` | `string` | Reason is a description of the error for Rejected resources. If the resource is pending or accepted, this field will be empty | 
-   `reported_by` | `string` | Reference to the reporter who wrote this status | 
-   `subresource_statuses` | `map<string, .core.solo.io.Status>` | Reference to statuses (by resource-ref string: "Kind.Namespace.Name") of subresources of the parent resource | 
+.. _field.core.solo.io.Status.state:
+
+state
+++++++++++++++++++++++++++
+
+Type: :ref:`message.core.solo.io.Status.State` 
+
+Description: State is the enum indicating the state of the resource 
+
+
+
+.. _field.core.solo.io.Status.reason:
+
+reason
+++++++++++++++++++++++++++
+
+Type: `string` 
+
+Description: Reason is a description of the error for Rejected resources. If the resource is pending or accepted, this field will be empty 
+
+
+
+.. _field.core.solo.io.Status.reported_by:
+
+reported_by
+++++++++++++++++++++++++++
+
+Type: `string` 
+
+Description: Reference to the reporter who wrote this status 
+
+
+
+.. _field.core.solo.io.Status.subresource_statuses:
+
+subresource_statuses
+++++++++++++++++++++++++++
+
+Type: `map<string, .core.solo.io.Status>` 
+
+Description: Reference to statuses (by resource-ref string: "Kind.Namespace.Name") of subresources of the parent resource 
+
+
+
 
 
 

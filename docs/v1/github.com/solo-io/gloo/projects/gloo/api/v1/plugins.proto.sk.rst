@@ -9,11 +9,11 @@ Package: `gloo.solo.io`
 **Types:**
 
 
-- :ref:`gloo.solo.io.ListenerPlugins`
-- :ref:`gloo.solo.io.VirtualHostPlugins`
-- :ref:`gloo.solo.io.RoutePlugins`
-- :ref:`gloo.solo.io.DestinationSpec`
-- :ref:`gloo.solo.io.UpstreamSpec`
+- :ref:`message.gloo.solo.io.ListenerPlugins`
+- :ref:`message.gloo.solo.io.VirtualHostPlugins`
+- :ref:`message.gloo.solo.io.RoutePlugins`
+- :ref:`message.gloo.solo.io.DestinationSpec`
+- :ref:`message.gloo.solo.io.UpstreamSpec`
   
 
 
@@ -23,8 +23,7 @@ Package: `gloo.solo.io`
 
 
 
-
-.. _gloo.solo.io.ListenerPlugins:
+.. _message.gloo.solo.io.ListenerPlugins:
 
 ListenerPlugins
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -40,15 +39,12 @@ to be usable by Gloo.
 
 
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
 
 
 
-.. _gloo.solo.io.VirtualHostPlugins:
+.. _message.gloo.solo.io.VirtualHostPlugins:
 
 VirtualHostPlugins
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -65,16 +61,23 @@ to be usable by Gloo.
 
    "extensions": .gloo.solo.io.Extensions
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `extensions` | :ref:`gloo.solo.io.Extensions` |  | 
+.. _field.gloo.solo.io.VirtualHostPlugins.extensions:
+
+extensions
+++++++++++++++++++++++++++
+
+Type: :ref:`message.gloo.solo.io.Extensions` 
+
+Description:  
 
 
 
-.. _gloo.solo.io.RoutePlugins:
+
+
+
+.. _message.gloo.solo.io.RoutePlugins:
 
 RoutePlugins
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -96,21 +99,78 @@ to be usable by Gloo.
    "retries": .retries.plugins.gloo.solo.io.RetryPolicy
    "extensions": .gloo.solo.io.Extensions
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `transformations` | :ref:`transformation.plugins.gloo.solo.io.RouteTransformations` |  | 
-   `faults` | :ref:`fault.plugins.gloo.solo.io.RouteFaults` |  | 
-   `prefix_rewrite` | :ref:`transformation.plugins.gloo.solo.io.PrefixRewrite` |  | 
-   `timeout` | `.google.protobuf.Duration<https://developers.google.com/protocol-buffers/docs/reference/csharp/class/google/protobuf/well-known-types/duration>`_ |  | 
-   `retries` | :ref:`retries.plugins.gloo.solo.io.RetryPolicy` |  | 
-   `extensions` | :ref:`gloo.solo.io.Extensions` |  | 
+.. _field.gloo.solo.io.RoutePlugins.transformations:
+
+transformations
+++++++++++++++++++++++++++
+
+Type: :ref:`message.transformation.plugins.gloo.solo.io.RouteTransformations` 
+
+Description:  
 
 
 
-.. _gloo.solo.io.DestinationSpec:
+.. _field.gloo.solo.io.RoutePlugins.faults:
+
+faults
+++++++++++++++++++++++++++
+
+Type: :ref:`message.fault.plugins.gloo.solo.io.RouteFaults` 
+
+Description:  
+
+
+
+.. _field.gloo.solo.io.RoutePlugins.prefix_rewrite:
+
+prefix_rewrite
+++++++++++++++++++++++++++
+
+Type: :ref:`message.transformation.plugins.gloo.solo.io.PrefixRewrite` 
+
+Description:  
+
+
+
+.. _field.gloo.solo.io.RoutePlugins.timeout:
+
+timeout
+++++++++++++++++++++++++++
+
+Type: `.google.protobuf.Duration<https://developers.google.com/protocol-buffers/docs/reference/csharp/class/google/protobuf/well-known-types/duration>`_ 
+
+Description:  
+
+
+
+.. _field.gloo.solo.io.RoutePlugins.retries:
+
+retries
+++++++++++++++++++++++++++
+
+Type: :ref:`message.retries.plugins.gloo.solo.io.RetryPolicy` 
+
+Description:  
+
+
+
+.. _field.gloo.solo.io.RoutePlugins.extensions:
+
+extensions
+++++++++++++++++++++++++++
+
+Type: :ref:`message.gloo.solo.io.Extensions` 
+
+Description:  
+
+
+
+
+
+
+.. _message.gloo.solo.io.DestinationSpec:
 
 DestinationSpec
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -127,19 +187,56 @@ Configuration for Destinations that are tied to the UpstreamSpec or ServiceSpec 
    "rest": .rest.plugins.gloo.solo.io.DestinationSpec
    "grpc": .grpc.plugins.gloo.solo.io.DestinationSpec
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `aws` | :ref:`aws.plugins.gloo.solo.io.DestinationSpec` |  | 
-   `azure` | :ref:`azure.plugins.gloo.solo.io.DestinationSpec` |  | 
-   `rest` | :ref:`rest.plugins.gloo.solo.io.DestinationSpec` |  | 
-   `grpc` | :ref:`grpc.plugins.gloo.solo.io.DestinationSpec` |  | 
+.. _field.gloo.solo.io.DestinationSpec.aws:
+
+aws
+++++++++++++++++++++++++++
+
+Type: :ref:`message.aws.plugins.gloo.solo.io.DestinationSpec` 
+
+Description:  
 
 
 
-.. _gloo.solo.io.UpstreamSpec:
+.. _field.gloo.solo.io.DestinationSpec.azure:
+
+azure
+++++++++++++++++++++++++++
+
+Type: :ref:`message.azure.plugins.gloo.solo.io.DestinationSpec` 
+
+Description:  
+
+
+
+.. _field.gloo.solo.io.DestinationSpec.rest:
+
+rest
+++++++++++++++++++++++++++
+
+Type: :ref:`message.rest.plugins.gloo.solo.io.DestinationSpec` 
+
+Description:  
+
+
+
+.. _field.gloo.solo.io.DestinationSpec.grpc:
+
+grpc
+++++++++++++++++++++++++++
+
+Type: :ref:`message.grpc.plugins.gloo.solo.io.DestinationSpec` 
+
+Description:  
+
+
+
+
+
+
+.. _message.gloo.solo.io.UpstreamSpec:
 
 UpstreamSpec
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -158,16 +255,63 @@ Each upstream type is handled by a corresponding Gloo plugin.
    "azure": .azure.plugins.gloo.solo.io.UpstreamSpec
    "consul": .consul.plugins.gloo.solo.io.UpstreamSpec
 
-.. csv-table:: Fields Reference
-   :header: "Field" , "Type", "Description", "Default"
-   :delim: |
 
 
-   `kube` | :ref:`kubernetes.plugins.gloo.solo.io.UpstreamSpec` |  | 
-   `static` | :ref:`static.plugins.gloo.solo.io.UpstreamSpec` |  | 
-   `aws` | :ref:`aws.plugins.gloo.solo.io.UpstreamSpec` |  | 
-   `azure` | :ref:`azure.plugins.gloo.solo.io.UpstreamSpec` |  | 
-   `consul` | :ref:`consul.plugins.gloo.solo.io.UpstreamSpec` |  | 
+.. _field.gloo.solo.io.UpstreamSpec.kube:
+
+kube
+++++++++++++++++++++++++++
+
+Type: :ref:`message.kubernetes.plugins.gloo.solo.io.UpstreamSpec` 
+
+Description:  
+
+
+
+.. _field.gloo.solo.io.UpstreamSpec.static:
+
+static
+++++++++++++++++++++++++++
+
+Type: :ref:`message.static.plugins.gloo.solo.io.UpstreamSpec` 
+
+Description:  
+
+
+
+.. _field.gloo.solo.io.UpstreamSpec.aws:
+
+aws
+++++++++++++++++++++++++++
+
+Type: :ref:`message.aws.plugins.gloo.solo.io.UpstreamSpec` 
+
+Description:  
+
+
+
+.. _field.gloo.solo.io.UpstreamSpec.azure:
+
+azure
+++++++++++++++++++++++++++
+
+Type: :ref:`message.azure.plugins.gloo.solo.io.UpstreamSpec` 
+
+Description:  
+
+
+
+.. _field.gloo.solo.io.UpstreamSpec.consul:
+
+consul
+++++++++++++++++++++++++++
+
+Type: :ref:`message.consul.plugins.gloo.solo.io.UpstreamSpec` 
+
+Description:  
+
+
+
 
 
 

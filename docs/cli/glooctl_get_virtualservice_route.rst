@@ -35,5 +35,5 @@ Options inherited from parent commands
 SEE ALSO
 ~~~~~~~~
 
-* `glooctl get virtualservice <glooctl_get_virtualservice.rst>`_ 	 - read a virtualservice or list virtualservices in a namespace
+* :ref:`glooctl get virtualservice <glooctl_get_virtualservice>` 	 - read a virtualservice or list virtualservices in a namespace
 

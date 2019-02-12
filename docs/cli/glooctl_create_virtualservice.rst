@@ -39,5 +39,5 @@ Options inherited from parent commands
 SEE ALSO
 ~~~~~~~~
 
-* `glooctl create <glooctl_create.rst>`_ 	 - Create a Gloo resource
+* :ref:`glooctl create <glooctl_create>` 	 - Create a Gloo resource
 

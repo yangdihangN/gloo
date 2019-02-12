@@ -30,8 +30,8 @@ Options inherited from parent commands
 SEE ALSO
 ~~~~~~~~
 
-* `glooctl <glooctl.rst>`_ 	 - CLI for Gloo
-* `glooctl delete proxy <glooctl_delete_proxy.rst>`_ 	 - delete a proxy
-* `glooctl delete upstream <glooctl_delete_upstream.rst>`_ 	 - delete an upstream
-* `glooctl delete virtualservice <glooctl_delete_virtualservice.rst>`_ 	 - delete a virtualservice
+* :ref:`glooctl <glooctl>` 	 - CLI for Gloo
+* :ref:`glooctl delete proxy <glooctl_delete_proxy>` 	 - delete a proxy
+* :ref:`glooctl delete upstream <glooctl_delete_upstream>` 	 - delete an upstream
+* :ref:`glooctl delete virtualservice <glooctl_delete_virtualservice>` 	 - delete a virtualservice
 

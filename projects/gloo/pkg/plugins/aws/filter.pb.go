@@ -5,10 +5,9 @@ package aws
 
 import (
 	fmt "fmt"
-	math "math"
-
 	proto "github.com/gogo/protobuf/proto"
 	_ "github.com/lyft/protoc-gen-validate/validate"
+	math "math"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.

@@ -17,6 +17,7 @@ An Envoy-Powered API Gateway
    introduction/concepts
    introduction/architecture
    cli/index
+   api/index
 
 
 Gloo is a feature-rich, Kubernetes-native ingress controller, and next-generation API gateway.

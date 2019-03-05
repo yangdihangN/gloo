@@ -14,7 +14,7 @@ func main() {
 	start := time.Now()
 	defer check.CallCheck("glooctl", version.Version, start)
 
-	app := cmd.GlooCli(version.Version)
+	app := cmd.GlooCli()
 	if err := app.Execute(); err != nil {
 		//fmt.Println(err)
 		os.Exit(1)

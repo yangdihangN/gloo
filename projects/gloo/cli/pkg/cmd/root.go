@@ -2,9 +2,9 @@ package cmd
 
 import (
 	"context"
-
 	"github.com/solo-io/gloo/projects/gloo/cli/pkg/cmd/remove"
 	"github.com/solo-io/gloo/projects/gloo/cli/pkg/cmd/route"
+	version2 "github.com/solo-io/gloo/projects/gloo/cli/pkg/cmd/version"
 
 	"github.com/solo-io/gloo/projects/gloo/cli/pkg/cmd/add"
 	"github.com/solo-io/gloo/projects/gloo/cli/pkg/cmd/create"
@@ -23,14 +23,13 @@ import (
 var versionTemplate = `{{with .Name}}{{printf "%s community edition " .}}{{end}}{{printf "version %s" .Version}}
 `
 
-func App(version string, optionsFunc ...cliutils.OptionsFunc) *cobra.Command {
+func App(optionsFunc ...cliutils.OptionsFunc) *cobra.Command {
 
 	app := &cobra.Command{
 		Use:   "glooctl",
 		Short: "CLI for Gloo",
 		Long: `glooctl is the unified CLI for Gloo.
 	Find more information at https://solo.io`,
-		Version: version,
 	}
 
 	// Complete additional passed in setup
@@ -41,7 +40,7 @@ func App(version string, optionsFunc ...cliutils.OptionsFunc) *cobra.Command {
 	return app
 }
 
-func GlooCli(version string) *cobra.Command {
+func GlooCli() *cobra.Command {
 	opts := &options.Options{
 		Top: options.Top{
 			Ctx: context.Background(),
@@ -65,8 +64,9 @@ func GlooCli(version string) *cobra.Command {
 			edit.RootCmd(opts),
 			upgrade.RootCmd(opts),
 			gateway.RootCmd(opts),
+			version2.VersionCmd(opts),
 		)
 	}
-
-	return App(version, optionsFunc)
+	cmd := App(optionsFunc)
+	return cmd
 }

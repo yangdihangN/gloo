@@ -75,4 +75,10 @@ var (
 		Aliases: []string{"ed"},
 		Short:   "Edit a Gloo resource",
 	}
+
+	VERSION_COMMAND = cobra.Command{
+		Use:     "version",
+		Aliases: []string{"v"},
+		Short:   "print client and server version information.",
+	}
 )

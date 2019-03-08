@@ -175,6 +175,18 @@ steps:
   secretEnv: ['GITHUB_TOKEN']
   id: 'release'
   waitFor: ['test', 'regression-tests']
+
+# build and push docker images in parallel
+- name: 'gcr.io/$PROJECT_ID/go-make'
+  args: ['-j', 'docker-push']
+  env:
+    - 'TAGGED_VERSION=$TAG_NAME'
+    - 'PROJECT_ROOT=github.com/solo-io/gloo'
+    - 'GOPATH=/workspace/gopath'
+  dir: './gopath/src/github.com/solo-io/gloo'
+  id: 'push-docker-images'
+  waitFor: ['test', 'regression-tests']
+
 # Sync helm chart data back to google storage bucket
 - name: gcr.io/cloud-builders/gsutil
   args:

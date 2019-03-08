@@ -4,6 +4,8 @@
 
 ROOTDIR := $(shell pwd)
 OUTPUT_DIR ?= $(ROOTDIR)/_output
+# Kind of a hack to make sure _output exists
+z := $(shell mkdir -p $(OUTPUT_DIR))
 SOURCES := $(shell find . -name "*.go" | grep -v test.go | grep -v '\.\#*')
 RELEASE := "true"
 ifeq ($(TAGGED_VERSION),)
@@ -180,10 +182,15 @@ gateway: $(OUTPUT_DIR)/gateway-linux-amd64
 $(OUTPUT_DIR)/Dockerfile.gateway: $(GATEWAY_DIR)/cmd/Dockerfile
 	cp $< $@
 
-gateway-docker: $(OUTPUT_DIR)/gateway-linux-amd64 $(OUTPUT_DIR)/Dockerfile.gateway
+.PHONY: gateway-docker
+gateway-docker: $(OUTPUT_DIR)/.gateway-docker
+
+$(OUTPUT_DIR)/.gateway-docker: $(OUTPUT_DIR)/gateway-linux-amd64 $(OUTPUT_DIR)/Dockerfile.gateway
 	docker build $(OUTPUT_DIR) -f $(OUTPUT_DIR)/Dockerfile.gateway \
 		-t quay.io/solo-io/gateway:$(VERSION) \
 		$(call get_test_tag,gateway)
+	touch $@
+
 
 #----------------------------------------------------------------------------------
 # Ingress
@@ -202,10 +209,14 @@ ingress: $(OUTPUT_DIR)/ingress-linux-amd64
 $(OUTPUT_DIR)/Dockerfile.ingress: $(INGRESS_DIR)/cmd/Dockerfile
 	cp $< $@
 
-ingress-docker: $(OUTPUT_DIR)/ingress-linux-amd64 $(OUTPUT_DIR)/Dockerfile.ingress
+.PHONY: ingress-docker
+ingress-docker: $(OUTPUT_DIR)/.ingress-docker
+
+$(OUTPUT_DIR)/.ingress-docker: $(OUTPUT_DIR)/ingress-linux-amd64 $(OUTPUT_DIR)/Dockerfile.ingress
 	docker build $(OUTPUT_DIR) -f $(OUTPUT_DIR)/Dockerfile.ingress \
 		-t quay.io/solo-io/ingress:$(VERSION) \
 		$(call get_test_tag,ingress)
+	touch $@
 
 #----------------------------------------------------------------------------------
 # Discovery
@@ -224,10 +235,14 @@ discovery: $(OUTPUT_DIR)/discovery-linux-amd64
 $(OUTPUT_DIR)/Dockerfile.discovery: $(DISCOVERY_DIR)/cmd/Dockerfile
 	cp $< $@
 
-discovery-docker: $(OUTPUT_DIR)/discovery-linux-amd64 $(OUTPUT_DIR)/Dockerfile.discovery
+.PHONY: discovery-docker
+discovery-docker: $(OUTPUT_DIR)/.discovery-docker
+
+$(OUTPUT_DIR)/.discovery-docker: $(OUTPUT_DIR)/discovery-linux-amd64 $(OUTPUT_DIR)/Dockerfile.discovery
 	docker build $(OUTPUT_DIR) -f $(OUTPUT_DIR)/Dockerfile.discovery \
 		-t quay.io/solo-io/discovery:$(VERSION) \
 		$(call get_test_tag,discovery)
+	touch $@
 
 #----------------------------------------------------------------------------------
 # Gloo
@@ -251,6 +266,15 @@ gloo-docker: $(OUTPUT_DIR)/gloo-linux-amd64 $(OUTPUT_DIR)/Dockerfile.gloo
 		-t quay.io/solo-io/gloo:$(VERSION) \
 		$(call get_test_tag,gloo)
 
+.PHONY: gloo-docker
+gloo-docker: $(OUTPUT_DIR)/.gloo-docker
+
+$(OUTPUT_DIR)/.gloo-docker: $(OUTPUT_DIR)/gloo-linux-amd64 $(OUTPUT_DIR)/Dockerfile.gloo
+	docker build $(OUTPUT_DIR) -f $(OUTPUT_DIR)/Dockerfile.gloo \
+		-t quay.io/solo-io/gloo:$(VERSION) \
+		$(call get_test_tag,gloo)
+	touch $@
+
 #----------------------------------------------------------------------------------
 # Envoy init
 #----------------------------------------------------------------------------------
@@ -273,6 +297,15 @@ gloo-envoy-wrapper-docker: $(OUTPUT_DIR)/envoyinit-linux-amd64 $(OUTPUT_DIR)/Doc
 	docker build $(OUTPUT_DIR) -f $(OUTPUT_DIR)/Dockerfile.envoyinit \
 		-t quay.io/solo-io/gloo-envoy-wrapper:$(VERSION) \
 		$(call get_test_tag,gloo-envoy-wrapper)
+
+.PHONY: gloo-envoy-wrapper-docker
+gloo-envoy-wrapper-docker: $(OUTPUT_DIR)/.gloo-envoy-wrapper-docker
+
+$(OUTPUT_DIR)/.gloo-envoy-wrapper-docker: $(OUTPUT_DIR)/envoyinit-linux-amd64 $(OUTPUT_DIR)/Dockerfile.envoyinit
+	docker build $(OUTPUT_DIR) -f $(OUTPUT_DIR)/Dockerfile.envoyinit \
+		-t quay.io/solo-io/gloo-envoy-wrapper:$(VERSION) \
+		$(call get_test_tag,gloo-envoy-wrapper)
+	touch $@
 
 
 #----------------------------------------------------------------------------------

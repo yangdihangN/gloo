@@ -124,6 +124,7 @@ steps:
   secretEnv: ['QUAY_IO_PASSWORD']
   id: 'docker-login'
   waitFor: ['test']
+
 - name: 'gcr.io/$PROJECT_ID/go-make'
   args: ['docker']
   env:
@@ -178,7 +179,7 @@ steps:
 
 # build and push docker images in parallel
 - name: 'gcr.io/$PROJECT_ID/go-make'
-  args: ['-j', 'docker-push']
+  args: ['--jobs=4', 'docker-push']
   env:
     - 'TAGGED_VERSION=$TAG_NAME'
     - 'PROJECT_ROOT=github.com/solo-io/gloo'

@@ -124,7 +124,7 @@ var _ = Describe("Kube2e: gateway", func() {
 			Host:              gatewayProxy,
 			Service:           gatewayProxy,
 			Port:              gatewayPort,
-			ConnectionTimeout: 5, // this is important, as sometimes curl hangs
+			ConnectionTimeout: 10, // this is important, as sometimes curl hangs
 		}, helper.SimpleHttpResponse, 1, time.Minute*2)
 	})
 
@@ -206,7 +206,7 @@ var _ = Describe("Kube2e: gateway", func() {
 				Service:           gatewayProxy,
 				Port:              gatewayPort,
 				CaFile:            "/tmp/ca.crt",
-				ConnectionTimeout: 5,
+				ConnectionTimeout: 10,
 			}, helper.SimpleHttpResponse, 1, time.Minute*2)
 		})
 	})

@@ -137,32 +137,29 @@ func (s *setupSyncer) Setup(ctx context.Context, kubeCache kube.SharedCache, mem
 		s.cancelControlPlane = cancel
 	}
 
+	// * build the options *
 	var clientset kubernetes.Interface
-	bf, err := BootstrapFactories(ctx, clientset, kubeCache, memCache, settings)
+	// 1. get bootstrap option factories
+	opts, err := BootstrapFactories(ctx, clientset, kubeCache, memCache, settings)
 	if err != nil {
 		return err
 	}
-	opts := bootstrap.Opts{
-		WriteNamespace:  writeNamespace,
-		WatchNamespaces: watchNamespaces,
-		Upstreams:       bf.Upstreams,
-		Proxies:         bf.Proxies,
-		Secrets:         bf.Secrets,
-		Artifacts:       bf.Artifacts,
-		WatchOpts: clients.WatchOpts{
-			Ctx:         ctx,
-			RefreshRate: refreshRate,
-		},
-		BindAddr: &net.TCPAddr{
-			IP:   net.ParseIP(ipPort[0]),
-			Port: port,
-		},
-		ControlPlane: s.controlPlane,
-		// if nil, kube plugin disabled
-		KubeClient: clientset,
-		DevMode:    true,
-		Extensions: settings.Extensions,
+	// 2. apply remaining bootstrap option field values
+	opts.WriteNamespace = writeNamespace
+	opts.WatchNamespaces = watchNamespaces
+	opts.WatchOpts = clients.WatchOpts{
+		Ctx:         ctx,
+		RefreshRate: refreshRate,
 	}
+	opts.BindAddr = &net.TCPAddr{
+		IP:   net.ParseIP(ipPort[0]),
+		Port: port,
+	}
+	opts.ControlPlane = s.controlPlane
+	// if nil, kube plugin disabled
+	opts.KubeClient = clientset
+	opts.DevMode = true
+	opts.Extensions = settings.Extensions
 
 	return s.runFunc(opts)
 }

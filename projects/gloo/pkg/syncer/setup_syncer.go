@@ -284,7 +284,7 @@ func RunGlooWithExtensions(opts bootstrap.Opts, extensions Extensions) error {
 	return nil
 }
 
-func BootstrapFactories(ctx context.Context, clientset kubernetes.Interface, kubeCache kube.SharedCache, memCache memory.InMemoryResourceCache, settings *gloov1.Settings) (bootstrap.Opts, error) {
+func BootstrapFactories(ctx context.Context, clientset kubernetes.Interface, kubeCache kube.SharedCache, memCache memory.InMemoryResourceCache, settings *v1.Settings) (bootstrap.Opts, error) {
 
 	var (
 		cfg           *rest.Config
@@ -295,7 +295,7 @@ func BootstrapFactories(ctx context.Context, clientset kubernetes.Interface, kub
 		settings,
 		memCache,
 		kubeCache,
-		gloov1.UpstreamCrd,
+		v1.UpstreamCrd,
 		&cfg,
 	)
 	if err != nil {
@@ -306,7 +306,7 @@ func BootstrapFactories(ctx context.Context, clientset kubernetes.Interface, kub
 		settings,
 		memCache,
 		kubeCache,
-		gloov1.ProxyCrd,
+		v1.ProxyCrd,
 		&cfg,
 	)
 	if err != nil {
@@ -320,7 +320,7 @@ func BootstrapFactories(ctx context.Context, clientset kubernetes.Interface, kub
 		&cfg,
 		&clientset,
 		&kubeCoreCache,
-		gloov1.SecretCrd.Plural,
+		v1.SecretCrd.Plural,
 	)
 	if err != nil {
 		return bootstrap.Opts{}, err
@@ -333,7 +333,7 @@ func BootstrapFactories(ctx context.Context, clientset kubernetes.Interface, kub
 		&cfg,
 		&clientset,
 		&kubeCoreCache,
-		gloov1.ArtifactCrd.Plural,
+		v1.ArtifactCrd.Plural,
 	)
 	if err != nil {
 		return bootstrap.Opts{}, err

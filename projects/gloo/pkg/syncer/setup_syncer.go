@@ -99,59 +99,6 @@ func NewControlPlane(ctx context.Context, grpcServer *grpc.Server, start bool) b
 }
 
 func (s *setupSyncer) Setup(ctx context.Context, kubeCache kube.SharedCache, memCache memory.InMemoryResourceCache, settings *v1.Settings) error {
-	var (
-		cfg           *rest.Config
-		clientset     kubernetes.Interface
-		kubeCoreCache corecache.KubeCoreCache
-	)
-
-	upstreamFactory, err := bootstrap.ConfigFactoryForSettings(
-		settings,
-		memCache,
-		kubeCache,
-		v1.UpstreamCrd,
-		&cfg,
-	)
-	if err != nil {
-		return err
-	}
-
-	proxyFactory, err := bootstrap.ConfigFactoryForSettings(
-		settings,
-		memCache,
-		kubeCache,
-		v1.ProxyCrd,
-		&cfg,
-	)
-	if err != nil {
-		return err
-	}
-
-	secretFactory, err := bootstrap.SecretFactoryForSettings(
-		ctx,
-		settings,
-		memCache,
-		&cfg,
-		&clientset,
-		&kubeCoreCache,
-		v1.SecretCrd.Plural,
-	)
-	if err != nil {
-		return err
-	}
-
-	artifactFactory, err := bootstrap.ArtifactFactoryForSettings(
-		ctx,
-		settings,
-		memCache,
-		&cfg,
-		&clientset,
-		&kubeCoreCache,
-		v1.ArtifactCrd.Plural,
-	)
-	if err != nil {
-		return err
-	}
 
 	ipPort := strings.Split(settings.BindAddr, ":")
 	if len(ipPort) != 2 {
@@ -190,13 +137,18 @@ func (s *setupSyncer) Setup(ctx context.Context, kubeCache kube.SharedCache, mem
 		s.cancelControlPlane = cancel
 	}
 
+	var clientset kubernetes.Interface
+	bf, err := BootstrapFactories(ctx, clientset, kubeCache, memCache, settings)
+	if err != nil {
+		return err
+	}
 	opts := bootstrap.Opts{
 		WriteNamespace:  writeNamespace,
 		WatchNamespaces: watchNamespaces,
-		Upstreams:       upstreamFactory,
-		Proxies:         proxyFactory,
-		Secrets:         secretFactory,
-		Artifacts:       artifactFactory,
+		Upstreams:       bf.Upstreams,
+		Proxies:         bf.Proxies,
+		Secrets:         bf.Secrets,
+		Artifacts:       bf.Artifacts,
 		WatchOpts: clients.WatchOpts{
 			Ctx:         ctx,
 			RefreshRate: refreshRate,
@@ -330,4 +282,66 @@ func RunGlooWithExtensions(opts bootstrap.Opts, extensions Extensions) error {
 		}
 	}()
 	return nil
+}
+
+func BootstrapFactories(ctx context.Context, clientset kubernetes.Interface, kubeCache kube.SharedCache, memCache memory.InMemoryResourceCache, settings *gloov1.Settings) (bootstrap.Opts, error) {
+
+	var (
+		cfg           *rest.Config
+		kubeCoreCache corecache.KubeCoreCache
+	)
+
+	upstreamFactory, err := bootstrap.ConfigFactoryForSettings(
+		settings,
+		memCache,
+		kubeCache,
+		gloov1.UpstreamCrd,
+		&cfg,
+	)
+	if err != nil {
+		return bootstrap.Opts{}, err
+	}
+
+	proxyFactory, err := bootstrap.ConfigFactoryForSettings(
+		settings,
+		memCache,
+		kubeCache,
+		gloov1.ProxyCrd,
+		&cfg,
+	)
+	if err != nil {
+		return bootstrap.Opts{}, err
+	}
+
+	secretFactory, err := bootstrap.SecretFactoryForSettings(
+		ctx,
+		settings,
+		memCache,
+		&cfg,
+		&clientset,
+		&kubeCoreCache,
+		gloov1.SecretCrd.Plural,
+	)
+	if err != nil {
+		return bootstrap.Opts{}, err
+	}
+
+	artifactFactory, err := bootstrap.ArtifactFactoryForSettings(
+		ctx,
+		settings,
+		memCache,
+		&cfg,
+		&clientset,
+		&kubeCoreCache,
+		gloov1.ArtifactCrd.Plural,
+	)
+	if err != nil {
+		return bootstrap.Opts{}, err
+	}
+	return bootstrap.Opts{
+		Upstreams: upstreamFactory,
+		Proxies:   proxyFactory,
+		Secrets:   secretFactory,
+		Artifacts: artifactFactory,
+	}, nil
 }

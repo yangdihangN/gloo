@@ -207,7 +207,7 @@ var _ = Describe("Kube2e: gateway", func() {
 				Port:              gatewayPort,
 				CaFile:            "/tmp/ca.crt",
 				ConnectionTimeout: 20,
-			}, helper.SimpleHttpResponse, 1, 150*time.Minute)
+			}, helper.SimpleHttpResponse, 1, 150*time.Second)
 		})
 	})
 })

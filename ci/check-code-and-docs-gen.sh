@@ -7,6 +7,7 @@ protoc --version
 if [ ! -f .gitignore ]; then
   echo "_output" > .gitignore
 fi
+echo "# dummy comment" >> .gitignore
 
 git init
 git add .

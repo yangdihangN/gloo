@@ -137,14 +137,11 @@ func (s *setupSyncer) Setup(ctx context.Context, kubeCache kube.SharedCache, mem
 		s.cancelControlPlane = cancel
 	}
 
-	// * build the options *
 	var clientset kubernetes.Interface
-	// 1. get bootstrap option factories
-	opts, err := BootstrapFactories(ctx, clientset, kubeCache, memCache, settings)
+	opts, err := BootstrapFactories(ctx, &clientset, kubeCache, memCache, settings)
 	if err != nil {
 		return err
 	}
-	// 2. apply remaining bootstrap option field values
 	opts.WriteNamespace = writeNamespace
 	opts.WatchNamespaces = watchNamespaces
 	opts.WatchOpts = clients.WatchOpts{
@@ -281,7 +278,7 @@ func RunGlooWithExtensions(opts bootstrap.Opts, extensions Extensions) error {
 	return nil
 }
 
-func BootstrapFactories(ctx context.Context, clientset kubernetes.Interface, kubeCache kube.SharedCache, memCache memory.InMemoryResourceCache, settings *v1.Settings) (bootstrap.Opts, error) {
+func BootstrapFactories(ctx context.Context, clientset *kubernetes.Interface, kubeCache kube.SharedCache, memCache memory.InMemoryResourceCache, settings *v1.Settings) (bootstrap.Opts, error) {
 
 	var (
 		cfg           *rest.Config
@@ -315,7 +312,7 @@ func BootstrapFactories(ctx context.Context, clientset kubernetes.Interface, kub
 		settings,
 		memCache,
 		&cfg,
-		&clientset,
+		clientset,
 		&kubeCoreCache,
 		v1.SecretCrd.Plural,
 	)
@@ -328,7 +325,7 @@ func BootstrapFactories(ctx context.Context, clientset kubernetes.Interface, kub
 		settings,
 		memCache,
 		&cfg,
-		&clientset,
+		clientset,
 		&kubeCoreCache,
 		v1.ArtifactCrd.Plural,
 	)

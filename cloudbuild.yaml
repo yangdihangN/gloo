@@ -12,7 +12,7 @@ steps:
   entrypoint: 'bash'
   args: ['-c', 'mkdir -p ./gopath/pkg/dep && gsutil cat gs://solo-public-cache/gloo/gloo-dep.tar.gz | tar -xzf -']
   id: 'download-untar-dep-cache'
-  waitFor: ['check']
+  waitFor: ['check-spelling']
 
 # Run dep to set up the project so it can be built and tested
 # Dep modifies workspace so that the code is moved into the PROJECT_ROOT

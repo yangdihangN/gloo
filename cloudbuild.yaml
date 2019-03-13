@@ -3,6 +3,7 @@ steps:
 - name: 'gcr.io/cloud-builders/wget'
   entrypoint: ./ci/spell.sh
   args: ['check']
+  waitFor: ['-']
   env:
   - 'LSCOMMAND=find * -path gopath -prune -o -print'
   id: 'check-spelling'
@@ -12,7 +13,7 @@ steps:
   entrypoint: 'bash'
   args: ['-c', 'mkdir -p ./gopath/pkg/dep && gsutil cat gs://solo-public-cache/gloo/gloo-dep.tar.gz | tar -xzf -']
   id: 'download-untar-dep-cache'
-  waitFor: ['check-spelling']
+  waitFor: ['-']
 
 # Run dep to set up the project so it can be built and tested
 # Dep modifies workspace so that the code is moved into the PROJECT_ROOT

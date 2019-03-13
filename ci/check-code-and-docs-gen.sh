@@ -7,11 +7,10 @@ protoc --version
 if [ ! -f .gitignore ]; then
   echo "_output" > .gitignore
 fi
-echo "# dummy comment" >> .gitignore
 
 git init
 git add .
-git commit -m "set up dummy repo for diffing" -q
+git commit -m "set up dummy repo for diffing" -q --allow-empty
 
 git clone https://github.com/solo-io/solo-kit /workspace/gopath/src/github.com/solo-io/solo-kit
 

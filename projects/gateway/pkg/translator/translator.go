@@ -20,10 +20,12 @@ const GatewayProxyName = "gateway-proxy"
 func Translate(ctx context.Context, namespace string, snap *v1.ApiSnapshot) (*gloov1.Proxy, reporter.ResourceErrors) {
 	logger := contextutils.LoggerFrom(ctx)
 
+	filteredGateways := filterGateways(snap.Gateways.List(), namespace)
+
 	resourceErrs := make(reporter.ResourceErrors)
-	resourceErrs.Accept(snap.Gateways.List().AsInputResources()...)
+	resourceErrs.Accept(filteredGateways.AsInputResources()...)
 	resourceErrs.Accept(snap.VirtualServices.List().AsInputResources()...)
-	if len(snap.Gateways.List()) == 0 {
+	if len(filteredGateways) == 0 {
 		logger.Debugf("%v had no gateways", snap.Hash())
 		return nil, resourceErrs
 	}
@@ -32,7 +34,6 @@ func Translate(ctx context.Context, namespace string, snap *v1.ApiSnapshot) (*gl
 		return nil, resourceErrs
 	}
 
-	filteredGateways := filterGateways(snap.Gateways.List(), namespace)
 	validateGateways(filteredGateways, resourceErrs)
 
 	var listeners []*gloov1.Listener

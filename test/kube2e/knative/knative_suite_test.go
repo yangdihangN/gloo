@@ -47,7 +47,7 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 
 
-	locker, err = clusterlock.NewTestClusterLocker(MustKubeClient(), testHelper.InstallNamespace)
+	locker, err = clusterlock.NewTestClusterLocker(MustKubeClient(), "")
 	Expect(err).NotTo(HaveOccurred())
 	Expect(locker.AcquireLock()).NotTo(HaveOccurred())
 	// Install Gloo

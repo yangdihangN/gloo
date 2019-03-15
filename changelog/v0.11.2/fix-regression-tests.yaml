@@ -2,3 +2,6 @@ changelog:
   - type: FIX
     description: Filters gateways down to ones Gloo has written to it's write namespace, ignoring gateways created by other Gloo installations.
     issueLink: https://github.com/solo-io/gloo/issues/538
+  - type: FIX
+    description: Change name of cluster role binding created during Gloo installation to include namespace, so that writing it doesn't remove the cluster role binding for other Gloo installations.
+    issueLink: https://github.com/solo-io/gloo/issues/538

@@ -37,7 +37,7 @@ func Translate(ctx context.Context, namespace string, snap *v1.ApiSnapshot) (*gl
 
 	var listeners []*gloov1.Listener
 	for _, gateway := range filteredGateways {
-		virtualServices := getVirtualServiceForGateway(gateway, snap.VirtualServices.List(), resourceErrs)
+		virtualServices := getVirtualServiceForGateway(gateway, snap.VirtualServices.List(), resourceErrs, namespace)
 		mergedVirtualServices := validateAndMergeVirtualServices(namespace, gateway, virtualServices, resourceErrs)
 		mergedVirtualServices = filterVirtualSeviceForGateway(gateway, mergedVirtualServices)
 		listener := desiredListener(gateway, mergedVirtualServices)

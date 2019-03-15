@@ -115,7 +115,7 @@ steps:
   - 'DOCKER_CONFIG=/workspace/.docker/'
   dir: './gopath/src/github.com/solo-io/gloo'
   args: ['-r', '-failFast', '-p', '-race', '-dryRun']
-  waitFor: ['get-envoy', 'setup-aws-creds', 'setup-helm', 'check-code-and-docs-gen']
+  waitFor: ['get-envoy', 'setup-aws-creds', 'setup-helm']
   id: 'test'
 
 # Build and tag docker images

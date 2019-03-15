@@ -24,6 +24,7 @@ func TestGateway(t *testing.T) {
 }
 
 var testHelper *helper.SoloTestHelper
+var failed bool
 
 var _ = BeforeSuite(func() {
 	cwd, err := os.Getwd()
@@ -39,14 +40,24 @@ var _ = BeforeSuite(func() {
 	// Install Gloo
 	err = testHelper.InstallGloo(helper.GATEWAY, 5*time.Minute)
 	Expect(err).NotTo(HaveOccurred())
+	failed = false
+})
+
+var _ = AfterEach(func() {
+	failed = failed || CurrentGinkgoTestDescription().Failed
 })
 
 var _ = AfterSuite(func() {
-	testutils.Kubectl("cluster-info", "dump", "--namespaces", testHelper.InstallNamespace)
-	err := testHelper.UninstallGloo()
-	Expect(err).NotTo(HaveOccurred())
+	if failed {
+		// log a bunch of stuff to the build log after failures
+		testutils.Kubectl("cluster-info", "dump", "--namespaces", testHelper.InstallNamespace)
+	} else {
+		// stop cleaning up after failures
+		err := testHelper.UninstallGloo()
+		Expect(err).NotTo(HaveOccurred())
 
-	Eventually(func() error {
-		return testutils.Kubectl("get", "namespace", testHelper.InstallNamespace)
-	}, "60s", "1s").Should(HaveOccurred())
+		Eventually(func() error {
+			return testutils.Kubectl("get", "namespace", testHelper.InstallNamespace)
+		}, "60s", "1s").Should(HaveOccurred())
+	}
 })

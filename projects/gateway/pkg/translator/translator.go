@@ -31,10 +31,12 @@ func Translate(ctx context.Context, namespace string, snap *v1.ApiSnapshot) (*gl
 		logger.Debugf("%v had no virtual services", snap.Hash())
 		return nil, resourceErrs
 	}
-	validateGateways(snap.Gateways.List(), resourceErrs)
-	var listeners []*gloov1.Listener
-	for _, gateway := range snap.Gateways.List() {
 
+	filteredGateways := filterGateways(snap.Gateways.List(), namespace)
+	validateGateways(filteredGateways, resourceErrs)
+
+	var listeners []*gloov1.Listener
+	for _, gateway := range filteredGateways {
 		virtualServices := getVirtualServiceForGateway(gateway, snap.VirtualServices.List(), resourceErrs)
 		mergedVirtualServices := validateAndMergeVirtualServices(namespace, gateway, virtualServices, resourceErrs)
 		mergedVirtualServices = filterVirtualSeviceForGateway(gateway, mergedVirtualServices)
@@ -56,6 +58,19 @@ func joinGatewayNames(gateways v1.GatewayList) string {
 		names = append(names, gw.Metadata.Name)
 	}
 	return strings.Join(names, ".")
+}
+
+// https://github.com/solo-io/gloo/issues/538
+// Gloo should only pay attention to gateways it creates, i.e. in it's write namespace, to support
+// handling multiple gloo installations
+func filterGateways(gateways v1.GatewayList, namespace string) v1.GatewayList {
+	var filteredGateways v1.GatewayList
+	for _, gateway := range gateways {
+		if gateway.Metadata.Namespace == namespace {
+			filteredGateways = append(filteredGateways, gateway)
+		}
+	}
+	return filteredGateways
 }
 
 func validateGateways(gateways v1.GatewayList, resourceErrs reporter.ResourceErrors) {
@@ -181,15 +196,17 @@ func getMergedName(k string) string {
 	return "merged-" + k
 }
 
-func getVirtualServiceForGateway(gateway *v1.Gateway, virtualServices v1.VirtualServiceList, resourceErrs reporter.ResourceErrors) v1.VirtualServiceList {
+func getVirtualServiceForGateway(gateway *v1.Gateway, virtualServices v1.VirtualServiceList, resourceErrs reporter.ResourceErrors, namespace string) v1.VirtualServiceList {
 	virtualServiceRefs := gateway.VirtualServices
 	// add all virtual services if empty
 	if len(gateway.VirtualServices) == 0 {
 		for _, virtualService := range virtualServices {
-			virtualServiceRefs = append(virtualServiceRefs, core.ResourceRef{
-				Name:      virtualService.GetMetadata().Name,
-				Namespace: virtualService.GetMetadata().Namespace,
-			})
+			if virtualService.Metadata.Namespace == namespace {
+				virtualServiceRefs = append(virtualServiceRefs, core.ResourceRef{
+					Name:      virtualService.GetMetadata().Name,
+					Namespace: virtualService.GetMetadata().Namespace,
+				})
+			}
 		}
 	}
 

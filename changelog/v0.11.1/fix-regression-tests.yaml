@@ -1,0 +1,4 @@
+changelog:
+  - type: FIX
+    description: Filters gateways down to ones Gloo has written to it's write namespace, ignoring gateways created by other Gloo installations.
+    issueLink: https://github.com/solo-io/gloo/issues/538

@@ -42,6 +42,7 @@ var _ = BeforeSuite(func() {
 })
 
 var _ = AfterSuite(func() {
+	testutils.Kubectl("cluster-info", "dump", "--namespaces", testHelper.InstallNamespace)
 	err := testHelper.UninstallGloo()
 	Expect(err).NotTo(HaveOccurred())
 

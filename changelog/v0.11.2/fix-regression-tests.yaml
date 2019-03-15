@@ -5,3 +5,6 @@ changelog:
   - type: FIX
     description: Change name of cluster role binding created during Gloo installation to include namespace, so that writing it doesn't remove the cluster role binding for other Gloo installations.
     issueLink: https://github.com/solo-io/gloo/issues/540
+  - type: FIX
+    description: Lock around KNative tests
+    issueLink: https://github.com/solo-io/gloo/issues/543

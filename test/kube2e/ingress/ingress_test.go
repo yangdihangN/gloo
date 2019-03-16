@@ -15,7 +15,7 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 )
 
-var _ = Describe("Kube2e: Ingress", func() {
+var _ = PDescribe("Kube2e: Ingress", func() {
 
 	It("works", func() {
 		cfg, err := kubeutils.GetConfig("", "")

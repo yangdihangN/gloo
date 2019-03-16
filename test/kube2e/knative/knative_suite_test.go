@@ -65,7 +65,7 @@ var _ = AfterEach(func() {
 var _ = AfterSuite(func() {
 
 	if failed {
-		
+
 	} else {
 		defer locker.ReleaseLock()
 		err := testHelper.UninstallGloo()

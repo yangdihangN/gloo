@@ -24,6 +24,11 @@ func TestIngress(t *testing.T) {
 }
 
 var testHelper *helper.SoloTestHelper
+var failed bool
+
+var _ = AfterEach(func() {
+	failed = failed || CurrentGinkgoTestDescription().Failed
+})
 
 var _ = BeforeSuite(func() {
 	cwd, err := os.Getwd()
@@ -42,10 +47,15 @@ var _ = BeforeSuite(func() {
 })
 
 var _ = AfterSuite(func() {
-	err := testHelper.UninstallGloo()
-	Expect(err).NotTo(HaveOccurred())
+	if failed {
+		// log a bunch of stuff to the build log after failures
+		testutils.Kubectl("cluster-info", "dump", "--namespaces", testHelper.InstallNamespace)
+	} else {
+		err := testHelper.UninstallGloo()
+		Expect(err).NotTo(HaveOccurred())
 
-	Eventually(func() error {
-		return testutils.Kubectl("get", "namespace", testHelper.InstallNamespace)
-	}, "60s", "1s").Should(HaveOccurred())
+		Eventually(func() error {
+			return testutils.Kubectl("get", "namespace", testHelper.InstallNamespace)
+		}, "60s", "1s").Should(HaveOccurred())
+	}
 })

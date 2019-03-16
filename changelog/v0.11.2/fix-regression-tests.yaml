@@ -5,12 +5,15 @@ changelog:
   - type: FIX
     description: Change name of cluster role binding created during Gloo installation to include namespace, so that writing it doesn't remove the cluster role binding for other Gloo installations.
     issueLink: https://github.com/solo-io/gloo/issues/540
-  - type: FIX
+  - type: NON_USER_FACING
     description: Lock around KNative tests
     issueLink: https://github.com/solo-io/gloo/issues/543
-  - type: FIX
+  - type: NON_USER_FACING
     description: Regression tests now run against the kube2e cluster.
     issueLink: https://github.com/solo-io/gloo/issues/541
   - type: FIX
     description: Give the gloo cluster role the union of permissions necessary for gateway, ingress, and knative modes, to support installing multiple modes of Gloo on a single cluster.
     issueLink: https://github.com/solo-io/gloo/issues/544
+  - type: NON_USER_FACING
+    description: KNative tests should not fail if webhook is not yet ready during setup.
+    issueLink: https://github.com/solo-io/gloo/issues/545

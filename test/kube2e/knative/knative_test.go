@@ -46,8 +46,10 @@ func deployKnativeTestService() {
 	b, err := ioutil.ReadFile(knativeTestServiceFile())
 	ExpectWithOffset(1, err).NotTo(HaveOccurred())
 
-	err = exec.RunCommandInput(string(b), testHelper.RootDir, true, "kubectl", "apply", "-f", "-")
-	ExpectWithOffset(1, err).NotTo(HaveOccurred())
+
+	EventuallyWithOffset(1, func() error {
+		return exec.RunCommandInput(string(b), testHelper.RootDir, true, "kubectl", "apply", "-f", "-")
+	}, "60s", "1s").ShouldNot(HaveOccurred())
 }
 
 func deleteKnativeTestService() error {

@@ -8,3 +8,9 @@ changelog:
   - type: FIX
     description: Lock around KNative tests
     issueLink: https://github.com/solo-io/gloo/issues/543
+  - type: FIX
+    description: Regression tests now run against the kube2e cluster.
+    issueLink: https://github.com/solo-io/gloo/issues/541
+  - type: FIX
+    description: Give the gloo cluster role the union of permissions necessary for gateway, ingress, and knative modes, to support installing multiple modes of Gloo on a single cluster.
+    issueLink: https://github.com/solo-io/gloo/issues/544

@@ -36,7 +36,10 @@ func MustKubeClient() kubernetes.Interface {
 	return kubeClient
 }
 
+var failed bool
+
 var _ = BeforeSuite(func() {
+	failed = false
 	cwd, err := os.Getwd()
 	Expect(err).NotTo(HaveOccurred())
 	testHelper, err = helper.NewSoloTestHelper(func(defaults helper.TestConfig) helper.TestConfig {
@@ -55,12 +58,21 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 })
 
-var _ = AfterSuite(func() {
-	defer locker.ReleaseLock()
-	err := testHelper.UninstallGloo()
-	Expect(err).NotTo(HaveOccurred())
+var _ = AfterEach(func() {
+	failed = failed || CurrentGinkgoTestDescription().Failed
+})
 
-	Eventually(func() error {
-		return testutils.Kubectl("get", "namespace", testHelper.InstallNamespace)
-	}, "60s", "1s").Should(HaveOccurred())
+var _ = AfterSuite(func() {
+
+	if failed {
+		
+	} else {
+		defer locker.ReleaseLock()
+		err := testHelper.UninstallGloo()
+		Expect(err).NotTo(HaveOccurred())
+
+		Eventually(func() error {
+			return testutils.Kubectl("get", "namespace", testHelper.InstallNamespace)
+		}, "60s", "1s").Should(HaveOccurred())
+	}
 })

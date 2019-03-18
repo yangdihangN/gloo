@@ -1,6 +1,8 @@
 package gateway_test
 
 import (
+	"github.com/solo-io/gloo/test/kube2e"
+	"github.com/solo-io/go-utils/testutils/clusterlock"
 	"os"
 	"path/filepath"
 	"testing"
@@ -25,6 +27,7 @@ func TestGateway(t *testing.T) {
 
 var testHelper *helper.SoloTestHelper
 var failed bool
+var locker *clusterlock.TestClusterLocker
 
 var _ = BeforeSuite(func() {
 	cwd, err := os.Getwd()
@@ -37,6 +40,10 @@ var _ = BeforeSuite(func() {
 	})
 	Expect(err).NotTo(HaveOccurred())
 
+	locker, err = clusterlock.NewTestClusterLocker(kube2e.MustKubeClient(), "")
+	Expect(err).NotTo(HaveOccurred())
+	Expect(locker.AcquireLock()).NotTo(HaveOccurred())
+
 	// Install Gloo
 	err = testHelper.InstallGloo(helper.GATEWAY, 5*time.Minute)
 	Expect(err).NotTo(HaveOccurred())
@@ -48,16 +55,12 @@ var _ = AfterEach(func() {
 })
 
 var _ = AfterSuite(func() {
-	if failed {
-		// log a bunch of stuff to the build log after failures
-		testutils.Kubectl("cluster-info", "dump", "--namespaces", testHelper.InstallNamespace)
-	} else {
-		// stop cleaning up after failures
-		err := testHelper.UninstallGloo()
-		Expect(err).NotTo(HaveOccurred())
+	defer locker.ReleaseLock()
+	// stop cleaning up after failures
+	err := testHelper.UninstallGloo()
+	Expect(err).NotTo(HaveOccurred())
 
-		Eventually(func() error {
-			return testutils.Kubectl("get", "namespace", testHelper.InstallNamespace)
-		}, "60s", "1s").Should(HaveOccurred())
-	}
+	Eventually(func() error {
+		return testutils.Kubectl("get", "namespace", testHelper.InstallNamespace)
+	}, "60s", "1s").Should(HaveOccurred())
 })

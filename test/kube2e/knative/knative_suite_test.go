@@ -1,9 +1,8 @@
 package knative_test
 
 import (
-	"github.com/solo-io/go-utils/kubeutils"
+	"github.com/solo-io/gloo/test/kube2e"
 	"github.com/solo-io/go-utils/testutils/clusterlock"
-	"k8s.io/client-go/kubernetes"
 	"os"
 	"path/filepath"
 	"testing"
@@ -27,15 +26,6 @@ func TestKnative(t *testing.T) {
 
 var testHelper *helper.SoloTestHelper
 var locker *clusterlock.TestClusterLocker
-
-func MustKubeClient() kubernetes.Interface {
-	restConfig, err := kubeutils.GetConfig("", "")
-	ExpectWithOffset(1, err).NotTo(HaveOccurred())
-	kubeClient, err := kubernetes.NewForConfig(restConfig)
-	ExpectWithOffset(1, err).NotTo(HaveOccurred())
-	return kubeClient
-}
-
 var failed bool
 
 var _ = BeforeSuite(func() {
@@ -49,10 +39,10 @@ var _ = BeforeSuite(func() {
 	})
 	Expect(err).NotTo(HaveOccurred())
 
-
-	locker, err = clusterlock.NewTestClusterLocker(MustKubeClient(), "")
+	locker, err = clusterlock.NewTestClusterLocker(kube2e.MustKubeClient(), "")
 	Expect(err).NotTo(HaveOccurred())
 	Expect(locker.AcquireLock()).NotTo(HaveOccurred())
+
 	// Install Gloo
 	err = testHelper.InstallGloo(helper.KNATIVE, 5*time.Minute)
 	Expect(err).NotTo(HaveOccurred())
@@ -63,16 +53,11 @@ var _ = AfterEach(func() {
 })
 
 var _ = AfterSuite(func() {
+	defer locker.ReleaseLock()
+	err := testHelper.UninstallGloo()
+	Expect(err).NotTo(HaveOccurred())
 
-	if failed {
-
-	} else {
-		defer locker.ReleaseLock()
-		err := testHelper.UninstallGloo()
-		Expect(err).NotTo(HaveOccurred())
-
-		Eventually(func() error {
-			return testutils.Kubectl("get", "namespace", testHelper.InstallNamespace)
-		}, "60s", "1s").Should(HaveOccurred())
-	}
+	Eventually(func() error {
+		return testutils.Kubectl("get", "namespace", testHelper.InstallNamespace)
+	}, "60s", "1s").Should(HaveOccurred())
 })

@@ -71,6 +71,10 @@ message DestinationSpec {
 message UpstreamSpec {
 
     UpstreamSslConfig ssl_config = 6;
+    // what subets to create for this uptsream
+    // this is only supported for systems like kubernetes where labels can be discovered
+     SubsetConfig subset_config= 7;
+
 
     // Note to developers: new Upstream Plugins must be added to this oneof field
     // to be usable by Gloo.
@@ -81,4 +85,21 @@ message UpstreamSpec {
         azure.plugins.gloo.solo.io.UpstreamSpec azure = 3;
         consul.plugins.gloo.solo.io.UpstreamSpec consul = 5;
     }
+}
+
+// also add glooctl proxy endpoints --upstream-name=.... --upstream-namespace=.... --subset="a=b,c=d"
+message SubsetConfig {
+    repeated SubsetLabels label_sets = 1;
+    Subset default_subset = 2;
+
+
+}
+
+message SubsetLabels {
+    // A subset will be created for each unique set of values for all these labels
+    Subset labels = 1;
+}
+message Subset {
+    // A subset will be created for each unique set of values for all these labels
+    repeated string labels = 1;
 }

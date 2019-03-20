@@ -259,6 +259,9 @@ message Destination {
     // destination config. If the destination config is required for the upstream and not provided by the user,
     // Gloo will invalidate the destination and its parent resources.
     DestinationSpec destination_spec = 2;
+
+    // S
+    map<string,string> subset = 3;
 }
 
 // MultiDestination is a container for a set of weighted destinations. Gloo will load balance traffic for a single

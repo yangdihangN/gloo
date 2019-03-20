@@ -84,7 +84,7 @@ func installFromUri(helmArchiveUri string, opts *options.Options, valuesFileName
 	}
 
 	if err := doPreInstall(opts, chart, values, renderOpts, filterKnativeResources); err != nil {
-
+		return err
 	}
 
 	return doInstall(opts, chart, values, renderOpts, filterKnativeResources)

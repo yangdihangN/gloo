@@ -1,0 +1,4 @@
+changelog:
+  - type: FIX
+    description: Fixes typo in refactor causing pre-install errors to be swallowed. This could only happen if a custom values file was provided causing settings to be created, and that failed. The impact would be gloo install may silently fail to create custom settings, and use default settings instead.
+    issueLink: https://github.com/solo-io/gloo/issues/571

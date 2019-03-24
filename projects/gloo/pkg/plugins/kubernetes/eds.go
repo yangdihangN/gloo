@@ -66,7 +66,12 @@ func (c *edsWatcher) List(writeNamespace string, opts clients.ListOpts) (v1.Endp
 		return nil, err
 	}
 
-	return filterEndpoints(opts.Ctx, writeNamespace, endpoints, services, pods, c.upstreams), nil
+	nodes, err := c.kubeShareFactory.NodesLister().List(labels.Everything())
+	if err != nil {
+		return nil, err
+	}
+
+	return filterEndpoints(opts.Ctx, writeNamespace, endpoints, services, pods, nodes, c.upstreams), nil
 }
 
 func (c *edsWatcher) watch(writeNamespace string, opts clients.WatchOpts) (<-chan v1.EndpointList, <-chan error, error) {
@@ -113,7 +118,7 @@ func (c *edsWatcher) watch(writeNamespace string, opts clients.WatchOpts) (<-cha
 }
 
 func filterEndpoints(ctx context.Context, writeNamespace string, kubeEndpoints []*kubev1.Endpoints,
-	services []*kubev1.Service, pods []*kubev1.Pod, upstreams map[core.ResourceRef]*kubeplugin.UpstreamSpec) v1.EndpointList {
+	services []*kubev1.Service, pods []*kubev1.Pod, nodes []*kubev1.Node, upstreams map[core.ResourceRef]*kubeplugin.UpstreamSpec) v1.EndpointList {
 	var endpoints v1.EndpointList
 
 	logger := contextutils.LoggerFrom(contextutils.WithLogger(ctx, "kubernetes_eds"))
@@ -212,7 +217,9 @@ func filterEndpoints(ctx context.Context, writeNamespace string, kubeEndpoints [
 			return '-'
 		}, addr.address)
 		endpointName := fmt.Sprintf("ep-%v-%v-%x", dnsname, addr.port, hash)
-		ep := createEndpoint(writeNamespace, endpointName, refs, addr.address, addr.port)
+		pod, _ := getPodForIp(addr.address, pods)
+		node, _ := getNodeForPod(pod, nodes)
+		ep := createEndpoint(writeNamespace, endpointName, refs, addr.address, addr.port, pod, node)
 		endpoints = append(endpoints, ep)
 	}
 
@@ -222,8 +229,8 @@ func filterEndpoints(ctx context.Context, writeNamespace string, kubeEndpoints [
 	return endpoints
 }
 
-func createEndpoint(namespace, name string, upstreams []*core.ResourceRef, address string, port uint32) *v1.Endpoint {
-	return &v1.Endpoint{
+func createEndpoint(namespace, name string, upstreams []*core.ResourceRef, address string, port uint32, pod *kubev1.Pod, node *kubev1.Node) *v1.Endpoint {
+	ep := &v1.Endpoint{
 		Metadata: core.Metadata{
 			Namespace: namespace,
 			Name:      name,
@@ -231,14 +238,48 @@ func createEndpoint(namespace, name string, upstreams []*core.ResourceRef, addre
 		Upstreams: upstreams,
 		Address:   address,
 		Port:      port,
+		// TODO: add locality info
 	}
+
+	if node != nil && node.Labels != nil {
+		// failureDomainRegion := node.Labels[kubev1.LabelRegionFailureDomain]
+		// failureDomainZone := node.Labels[kubev1.LabelZoneFailureDomain]
+		// nodeName := node.Name
+
+	}
+
+	if pod != nil {
+		ep.Metadata.Labels = pod.Labels
+
+	}
+	return ep
 }
 
 func getPodLabelsForIp(ip string, pods []*kubev1.Pod) (map[string]string, error) {
+	pod, err := getPodForIp(ip, pods)
+	if err != nil {
+		return nil, err
+	}
+	return pod.Labels, nil
+}
+
+func getPodForIp(ip string, pods []*kubev1.Pod) (*kubev1.Pod, error) {
 	for _, pod := range pods {
 		if pod.Status.PodIP == ip && pod.Status.Phase == kubev1.PodRunning {
-			return pod.Labels, nil
+			return pod, nil
 		}
 	}
 	return nil, errors.Errorf("running pod not found with ip %v", ip)
+}
+
+func getNodeForPod(pod *kubev1.Pod, nodes []*kubev1.Node) (*kubev1.Node, error) {
+	if pod == nil {
+		return nil, errors.Errorf("pod is nil")
+	}
+	for _, node := range nodes {
+		if node.Name == pod.Spec.NodeName {
+			return node, nil
+		}
+	}
+	return nil, errors.Errorf("node not found for pod %v.%v", pod.Namespace, pod.Name)
 }

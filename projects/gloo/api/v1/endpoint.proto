@@ -23,6 +23,14 @@ message Endpoint {
     // listening port for the endpoint
     uint32 port = 3;
 
+    Locality Locality = 4;
+
     // Metadata contains the object metadata for this resource
     core.solo.io.Metadata metadata = 7 [(gogoproto.nullable) = false];
+}
+
+message Locality {
+    string region = 1;
+    string zone = 2;
+    string node = 3;
 }

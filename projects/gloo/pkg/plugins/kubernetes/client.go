@@ -19,6 +19,7 @@ type KubePluginSharedFactory interface {
 	EndpointsLister() kubelisters.EndpointsLister
 	ServicesLister() kubelisters.ServiceLister
 	PodsLister() kubelisters.PodLister
+	NodesLister() kubelisters.NodeLister
 	Subscribe() <-chan struct{}
 	Unsubscribe(<-chan struct{})
 }
@@ -29,6 +30,7 @@ type KubePluginListers struct {
 	endpointsLister kubelisters.EndpointsLister
 	servicesLister  kubelisters.ServiceLister
 	podsLister      kubelisters.PodLister
+	nodesLister     kubelisters.NodeLister
 
 	cacheUpdatedWatchers      []chan struct{}
 	cacheUpdatedWatchersMutex sync.Mutex
@@ -55,16 +57,18 @@ func startInformerFactory(ctx context.Context, client kubernetes.Interface) *Kub
 	endpointInformer := kubeInformerFactory.Core().V1().Endpoints()
 	podsInformer := kubeInformerFactory.Core().V1().Pods()
 	servicesInformer := kubeInformerFactory.Core().V1().Services()
+	nodesInformer := kubeInformerFactory.Core().V1().Nodes()
 
 	k := &KubePluginListers{
 		endpointsLister: endpointInformer.Lister(),
 		servicesLister:  servicesInformer.Lister(),
 		podsLister:      podsInformer.Lister(),
+		nodesLister:     nodesInformer.Lister(),
 	}
 
 	kubeController := kubecontroller.NewController("kube-plugin-controller", client,
 		kubecontroller.NewLockingSyncHandler(k.updatedOccured),
-		endpointInformer.Informer(), podsInformer.Informer(), servicesInformer.Informer())
+		endpointInformer.Informer(), podsInformer.Informer(), servicesInformer.Informer(), nodesInformer.Informer())
 
 	stop := ctx.Done()
 	go kubeInformerFactory.Start(stop)
@@ -73,7 +77,8 @@ func startInformerFactory(ctx context.Context, client kubernetes.Interface) *Kub
 	ok := cache.WaitForCacheSync(stop,
 		endpointInformer.Informer().HasSynced,
 		podsInformer.Informer().HasSynced,
-		servicesInformer.Informer().HasSynced)
+		servicesInformer.Informer().HasSynced,
+		nodesInformer.Informer().HasSynced)
 	if !ok {
 		// if initError is non-nil, the kube resource client will panic
 		k.initError = errors.Errorf("waiting for kube pod, endpoints, services cache sync failed")
@@ -92,6 +97,10 @@ func (k *KubePluginListers) ServicesLister() kubelisters.ServiceLister {
 
 func (k *KubePluginListers) PodsLister() kubelisters.PodLister {
 	return k.podsLister
+}
+
+func (k *KubePluginListers) NodesLister() kubelisters.NodeLister {
+	return k.nodesLister
 }
 
 func (k *KubePluginListers) Subscribe() <-chan struct{} {

@@ -330,8 +330,8 @@ upload-github-release-assets: build-cli render-yaml
 push-docs:
 	go run ci/push_docs.go
 
-.PHONY: publish-chart
-publish-chart:
+.PHONY: publish-helm-chart
+publish-helm-chart:
 	gsutil -m rsync -r ./_output/helm gs://solo-public-helm/
 
 #----------------------------------------------------------------------------------

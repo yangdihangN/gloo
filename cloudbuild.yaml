@@ -171,7 +171,7 @@ steps:
 # 1) Run make targets to push docker images, compile manifests, produce release artifacts, deploy docs
 # 2) Publish helm chart
 - name: 'gcr.io/$PROJECT_ID/go-make:0.1.5'
-  args: ['docker-push', 'manifest', 'upload-github-release-assets', 'push-docs']
+  args: ['docker-push', 'manifest', 'upload-github-release-assets', 'push-docs', 'publish-helm-chart']
   env:
   - 'TAGGED_VERSION=$TAG_NAME'
   - 'PROJECT_ROOT=github.com/solo-io/gloo'
@@ -181,17 +181,6 @@ steps:
   secretEnv: ['GITHUB_TOKEN']
   id: 'release'
   waitFor: ['test', 'regression-tests']
-# Sync helm chart data back to google storage bucket
-- name: gcr.io/cloud-builders/gsutil
-  args:
-    - -m
-    - rsync
-    - -r
-    - './_output/helm'
-    - gs://solo-public-helm/
-  dir: './gopath/src/github.com/solo-io/gloo'
-  waitFor: ['release']
-  id: 'set-helm-chart'
 
 secrets:
 - kmsKeyName: projects/solo-public/locations/global/keyRings/build/cryptoKeys/build-key

@@ -45,9 +45,10 @@ func ConfigFactoryForSettings(settings *v1.Settings,
 			*cfg = c
 		}
 		return &factory.KubeResourceClientFactory{
-			Crd:         resourceCrd,
-			Cfg:         *cfg,
-			SharedCache: cache,
+			Crd:             resourceCrd,
+			Cfg:             *cfg,
+			SharedCache:     cache,
+			SkipCrdCreation: true,
 		}, nil
 	case *v1.Settings_DirectoryConfigSource:
 		return &factory.FileResourceClientFactory{

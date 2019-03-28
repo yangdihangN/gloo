@@ -1,0 +1,4 @@
+changelog:
+  - type: FIX
+    description: Uninstall no longer fails if it should be deleting the namespace and it has already been deleted. Instead, a warning is logged to stdout, and the error is logged to the cli log.
+    issueLink: 

@@ -78,6 +78,11 @@ var _ = Describe("Kube2e: gateway", func() {
 
 	It("works", func() {
 
+		vsRef := core.ResourceRef{
+			Namespace: testHelper.InstallNamespace,
+			Name: "vs",
+		}
+
 		_, err := virtualServiceClient.Write(&v1.VirtualService{
 
 			Metadata: core.Metadata{
@@ -112,7 +117,12 @@ var _ = Describe("Kube2e: gateway", func() {
 		defaultGateway := defaults.DefaultGateway(testHelper.InstallNamespace)
 		// wait for default gateway to be created
 		Eventually(func() (*v1.Gateway, error) {
-			return gatewayClient.Read(testHelper.InstallNamespace, defaultGateway.Metadata.Name, clients.ReadOpts{})
+			gateway, err := gatewayClient.Read(testHelper.InstallNamespace, defaultGateway.Metadata.Name, clients.ReadOpts{})
+			if err != nil {
+				return nil, err
+			}
+			gateway.VirtualServices = []core.ResourceRef{ vsRef }
+			return gatewayClient.Write(gateway, clients.WriteOpts{OverwriteExisting: true})
 		}, "15s", "0.5s").Should(Not(BeNil()))
 
 		gatewayProxy := "gateway-proxy"
@@ -143,6 +153,11 @@ var _ = Describe("Kube2e: gateway", func() {
 		It("works with ssl", func() {
 			createdSecret, err := kubeClient.CoreV1().Secrets(testHelper.InstallNamespace).Create(helpers.GetKubeSecret("secret", testHelper.InstallNamespace))
 			Expect(err).NotTo(HaveOccurred())
+
+			vsRef := core.ResourceRef{
+				Namespace: testHelper.InstallNamespace,
+				Name: "vs",
+			}
 
 			_, err = virtualServiceClient.Write(&v1.VirtualService{
 
@@ -186,7 +201,12 @@ var _ = Describe("Kube2e: gateway", func() {
 			defaultGateway := defaults.DefaultGateway(testHelper.InstallNamespace)
 			// wait for default gateway to be created
 			Eventually(func() (*v1.Gateway, error) {
-				return gatewayClient.Read(testHelper.InstallNamespace, defaultGateway.Metadata.Name, clients.ReadOpts{})
+				gateway, err := gatewayClient.Read(testHelper.InstallNamespace, defaultGateway.Metadata.Name, clients.ReadOpts{})
+				if err != nil {
+					return nil, err
+				}
+				gateway.VirtualServices = []core.ResourceRef{ vsRef }
+				return gatewayClient.Write(gateway, clients.WriteOpts{OverwriteExisting: true})
 			}, "15s", "0.5s").Should(Not(BeNil()))
 
 			gatewayProxy := "gateway-proxy"

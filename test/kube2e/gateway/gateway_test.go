@@ -80,7 +80,7 @@ var _ = Describe("Kube2e: gateway", func() {
 
 		vsRef := core.ResourceRef{
 			Namespace: testHelper.InstallNamespace,
-			Name: "vs",
+			Name:      "vs",
 		}
 
 		_, err := virtualServiceClient.Write(&v1.VirtualService{
@@ -121,7 +121,7 @@ var _ = Describe("Kube2e: gateway", func() {
 			if err != nil {
 				return nil, err
 			}
-			gateway.VirtualServices = []core.ResourceRef{ vsRef }
+			gateway.VirtualServices = []core.ResourceRef{vsRef}
 			return gatewayClient.Write(gateway, clients.WriteOpts{OverwriteExisting: true})
 		}, "15s", "0.5s").Should(Not(BeNil()))
 
@@ -156,7 +156,7 @@ var _ = Describe("Kube2e: gateway", func() {
 
 			vsRef := core.ResourceRef{
 				Namespace: testHelper.InstallNamespace,
-				Name: "vs",
+				Name:      "vs",
 			}
 
 			_, err = virtualServiceClient.Write(&v1.VirtualService{
@@ -205,7 +205,7 @@ var _ = Describe("Kube2e: gateway", func() {
 				if err != nil {
 					return nil, err
 				}
-				gateway.VirtualServices = []core.ResourceRef{ vsRef }
+				gateway.VirtualServices = []core.ResourceRef{vsRef}
 				return gatewayClient.Write(gateway, clients.WriteOpts{OverwriteExisting: true})
 			}, "15s", "0.5s").Should(Not(BeNil()))
 

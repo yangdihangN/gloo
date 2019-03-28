@@ -21,9 +21,8 @@ func UninstallGloo(opts *options.Options, cli install.KubeCli) error {
 
 func uninstallGloo(opts *options.Options, cli install.KubeCli) error {
 	if opts.Uninstall.DeleteNamespace || opts.Uninstall.DeleteAll {
-		if err := deleteNamespace(cli, opts.Uninstall.Namespace); err != nil {
-			return err
-		}
+		tryDeleteNamespace(cli, opts.Uninstall.Namespace)
+
 	} else {
 		if err := deleteGlooSystem(cli, opts.Uninstall.Namespace); err != nil {
 			return err
@@ -81,12 +80,13 @@ func deleteGlooCrds(cli install.KubeCli) error {
 	return nil
 }
 
-func deleteNamespace(cli install.KubeCli, namespace string) error {
+func tryDeleteNamespace(cli install.KubeCli, namespace string) {
 	fmt.Printf("Removing namespace %s...\n", namespace)
 	if err := cli.Kubectl(nil, "delete", "namespace", namespace); err != nil {
-		return errors.Wrapf(err, "deleting namespace %s failed", namespace)
+		fmt.Fprintf(cliutil.GetLogger(), "Removing namespace failed with error: %v", err)
+		fmt.Printf("Removing namespace failed. Detailed logs available at %s.\n", cliutil.GetLogsPath())
+		fmt.Printf("Continuing uninstall...\n")
 	}
-	return nil
 }
 
 func uninstallKnativeIfNecessary(cli install.KubeCli) error {

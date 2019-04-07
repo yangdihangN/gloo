@@ -95,6 +95,8 @@ generated-code: $(OUTPUT_DIR)/.generated-code
 # Glooctl enterprise docs are pushed from the private repo.
 SUBDIRS:=projects test
 $(OUTPUT_DIR)/.generated-code:
+	go mod vendor
+	./vendor-proto.sh
 	go generate ./...
 	(rm docs/cli/glooctl*; go run projects/gloo/cli/cmd/docs/main.go)
 	gofmt -w $(SUBDIRS)

@@ -3,6 +3,7 @@ module github.com/solo-io/gloo
 go 1.12
 
 require (
+	bitbucket.org/ww/goautoneg v0.0.0-20120707110453-75cd24fc2f2c // indirect
 	github.com/Azure/go-autorest v11.1.1+incompatible // indirect
 	github.com/DataDog/datadog-go v0.0.0-20180330214955-e67964b4021a // indirect
 	github.com/MakeNowJust/heredoc v0.0.0-20171113091838-e9091a26100e // indirect
@@ -26,16 +27,17 @@ require (
 	github.com/docker/docker v0.7.3-0.20190323110219-e4cc3adf81cc // indirect
 	github.com/docker/spdystream v0.0.0-20181023171402-6480d4af844c // indirect
 	github.com/elazarl/goproxy v0.0.0-20181111060418-2ce16c963a8a // indirect
+	github.com/emicklei/go-restful-swagger12 v0.0.0-20170926063155-7524189396c6 // indirect
 	github.com/envoyproxy/go-control-plane v0.6.9
 	github.com/exponent-io/jsonpath v0.0.0-20151013193312-d6023ce2651d // indirect
 	github.com/fatih/camelcase v1.0.0 // indirect
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-ini/ini v1.38.2 // indirect
-	github.com/go-openapi/analysis v0.0.0-20180801175213-7c1bef8f6d9f // indirect
-	github.com/go-openapi/loads v0.0.0-20171207192234-2a2b323bab96
-	github.com/go-openapi/spec v0.0.0-20180801175345-384415f06ee2
+	github.com/go-openapi/loads v0.17.0
+	github.com/go-openapi/spec v0.17.0
 	github.com/go-openapi/strfmt v0.19.0 // indirect
-	github.com/go-openapi/swag v0.0.0-20180715190254-becd2f08beaf
+	github.com/go-openapi/swag v0.17.0
+	github.com/go-openapi/validate v0.19.0 // indirect
 	github.com/go-yaml/yaml v2.1.0+incompatible // indirect
 	github.com/gogo/googleapis v1.0.0
 	github.com/gogo/protobuf v1.2.1
@@ -71,13 +73,13 @@ require (
 	github.com/lyft/protoc-gen-validate v0.0.6
 	github.com/mattbaird/jsonpatch v0.0.0-20171005235357-81af80346b1a // indirect
 	github.com/mattn/go-runewidth v0.0.3 // indirect
+	github.com/mattn/go-zglob v0.0.1
 	github.com/miekg/dns v1.1.1 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.0 // indirect
 	github.com/mitchellh/hashstructure v1.0.0
 	github.com/olekukonko/tablewriter v0.0.1
 	github.com/onsi/ginkgo v1.7.0
 	github.com/onsi/gomega v1.4.3
-	github.com/pborman/uuid v1.2.0 // indirect
 	github.com/pkg/errors v0.8.1
 	github.com/prometheus/client_golang v0.9.2
 	github.com/prometheus/prometheus v2.5.0+incompatible
@@ -87,9 +89,9 @@ require (
 	github.com/soheilhy/cmux v0.1.4 // indirect
 	github.com/solo-io/envoy-operator v0.1.0
 	github.com/solo-io/go-checkpoint v0.0.0-20181217204546-b798a7563f83
-	github.com/solo-io/go-utils v0.5.1
+	github.com/solo-io/go-utils v0.6.0
 	github.com/solo-io/kubecontroller v0.0.0-20181113180850-241bc627d540
-	github.com/solo-io/solo-kit v0.3.10
+	github.com/solo-io/solo-kit v0.3.11-0.20190407213936-7da1530f9402
 	github.com/spf13/cobra v0.0.3
 	github.com/spf13/pflag v1.0.3
 	github.com/technosophos/moniker v0.0.0-20180509230615-a5dbd03a2245 // indirect
@@ -104,6 +106,7 @@ require (
 	google.golang.org/grpc v1.17.0
 	gopkg.in/AlecAivazis/survey.v1 v1.8.2
 	gopkg.in/ini.v1 v1.42.0 // indirect
+	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 	gopkg.in/square/go-jose.v2 v2.2.2 // indirect
 	gopkg.in/vmihailenco/msgpack.v2 v2.9.1 // indirect
 	k8s.io/api v0.0.0-20181221193117-173ce66c1e39
@@ -117,5 +120,3 @@ require (
 	k8s.io/utils v0.0.0-20181221173059-8a16e7dd8fb6 // indirect
 	vbom.ml/util v0.0.0-20180919145318-efcd4e0f9787 // indirect
 )
-
-replace github.com/solo-io/solo-kit => /home/yuval/go/src/github.com/solo-io/solo-kit

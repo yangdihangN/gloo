@@ -59,7 +59,8 @@ update-deps:
 	go get -u golang.org/x/tools/cmd/goimports
 	go get -u github.com/gogo/protobuf/gogoproto
 	go get -u github.com/gogo/protobuf/protoc-gen-gogo
-	go get -u github.com/lyft/protoc-gen-validate
+	mkdir -p $$GOPATH/src/github.com/lyft
+	cd $$GOPATH/src/github.com/lyft && if [ ! -e protoc-gen-validate ];then git clone https://github.com/envoyproxy/protoc-gen-validate; fi && cd protoc-gen-validate && git checkout v0.0.6
 	go get -u github.com/paulvollmer/2gobytes
 
 .PHONY: pin-repos
@@ -382,10 +383,10 @@ push-kind-images: docker
 # The Kube2e tests will use the generated Gloo Chart to install Gloo to the GKE test cluster.
 
 .PHONY: build-test-assets
-build-test-assets: push-test-images build-test-chart
+build-test-assets: push-test-images build-test-chart $(OUTPUT_DIR)/glooctl-linux-amd64 $(OUTPUT_DIR)/glooctl-darwin-amd64
 
 .PHONY: build-kind-assets
-build-kind-assets: push-kind-images build-kind-chart
+build-kind-assets: push-kind-images build-kind-chart $(OUTPUT_DIR)/glooctl-linux-amd64 $(OUTPUT_DIR)/glooctl-darwin-amd64
 
 TEST_DOCKER_TARGETS := gateway-docker-test ingress-docker-test discovery-docker-test gloo-docker-test gloo-envoy-wrapper-docker-test
 
@@ -408,14 +409,14 @@ gloo-envoy-wrapper-docker-test: $(OUTPUT_DIR)/envoyinit-linux-amd64 $(OUTPUT_DIR
 	docker push $(GCR_REPO_PREFIX)/gloo-envoy-wrapper:$(TEST_IMAGE_TAG)
 
 .PHONY: build-test-chart
-build-test-chart: $(OUTPUT_DIR)/glooctl-linux-amd64 $(OUTPUT_DIR)/glooctl-darwin-amd64
+build-test-chart:
 	mkdir -p $(TEST_ASSET_DIR)
 	go run install/helm/gloo/generate.go $(TEST_IMAGE_TAG) $(GCR_REPO_PREFIX)
 	helm package --destination $(TEST_ASSET_DIR) $(HELM_DIR)/gloo
 	helm repo index $(TEST_ASSET_DIR)
 
 .PHONY: build-kind-chart
-build-kind-chart: $(OUTPUT_DIR)/glooctl-linux-amd64 $(OUTPUT_DIR)/glooctl-darwin-amd64
+build-kind-chart:
 	mkdir -p $(TEST_ASSET_DIR)
 	go run install/helm/gloo/generate.go $(VERSION)
 	helm package --destination $(TEST_ASSET_DIR) $(HELM_DIR)/gloo

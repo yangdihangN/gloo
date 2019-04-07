@@ -21,6 +21,7 @@ import (
 	"github.com/solo-io/gloo/projects/gloo/pkg/plugins/registry"
 	"github.com/solo-io/gloo/projects/gloo/pkg/translator"
 	"github.com/solo-io/gloo/projects/gloo/pkg/xds"
+	"github.com/solo-io/go-utils/contextutils"
 	"github.com/solo-io/solo-kit/pkg/api/v1/clients"
 	"github.com/solo-io/solo-kit/pkg/api/v1/clients/factory"
 	"github.com/solo-io/solo-kit/pkg/api/v1/clients/kube"
@@ -28,7 +29,6 @@ import (
 	xdsserver "github.com/solo-io/solo-kit/pkg/api/v1/control-plane/server"
 	"github.com/solo-io/solo-kit/pkg/api/v1/reporter"
 	"github.com/solo-io/solo-kit/pkg/errors"
-	"github.com/solo-io/solo-kit/pkg/utils/contextutils"
 	"github.com/solo-io/solo-kit/pkg/utils/errutils"
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
@@ -167,7 +167,7 @@ func (s *setupSyncer) Setup(ctx context.Context, kubeCache kube.SharedCache, mem
 	// if nil, kube plugin disabled
 	opts.KubeClient = clientset
 	opts.DevMode = true
-	opts.Extensions = settings.Extensions
+	opts.Settings = settings
 
 	return s.runFunc(opts)
 }
@@ -207,6 +207,14 @@ func RunGlooWithExtensions(opts bootstrap.Opts, extensions Extensions) error {
 		return err
 	}
 
+	upstreamGroupClient, err := v1.NewUpstreamGroupClient(opts.UpstreamGroups)
+	if err != nil {
+		return err
+	}
+	if err := upstreamGroupClient.Register(); err != nil {
+		return err
+	}
+
 	endpointClient, err := v1.NewEndpointClient(endpointsFactory)
 	if err != nil {
 		return err
@@ -222,7 +230,8 @@ func RunGlooWithExtensions(opts bootstrap.Opts, extensions Extensions) error {
 		return err
 	}
 
-	cache := v1.NewApiEmitter(artifactClient, endpointClient, proxyClient, secretClient, upstreamClient)
+	apiCache := v1.NewApiEmitter(artifactClient, endpointClient, proxyClient, upstreamGroupClient, secretClient, upstreamClient)
+	discoveryCache := v1.NewDiscoveryEmitter(upstreamClient, secretClient)
 
 	// Register grpc endpoints to the grpc server
 	xdsHasher := xds.SetupEnvoyXds(opts.ControlPlane.GrpcServer, opts.ControlPlane.XDSServer, opts.ControlPlane.SnapshotCache)
@@ -242,7 +251,7 @@ func RunGlooWithExtensions(opts bootstrap.Opts, extensions Extensions) error {
 
 	var syncerExtensions []TranslatorSyncerExtension
 	params := TranslatorSyncerExtensionParams{
-		SettingExtensions: opts.Extensions,
+		SettingExtensions: opts.Settings.Extensions,
 	}
 	for _, syncerExtensionFactory := range extensions.SyncerExtensions {
 		syncerExtension, err := syncerExtensionFactory(watchOpts.Ctx, params)
@@ -253,23 +262,26 @@ func RunGlooWithExtensions(opts bootstrap.Opts, extensions Extensions) error {
 		syncerExtensions = append(syncerExtensions, syncerExtension)
 	}
 
-	sync := NewTranslatorSyncer(translator.NewTranslator(plugins, opts.Extensions), opts.ControlPlane.SnapshotCache, xdsHasher, rpt, opts.DevMode, syncerExtensions)
-	eventLoop := v1.NewApiEventLoop(cache, sync)
+	apiSync := NewTranslatorSyncer(translator.NewTranslator(plugins, opts.Settings), opts.ControlPlane.SnapshotCache, xdsHasher, rpt, opts.DevMode, syncerExtensions)
+	apiEventLoop := v1.NewApiEventLoop(apiCache, apiSync)
 
 	errs := make(chan error)
 
-	eds := discovery.NewEndpointDiscovery(opts.WriteNamespace, endpointClient, discoveryPlugins)
-	edsErrs, err := discovery.RunEds(upstreamClient, eds, opts.WriteNamespace, watchOpts)
+	disc := discovery.NewEndpointDiscovery(opts.WatchNamespaces, opts.WriteNamespace, endpointClient, discoveryPlugins)
+	edsSync := discovery.NewEdsSyncer(disc, discovery.Opts{}, watchOpts.RefreshRate)
+
+	edsEventLoop := v1.NewDiscoveryEventLoop(discoveryCache, edsSync)
+	edsErrs, err := edsEventLoop.Run(opts.WatchNamespaces, watchOpts)
 	if err != nil {
 		return err
 	}
 	go errutils.AggregateErrs(watchOpts.Ctx, errs, edsErrs, "eds.gloo")
 
-	eventLoopErrs, err := eventLoop.Run(opts.WatchNamespaces, watchOpts)
+	apiEventLoopErrs, err := apiEventLoop.Run(opts.WatchNamespaces, watchOpts)
 	if err != nil {
 		return err
 	}
-	go errutils.AggregateErrs(watchOpts.Ctx, errs, eventLoopErrs, "event_loop.gloo")
+	go errutils.AggregateErrs(watchOpts.Ctx, errs, apiEventLoopErrs, "event_loop.gloo")
 
 	go func() {
 		for {
@@ -344,6 +356,17 @@ func BootstrapFactories(ctx context.Context, clientset *kubernetes.Interface, ku
 		return bootstrap.Opts{}, err
 	}
 
+	upstreamGroupFactory, err := bootstrap.ConfigFactoryForSettings(
+		settings,
+		memCache,
+		kubeCache,
+		v1.UpstreamGroupCrd,
+		&cfg,
+	)
+	if err != nil {
+		return bootstrap.Opts{}, err
+	}
+
 	artifactFactory, err := bootstrap.ArtifactFactoryForSettings(
 		ctx,
 		settings,
@@ -357,9 +380,10 @@ func BootstrapFactories(ctx context.Context, clientset *kubernetes.Interface, ku
 		return bootstrap.Opts{}, err
 	}
 	return bootstrap.Opts{
-		Upstreams: upstreamFactory,
-		Proxies:   proxyFactory,
-		Secrets:   secretFactory,
-		Artifacts: artifactFactory,
+		Upstreams:      upstreamFactory,
+		Proxies:        proxyFactory,
+		UpstreamGroups: upstreamGroupFactory,
+		Secrets:        secretFactory,
+		Artifacts:      artifactFactory,
 	}, nil
 }

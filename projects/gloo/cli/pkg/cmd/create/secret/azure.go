@@ -4,12 +4,13 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/solo-io/gloo/projects/gloo/cli/pkg/common"
+
 	"github.com/pkg/errors"
 	"github.com/solo-io/gloo/pkg/cliutil"
 	"github.com/solo-io/gloo/projects/gloo/cli/pkg/argsutils"
 	"github.com/solo-io/gloo/projects/gloo/cli/pkg/cmd/options"
 	"github.com/solo-io/gloo/projects/gloo/cli/pkg/helpers"
-	"github.com/solo-io/gloo/projects/gloo/cli/pkg/surveyutils"
 	"github.com/solo-io/solo-kit/pkg/api/v1/clients"
 	"github.com/solo-io/solo-kit/pkg/api/v1/resources/core"
 
@@ -18,7 +19,7 @@ import (
 )
 
 func azureCmd(opts *options.Options) *cobra.Command {
-	input := opts.Create.InputSecret.AzureSecret
+	input := &opts.Create.InputSecret.AzureSecret
 	cmd := &cobra.Command{
 		Use:   "azure",
 		Short: `Create an Azure secret with the given name`,
@@ -29,15 +30,14 @@ func azureCmd(opts *options.Options) *cobra.Command {
 			}
 			if opts.Top.Interactive {
 				// and gather any missing args that are available through interactive mode
-				if err := AzureSecretArgsInteractive(&opts.Metadata, &input); err != nil {
+				if err := AzureSecretArgsInteractive(&opts.Metadata, input); err != nil {
 					return err
 				}
 			}
 			// create the secret
-			if err := createAzureSecret(opts.Top.Ctx, opts.Metadata, input); err != nil {
+			if err := createAzureSecret(opts.Top.Ctx, opts.Metadata, *input, opts.Create.DryRun); err != nil {
 				return err
 			}
-			fmt.Printf("Created Azure secret [%v] in namespace [%v]\n", opts.Metadata.Name, opts.Metadata.Namespace)
 			return nil
 		},
 	}
@@ -48,22 +48,18 @@ func azureCmd(opts *options.Options) *cobra.Command {
 	return cmd
 }
 
-func AzureSecretArgsInteractive(meta *core.Metadata, input *options.AzureSecret) error {
-	if err := surveyutils.InteractiveNamespace(&meta.Namespace); err != nil {
-		return err
-	}
+const azurePromptApiKeys = "Enter API key entry (key=value)"
 
-	if err := cliutil.GetStringInput("name of secret", &meta.Name); err != nil {
-		return err
-	}
-	if err := cliutil.GetStringSliceInput("Enter API key entry (key=value)", &input.ApiKeys.Entries); err != nil {
+func AzureSecretArgsInteractive(meta *core.Metadata, input *options.AzureSecret) error {
+
+	if err := cliutil.GetStringSliceInput(azurePromptApiKeys, &input.ApiKeys.Entries); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func createAzureSecret(ctx context.Context, meta core.Metadata, input options.AzureSecret) error {
+func createAzureSecret(ctx context.Context, meta core.Metadata, input options.AzureSecret, dryRun bool) error {
 	if input.ApiKeys.Entries == nil {
 		return errors.Errorf("must provide azure api keys")
 	}
@@ -76,9 +72,16 @@ func createAzureSecret(ctx context.Context, meta core.Metadata, input options.Az
 		},
 	}
 
+	if dryRun {
+		return common.PrintKubeSecret(ctx, secret)
+	}
+
 	secretClient := helpers.MustSecretClient()
 	if _, err := secretClient.Write(secret, clients.WriteOpts{Ctx: ctx}); err != nil {
 		return err
 	}
+
+	fmt.Printf("Created Azure secret [%v] in namespace [%v]\n", meta.Name, meta.Namespace)
+
 	return nil
 }

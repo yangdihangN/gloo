@@ -17,6 +17,7 @@ type Opts struct {
 	WriteNamespace  string
 	WatchNamespaces []string
 	Upstreams       factory.ResourceClientFactory
+	UpstreamGroups  factory.ResourceClientFactory
 	Proxies         factory.ResourceClientFactory
 	Secrets         factory.ResourceClientFactory
 	Artifacts       factory.ResourceClientFactory
@@ -25,7 +26,7 @@ type Opts struct {
 	WatchOpts       clients.WatchOpts
 	DevMode         bool
 	ControlPlane    ControlPlane
-	Extensions      *v1.Extensions
+	Settings        *v1.Settings
 }
 
 type ControlPlane struct {

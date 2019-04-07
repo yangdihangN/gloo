@@ -9,9 +9,9 @@ import (
 	v1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
 	"github.com/solo-io/gloo/projects/gloo/pkg/plugins"
 	"github.com/solo-io/gloo/projects/gloo/pkg/xds"
+	"github.com/solo-io/go-utils/contextutils"
 	envoycache "github.com/solo-io/solo-kit/pkg/api/v1/control-plane/cache"
 	"github.com/solo-io/solo-kit/pkg/api/v1/reporter"
-	"github.com/solo-io/solo-kit/pkg/utils/contextutils"
 	"go.opencensus.io/trace"
 )
 
@@ -22,12 +22,14 @@ type Translator interface {
 type translator struct {
 	plugins            []plugins.Plugin
 	extensionsSettings *v1.Extensions
+	settings           *v1.Settings
 }
 
-func NewTranslator(plugins []plugins.Plugin, extensionsSettings *v1.Extensions) Translator {
+func NewTranslator(plugins []plugins.Plugin, settings *v1.Settings) Translator {
 	return &translator{
 		plugins:            plugins,
-		extensionsSettings: extensionsSettings,
+		extensionsSettings: settings.Extensions,
+		settings:           settings,
 	}
 }
 
@@ -49,6 +51,9 @@ func (t *translator) Translate(params plugins.Params, proxy *v1.Proxy) (envoycac
 	logger := contextutils.LoggerFrom(params.Ctx)
 
 	resourceErrs := make(reporter.ResourceErrors)
+
+	logger.Debugf("verifing upstream groups: %v", proxy.Metadata.Name)
+	t.verifyUpstreamGroups(params, resourceErrs)
 
 	// endpoints and listeners are shared between listeners
 	logger.Debugf("computing envoy clusters for proxy: %v", proxy.Metadata.Name)

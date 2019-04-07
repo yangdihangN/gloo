@@ -319,7 +319,7 @@
   revision = "6480d4af844c189cf5dd913db24ddd339d3a4f85"
 
 [[projects]]
-  digest = "1:337b6710f93230615f6008cae18120743c963b887a57a4ad52d68fb71bb51a62"
+  digest = "1:cd6daa6250a3b713f625f8eea5a296e683ba76a0c0cd9ae60858fa84ad09a1d3"
   name = "github.com/envoyproxy/go-control-plane"
   packages = [
     "envoy/api/v2",
@@ -338,7 +338,6 @@
     "envoy/config/grpc_credential/v2alpha",
     "envoy/config/metrics/v2",
     "envoy/config/overload/v2alpha",
-    "envoy/config/ratelimit/v2",
     "envoy/config/trace/v2",
     "envoy/service/discovery/v2",
     "envoy/type",
@@ -346,8 +345,9 @@
     "pkg/util",
   ]
   pruneopts = "UT"
-  revision = "0ad6fa1cf0b9b6ca8f3617a7188a568e81f40b87"
-  version = "v0.6.9"
+  revision = "5ac1f5e0a972ec8168f315554c53a054a5286b23"
+  source = "github.com/yuval-k/go-control-plane"
+  version = "v0.6.11"
 
 [[projects]]
   digest = "1:f1f2bd73c025d24c3b93abf6364bccb802cf2fdedaa44360804c67800e8fab8d"
@@ -1121,6 +1121,7 @@
   packages = ["validate"]
   pruneopts = "UT"
   revision = "930a67cf7ba41b9d9436ad7a1be70a5d5ff6e1fc"
+  source = "github.com/envoyproxy/protoc-gen-validate"
   version = "v0.0.6"
 
 [[projects]]
@@ -1484,7 +1485,7 @@
   version = "0.0.4"
 
 [[projects]]
-  digest = "1:895e4708511088712de26601f976255b2930717d1f3fe2ff735e7d39784348c2"
+  digest = "1:5dc73738b0939b312ba1beb2a797a34be5390045f49e34e3671420cf56c0e043"
   name = "github.com/solo-io/go-utils"
   packages = [
     "changelogutils",
@@ -1505,8 +1506,8 @@
     "versionutils",
   ]
   pruneopts = "UT"
-  revision = "94b56d174b345de8c59b6312228ccbd9c21b3581"
-  version = "v0.5.1"
+  revision = "345282db284ff4ad930528c4c6f9a7b253464a43"
+  version = "v0.6.1"
 
 [[projects]]
   branch = "master"
@@ -1517,7 +1518,7 @@
   revision = "241bc627d5400a0794853220df4fdefeeb2af0e0"
 
 [[projects]]
-  digest = "1:6c172d601e7943ee80ec60c660069073bf36b79a32ea511574c78c3a9b20af0b"
+  digest = "1:db93442eb490ebfad170e9729e08ba6f3eef703b88cc89396ec9aa7b507cc90b"
   name = "github.com/solo-io/solo-kit"
   packages = [
     "pkg/api/v1/clients",
@@ -1558,7 +1559,6 @@
     "pkg/code-generator/parser",
     "pkg/errors",
     "pkg/utils/cliutils",
-    "pkg/utils/contextutils",
     "pkg/utils/errutils",
     "pkg/utils/fileutils",
     "pkg/utils/hashutils",
@@ -1572,8 +1572,8 @@
     "test/tests/typed",
   ]
   pruneopts = "UT"
-  revision = "e722533e9c1f1a41eee32a256ff5c09a20f2bd03"
-  version = "v0.3.10"
+  revision = "ab66edfc0413abe3bf9d16bf79d0bdbde907c218"
+  version = "v0.4.1"
 
 [[projects]]
   digest = "1:3e39bafd6c2f4bf3c76c3bfd16a2e09e016510ad5db90dc02b88e2f565d6d595"
@@ -2097,10 +2097,11 @@
   revision = "4c1cca29720474bad8854aa44b1dcb03d8c4e2b4"
 
 [[projects]]
-  digest = "1:f29e91f524c0b5d388eeb9907f26dac0bfc54c5e8601f48901bc711e2100ce99"
+  digest = "1:62c182475908e2bea479ad6cffa5d37eb34b97f58f80a49044a609ced9dd9165"
   name = "k8s.io/client-go"
   packages = [
     "discovery",
+    "discovery/fake",
     "dynamic",
     "informers",
     "informers/admissionregistration",
@@ -2149,39 +2150,72 @@
     "informers/storage/v1alpha1",
     "informers/storage/v1beta1",
     "kubernetes",
+    "kubernetes/fake",
     "kubernetes/scheme",
     "kubernetes/typed/admissionregistration/v1alpha1",
+    "kubernetes/typed/admissionregistration/v1alpha1/fake",
     "kubernetes/typed/admissionregistration/v1beta1",
+    "kubernetes/typed/admissionregistration/v1beta1/fake",
     "kubernetes/typed/apps/v1",
+    "kubernetes/typed/apps/v1/fake",
     "kubernetes/typed/apps/v1beta1",
+    "kubernetes/typed/apps/v1beta1/fake",
     "kubernetes/typed/apps/v1beta2",
+    "kubernetes/typed/apps/v1beta2/fake",
     "kubernetes/typed/auditregistration/v1alpha1",
+    "kubernetes/typed/auditregistration/v1alpha1/fake",
     "kubernetes/typed/authentication/v1",
+    "kubernetes/typed/authentication/v1/fake",
     "kubernetes/typed/authentication/v1beta1",
+    "kubernetes/typed/authentication/v1beta1/fake",
     "kubernetes/typed/authorization/v1",
+    "kubernetes/typed/authorization/v1/fake",
     "kubernetes/typed/authorization/v1beta1",
+    "kubernetes/typed/authorization/v1beta1/fake",
     "kubernetes/typed/autoscaling/v1",
+    "kubernetes/typed/autoscaling/v1/fake",
     "kubernetes/typed/autoscaling/v2beta1",
+    "kubernetes/typed/autoscaling/v2beta1/fake",
     "kubernetes/typed/autoscaling/v2beta2",
+    "kubernetes/typed/autoscaling/v2beta2/fake",
     "kubernetes/typed/batch/v1",
+    "kubernetes/typed/batch/v1/fake",
     "kubernetes/typed/batch/v1beta1",
+    "kubernetes/typed/batch/v1beta1/fake",
     "kubernetes/typed/batch/v2alpha1",
+    "kubernetes/typed/batch/v2alpha1/fake",
     "kubernetes/typed/certificates/v1beta1",
+    "kubernetes/typed/certificates/v1beta1/fake",
     "kubernetes/typed/coordination/v1beta1",
+    "kubernetes/typed/coordination/v1beta1/fake",
     "kubernetes/typed/core/v1",
+    "kubernetes/typed/core/v1/fake",
     "kubernetes/typed/events/v1beta1",
+    "kubernetes/typed/events/v1beta1/fake",
     "kubernetes/typed/extensions/v1beta1",
+    "kubernetes/typed/extensions/v1beta1/fake",
     "kubernetes/typed/networking/v1",
+    "kubernetes/typed/networking/v1/fake",
     "kubernetes/typed/policy/v1beta1",
+    "kubernetes/typed/policy/v1beta1/fake",
     "kubernetes/typed/rbac/v1",
+    "kubernetes/typed/rbac/v1/fake",
     "kubernetes/typed/rbac/v1alpha1",
+    "kubernetes/typed/rbac/v1alpha1/fake",
     "kubernetes/typed/rbac/v1beta1",
+    "kubernetes/typed/rbac/v1beta1/fake",
     "kubernetes/typed/scheduling/v1alpha1",
+    "kubernetes/typed/scheduling/v1alpha1/fake",
     "kubernetes/typed/scheduling/v1beta1",
+    "kubernetes/typed/scheduling/v1beta1/fake",
     "kubernetes/typed/settings/v1alpha1",
+    "kubernetes/typed/settings/v1alpha1/fake",
     "kubernetes/typed/storage/v1",
+    "kubernetes/typed/storage/v1/fake",
     "kubernetes/typed/storage/v1alpha1",
+    "kubernetes/typed/storage/v1alpha1/fake",
     "kubernetes/typed/storage/v1beta1",
+    "kubernetes/typed/storage/v1beta1/fake",
     "listers/admissionregistration/v1alpha1",
     "listers/admissionregistration/v1beta1",
     "listers/apps/v1",
@@ -2231,6 +2265,7 @@
     "scale/scheme/autoscalingv1",
     "scale/scheme/extensionsint",
     "scale/scheme/extensionsv1beta1",
+    "testing",
     "third_party/forked/golang/template",
     "tools/auth",
     "tools/cache",
@@ -2469,6 +2504,7 @@
     "github.com/aws/aws-sdk-go/service/lambda",
     "github.com/envoyproxy/go-control-plane/envoy/api/v2",
     "github.com/envoyproxy/go-control-plane/envoy/api/v2/auth",
+    "github.com/envoyproxy/go-control-plane/envoy/api/v2/cluster",
     "github.com/envoyproxy/go-control-plane/envoy/api/v2/core",
     "github.com/envoyproxy/go-control-plane/envoy/api/v2/endpoint",
     "github.com/envoyproxy/go-control-plane/envoy/api/v2/listener",
@@ -2528,6 +2564,7 @@
     "github.com/solo-io/go-checkpoint",
     "github.com/solo-io/go-utils/clidoc",
     "github.com/solo-io/go-utils/cliutils",
+    "github.com/solo-io/go-utils/contextutils",
     "github.com/solo-io/go-utils/docsutils",
     "github.com/solo-io/go-utils/errors",
     "github.com/solo-io/go-utils/githubutils",
@@ -2559,7 +2596,6 @@
     "github.com/solo-io/solo-kit/pkg/code-generator/docgen/options",
     "github.com/solo-io/solo-kit/pkg/errors",
     "github.com/solo-io/solo-kit/pkg/utils/cliutils",
-    "github.com/solo-io/solo-kit/pkg/utils/contextutils",
     "github.com/solo-io/solo-kit/pkg/utils/errutils",
     "github.com/solo-io/solo-kit/pkg/utils/hashutils",
     "github.com/solo-io/solo-kit/pkg/utils/kubeutils",
@@ -2595,11 +2631,13 @@
     "k8s.io/apimachinery/pkg/watch",
     "k8s.io/client-go/informers",
     "k8s.io/client-go/kubernetes",
+    "k8s.io/client-go/kubernetes/fake",
     "k8s.io/client-go/listers/core/v1",
     "k8s.io/client-go/plugin/pkg/client/auth",
     "k8s.io/client-go/plugin/pkg/client/auth/gcp",
     "k8s.io/client-go/rest",
     "k8s.io/client-go/tools/cache",
+    "k8s.io/client-go/util/homedir",
     "k8s.io/helm/pkg/chartutil",
     "k8s.io/helm/pkg/manifest",
     "k8s.io/helm/pkg/proto/hapi/chart",

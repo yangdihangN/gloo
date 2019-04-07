@@ -6,7 +6,7 @@ import (
 	"github.com/solo-io/gloo/projects/gloo/pkg/bootstrap"
 	"github.com/solo-io/gloo/projects/gloo/pkg/discovery"
 	"github.com/solo-io/gloo/projects/gloo/pkg/plugins/registry"
-	"github.com/solo-io/solo-kit/pkg/utils/contextutils"
+	"github.com/solo-io/go-utils/contextutils"
 	"github.com/solo-io/solo-kit/pkg/utils/errutils"
 )
 
@@ -31,7 +31,7 @@ func RunUDS(opts bootstrap.Opts) error {
 	}
 
 	emit := make(chan struct{})
-	emitter := v1.NewDiscoveryEmitterWithEmit(secretClient, upstreamClient, emit)
+	emitter := v1.NewDiscoveryEmitterWithEmit(upstreamClient, secretClient, emit)
 
 	// jump start all the watches
 	go func() {
@@ -48,14 +48,19 @@ func RunUDS(opts bootstrap.Opts) error {
 		}
 	}
 	watchNamespaces := utils.ProcessWatchNamespaces(opts.WatchNamespaces, opts.WriteNamespace)
-	disc := discovery.NewUpstreamDiscovery(watchNamespaces, opts.WriteNamespace, upstreamClient, discoveryPlugins)
-
-	sync := NewDiscoverySyncer(disc,
-		discovery.Opts{}, // TODO(ilackarms)
-		watchOpts.RefreshRate)
-	eventLoop := v1.NewDiscoveryEventLoop(emitter, sync)
 
 	errs := make(chan error)
+
+	uds := discovery.NewUpstreamDiscovery(watchNamespaces, opts.WriteNamespace, upstreamClient, discoveryPlugins)
+	// TODO(ilackarms) expose discovery options
+	udsErrs, err := uds.StartUds(watchOpts, discovery.Opts{})
+	if err != nil {
+		return err
+	}
+	go errutils.AggregateErrs(watchOpts.Ctx, errs, udsErrs, "event_loop.uds")
+
+	sync := NewDiscoverySyncer(uds, watchOpts.RefreshRate)
+	eventLoop := v1.NewDiscoveryEventLoop(emitter, sync)
 
 	eventLoopErrs, err := eventLoop.Run(opts.WatchNamespaces, watchOpts)
 	if err != nil {

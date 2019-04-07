@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	consulplugin "github.com/solo-io/gloo/projects/gloo/pkg/api/v1/plugins/consul"
+	"github.com/solo-io/go-utils/contextutils"
 	"github.com/solo-io/solo-kit/pkg/api/v1/resources/core"
-	"github.com/solo-io/solo-kit/pkg/utils/contextutils"
 
 	"github.com/hashicorp/consul/api"
 
@@ -19,7 +19,7 @@ import (
 	"github.com/solo-io/solo-kit/pkg/errors"
 )
 
-var _ discovery.DiscoveryPlugin = &plugin{}
+var _ discovery.DiscoveryPlugin = new(plugin)
 
 type upstreamController struct {
 	consul          *api.Client

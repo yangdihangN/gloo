@@ -16,6 +16,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const EmptyCreateError = "please provide a file flag or subcommand"
+
 func RootCmd(opts *options.Options, optionsFunc ...cliutils.OptionsFunc) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     constants.CREATE_COMMAND.Use,
@@ -25,7 +27,7 @@ func RootCmd(opts *options.Options, optionsFunc ...cliutils.OptionsFunc) *cobra.
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var reader io.ReadCloser
 			if opts.Top.File == "" {
-				return errors.Errorf("create only takes a file")
+				return errors.Errorf(EmptyCreateError)
 			}
 			if opts.Top.File == "-" {
 				reader = os.Stdin
@@ -46,6 +48,7 @@ func RootCmd(opts *options.Options, optionsFunc ...cliutils.OptionsFunc) *cobra.
 	flagutils.AddFileFlag(cmd.LocalFlags(), &opts.Top.File)
 	flagutils.AddOutputFlag(cmd.PersistentFlags(), &opts.Top.Output)
 	flagutils.AddMetadataFlags(cmd.PersistentFlags(), &opts.Metadata)
+	flagutils.AddDryRunFlag(cmd.PersistentFlags(), &opts.Create.DryRun)
 
 	cmd.AddCommand(VirtualService(opts))
 	cmd.AddCommand(Upstream(opts))

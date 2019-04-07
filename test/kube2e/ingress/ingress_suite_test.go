@@ -41,7 +41,10 @@ var _ = BeforeSuite(func() {
 	})
 	Expect(err).NotTo(HaveOccurred())
 
-	locker, err = clusterlock.NewTestClusterLocker(kube2e.MustKubeClient(), "")
+	options := clusterlock.Options{
+		IdPrefix: os.ExpandEnv("ingress-${BUILD_ID}-"),
+	}
+	locker, err = clusterlock.NewTestClusterLocker(kube2e.MustKubeClient(), options)
 	Expect(err).NotTo(HaveOccurred())
 	Expect(locker.AcquireLock(retry.Attempts(40))).NotTo(HaveOccurred())
 
@@ -56,8 +59,7 @@ var _ = AfterSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 
 	// TODO go-utils should expose `glooctl uninstall --delete-namespace`
-	err = testutils.Kubectl("delete", "namespace", testHelper.InstallNamespace)
-	Expect(err).NotTo(HaveOccurred())
+	testutils.Kubectl("delete", "namespace", testHelper.InstallNamespace)
 
 	Eventually(func() error {
 		return testutils.Kubectl("get", "namespace", testHelper.InstallNamespace)

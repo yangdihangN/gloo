@@ -10,7 +10,7 @@ import (
 	v1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
 	"github.com/solo-io/gloo/projects/gloo/pkg/bootstrap"
 	"github.com/solo-io/gloo/projects/gloo/pkg/plugins/registry"
-	"github.com/solo-io/solo-kit/pkg/utils/contextutils"
+	"github.com/solo-io/go-utils/contextutils"
 	"github.com/solo-io/solo-kit/pkg/utils/errutils"
 )
 
@@ -33,7 +33,7 @@ func RunFDS(opts bootstrap.Opts) error {
 		return err
 	}
 
-	cache := v1.NewDiscoveryEmitter(secretClient, upstreamClient)
+	cache := v1.NewDiscoveryEmitter(upstreamClient, secretClient)
 
 	var resolvers fds.Resolvers
 	for _, plug := range registry.Plugins(opts) {

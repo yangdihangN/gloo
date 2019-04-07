@@ -1,6 +1,7 @@
 package discovery
 
 import (
+	"context"
 	"reflect"
 	"sort"
 	"strings"
@@ -10,11 +11,11 @@ import (
 
 	v1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
 	"github.com/solo-io/gloo/projects/gloo/pkg/plugins"
+	"github.com/solo-io/go-utils/contextutils"
 	"github.com/solo-io/solo-kit/pkg/api/v1/clients"
 	"github.com/solo-io/solo-kit/pkg/api/v1/resources"
 	"github.com/solo-io/solo-kit/pkg/api/v1/resources/core"
 	"github.com/solo-io/solo-kit/pkg/errors"
-	"github.com/solo-io/solo-kit/pkg/utils/contextutils"
 )
 
 type DiscoveryPlugin interface {
@@ -36,44 +37,49 @@ type DiscoveryPlugin interface {
 }
 
 type UpstreamDiscovery struct {
-	watchNamespaces    []string
-	writeNamespace     string
-	upstreamReconciler v1.UpstreamReconciler
-	discoveryPlugins   []DiscoveryPlugin
+	watchNamespaces        []string
+	writeNamespace         string
+	upstreamReconciler     v1.UpstreamReconciler
+	discoveryPlugins       []DiscoveryPlugin
+	lock                   sync.Mutex
+	latestDesiredUpstreams map[DiscoveryPlugin]v1.UpstreamList
+	extraSelectorLabels    map[string]string
 }
 
 type EndpointDiscovery struct {
+	watchNamespaces    []string
 	writeNamespace     string
 	endpointReconciler v1.EndpointReconciler
 	discoveryPlugins   []DiscoveryPlugin
+}
+
+func NewEndpointDiscovery(watchNamespaces []string,
+	writeNamespace string,
+	endpointsClient v1.EndpointClient,
+	discoveryPlugins []DiscoveryPlugin) *EndpointDiscovery {
+	return &EndpointDiscovery{
+		watchNamespaces:    watchNamespaces,
+		writeNamespace:     writeNamespace,
+		endpointReconciler: v1.NewEndpointReconciler(endpointsClient),
+		discoveryPlugins:   discoveryPlugins}
 }
 
 func NewUpstreamDiscovery(watchNamespaces []string, writeNamespace string,
 	upstreamClient v1.UpstreamClient,
 	discoveryPlugins []DiscoveryPlugin) *UpstreamDiscovery {
 	return &UpstreamDiscovery{
-		watchNamespaces:    watchNamespaces,
-		writeNamespace:     writeNamespace,
-		upstreamReconciler: v1.NewUpstreamReconciler(upstreamClient),
-		discoveryPlugins:   discoveryPlugins,
-	}
-}
-
-func NewEndpointDiscovery(writeNamespace string,
-	endpointsClient v1.EndpointClient,
-	discoveryPlugins []DiscoveryPlugin) *EndpointDiscovery {
-	return &EndpointDiscovery{
-		writeNamespace:     writeNamespace,
-		endpointReconciler: v1.NewEndpointReconciler(endpointsClient),
-		discoveryPlugins:   discoveryPlugins,
+		watchNamespaces:        watchNamespaces,
+		writeNamespace:         writeNamespace,
+		upstreamReconciler:     v1.NewUpstreamReconciler(upstreamClient),
+		discoveryPlugins:       discoveryPlugins,
+		latestDesiredUpstreams: make(map[DiscoveryPlugin]v1.UpstreamList),
 	}
 }
 
 // launch a goroutine for all the UDS plugins
 func (d *UpstreamDiscovery) StartUds(opts clients.WatchOpts, discOpts Opts) (chan error, error) {
 	aggregatedErrs := make(chan error)
-	upstreamsByUds := make(map[DiscoveryPlugin]v1.UpstreamList)
-	lock := sync.Mutex{}
+	d.extraSelectorLabels = opts.Selector
 	for _, uds := range d.discoveryPlugins {
 		upstreams, errs, err := uds.DiscoverUpstreams(d.watchNamespaces, d.writeNamespace, opts, discOpts)
 		if err != nil {
@@ -85,26 +91,16 @@ func (d *UpstreamDiscovery) StartUds(opts clients.WatchOpts, discOpts Opts) (cha
 			// TODO (ilackarms): when we have less problems, solve this
 			udsName := strings.Replace(reflect.TypeOf(uds).String(), "*", "", -1)
 			udsName = strings.Replace(udsName, ".", "", -1)
-			selector := map[string]string{
-				"discovered_by": udsName,
-			}
-			for k, v := range opts.Selector {
-				selector[k] = v
-			}
 			for {
 				select {
 				case upstreamList := <-upstreams:
-					lock.Lock()
+					d.lock.Lock()
 					upstreamList = setLabels(udsName, upstreamList)
-					upstreamsByUds[uds] = upstreamList
-					desiredUpstreams := aggregateUpstreams(upstreamsByUds)
-					if err := d.upstreamReconciler.Reconcile(d.writeNamespace, desiredUpstreams, uds.UpdateUpstream, clients.ListOpts{
-						Ctx:      opts.Ctx,
-						Selector: selector,
-					}); err != nil {
-						aggregatedErrs <- errors.Wrapf(err, "reconciling %v desired upstreams", len(desiredUpstreams))
+					d.latestDesiredUpstreams[uds] = upstreamList
+					d.lock.Unlock()
+					if err := d.Resync(opts.Ctx); err != nil {
+						aggregatedErrs <- errors.Wrapf(err, "error in uds plugin %v", reflect.TypeOf(uds).Name())
 					}
-					lock.Unlock()
 				case err := <-errs:
 					aggregatedErrs <- errors.Wrapf(err, "error in uds plugin %v", reflect.TypeOf(uds).Name())
 				case <-opts.Ctx.Done():
@@ -114,6 +110,29 @@ func (d *UpstreamDiscovery) StartUds(opts clients.WatchOpts, discOpts Opts) (cha
 		}(uds)
 	}
 	return aggregatedErrs, nil
+}
+
+// ensures that the latest desired upstreams are in sync
+func (d *UpstreamDiscovery) Resync(ctx context.Context) error {
+	d.lock.Lock()
+	defer d.lock.Unlock()
+	for uds, desiredUpstreams := range d.latestDesiredUpstreams {
+		udsName := strings.Replace(reflect.TypeOf(uds).String(), "*", "", -1)
+		udsName = strings.Replace(udsName, ".", "", -1)
+		selector := map[string]string{
+			"discovered_by": udsName,
+		}
+		for k, v := range d.extraSelectorLabels {
+			selector[k] = v
+		}
+		if err := d.upstreamReconciler.Reconcile(d.writeNamespace, desiredUpstreams, uds.UpdateUpstream, clients.ListOpts{
+			Ctx:      ctx,
+			Selector: selector,
+		}); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func setLabels(udsName string, upstreamList v1.UpstreamList) v1.UpstreamList {
@@ -129,21 +148,10 @@ func setLabels(udsName string, upstreamList v1.UpstreamList) v1.UpstreamList {
 	return clone
 }
 
-func aggregateUpstreams(endpointsByUds map[DiscoveryPlugin]v1.UpstreamList) v1.UpstreamList {
-	var upstreams v1.UpstreamList
-	for _, upstreamList := range endpointsByUds {
-		upstreams = append(upstreams, upstreamList...)
-	}
-	sort.SliceStable(upstreams, func(i, j int) bool {
-		return upstreams[i].Metadata.Less(upstreams[j].Metadata)
-	})
-	return upstreams
-}
-
 // launch a goroutine for all the UDS plugins with a single cancel to close them all
 func (d *EndpointDiscovery) StartEds(upstreamsToTrack v1.UpstreamList, opts clients.WatchOpts) (chan error, error) {
 	aggregatedErrs := make(chan error)
-	endpointsByUds := make(map[DiscoveryPlugin]v1.EndpointList)
+	endpointsByEds := make(map[DiscoveryPlugin]v1.EndpointList)
 	lock := sync.Mutex{}
 	for _, eds := range d.discoveryPlugins {
 		endpoints, errs, err := eds.WatchEndpoints(d.writeNamespace, upstreamsToTrack, opts)
@@ -160,8 +168,8 @@ func (d *EndpointDiscovery) StartEds(upstreamsToTrack v1.UpstreamList, opts clie
 						return
 					}
 					lock.Lock()
-					endpointsByUds[eds] = endpointList
-					desiredEndpoints := aggregateEndpoints(endpointsByUds)
+					endpointsByEds[eds] = endpointList
+					desiredEndpoints := aggregateEndpoints(endpointsByEds)
 					if err := d.endpointReconciler.Reconcile(d.writeNamespace, desiredEndpoints, txnEndpoint, clients.ListOpts{
 						Ctx:      opts.Ctx,
 						Selector: opts.Selector,

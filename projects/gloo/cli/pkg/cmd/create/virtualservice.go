@@ -4,6 +4,7 @@ import (
 	v1 "github.com/solo-io/gloo/projects/gateway/pkg/api/v1"
 	"github.com/solo-io/gloo/projects/gloo/cli/pkg/argsutils"
 	"github.com/solo-io/gloo/projects/gloo/cli/pkg/cmd/options"
+	"github.com/solo-io/gloo/projects/gloo/cli/pkg/common"
 	"github.com/solo-io/gloo/projects/gloo/cli/pkg/constants"
 	"github.com/solo-io/gloo/projects/gloo/cli/pkg/flagutils"
 	"github.com/solo-io/gloo/projects/gloo/cli/pkg/helpers"
@@ -49,10 +50,15 @@ func VirtualService(opts *options.Options, optionsFunc ...cliutils.OptionsFunc) 
 }
 
 func createVirtualService(opts *options.Options, args []string) error {
-	vs, err := virtualServiceFromOpts(opts.Metadata, opts.Create.VirtualService)
+	vs, err := VirtualServiceFromOpts(opts.Metadata, opts.Create.VirtualService)
 	if err != nil {
 		return err
 	}
+
+	if opts.Create.DryRun {
+		return common.PrintKubeCrd(vs, v1.VirtualServiceCrd)
+	}
+
 	virtualServiceClient := helpers.MustVirtualServiceClient()
 	vs, err = virtualServiceClient.Write(vs, clients.WriteOpts{})
 	if err != nil {
@@ -66,7 +72,7 @@ func createVirtualService(opts *options.Options, args []string) error {
 
 var allDomains = []string{"*"}
 
-func virtualServiceFromOpts(meta core.Metadata, input options.InputVirtualService) (*v1.VirtualService, error) {
+func VirtualServiceFromOpts(meta core.Metadata, input options.InputVirtualService) (*v1.VirtualService, error) {
 	if len(input.Domains) == 0 {
 		input.Domains = allDomains
 	}

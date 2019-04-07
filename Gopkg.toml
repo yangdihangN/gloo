@@ -3,8 +3,9 @@
   unused-packages = true
 
 [[constraint]]
-  version = "0.6.9"
+  version = "0.6.11"
   name = "github.com/envoyproxy/go-control-plane"
+  source = "github.com/yuval-k/go-control-plane"
 
 [[constraint]]
   version = "1.1.1"
@@ -24,11 +25,11 @@
 
 [[constraint]]
   name = "github.com/solo-io/solo-kit"
-  version = "0.3.10"
+  version = "0.4.1"
 
 [[constraint]]
   name = "github.com/solo-io/go-utils"
-  version = "0.5.0"
+  version = "0.6.1"
 
 [[constraint]]
   name = "github.com/hashicorp/consul"
@@ -73,3 +74,8 @@
 [[override]]
   name = "k8s.io/helm"
   version = "v2.12.3"
+
+[[override]]
+  name = "github.com/lyft/protoc-gen-validate"
+  version = "0.0.6"
+  source = "github.com/envoyproxy/protoc-gen-validate"

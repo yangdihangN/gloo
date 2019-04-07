@@ -7,10 +7,11 @@ import (
 	envoylistener "github.com/envoyproxy/go-control-plane/envoy/api/v2/listener"
 	envoyhttp "github.com/envoyproxy/go-control-plane/envoy/config/filter/network/http_connection_manager/v2"
 	envoyutil "github.com/envoyproxy/go-control-plane/pkg/util"
+	types "github.com/gogo/protobuf/types"
 	"github.com/pkg/errors"
 	v1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
 	"github.com/solo-io/gloo/projects/gloo/pkg/plugins"
-	"github.com/solo-io/solo-kit/pkg/utils/contextutils"
+	"github.com/solo-io/go-utils/contextutils"
 	"github.com/solo-io/solo-kit/pkg/utils/log"
 )
 
@@ -20,6 +21,9 @@ func NewHttpConnectionManager(httpFilters []*envoyhttp.HttpFilter, rdsName strin
 	return &envoyhttp.HttpConnectionManager{
 		CodecType:  envoyhttp.AUTO,
 		StatPrefix: "http",
+		NormalizePath: &types.BoolValue{
+			Value: true,
+		},
 		UpgradeConfigs: []*envoyhttp.HttpConnectionManager_UpgradeConfig{{
 			UpgradeType: webSocketUpgradeType,
 		}},
@@ -43,14 +47,11 @@ func (t *translator) computeHttpConnectionManagerFilter(params plugins.Params, l
 
 	httpConnMgr := NewHttpConnectionManager(httpFilters, rdsName)
 
-	httpConnMgrCfg, err := envoyutil.MessageToStruct(httpConnMgr)
+	hcmFilter, err := NewFilterWithConfig(envoyutil.HTTPConnectionManager, httpConnMgr)
 	if err != nil {
 		panic(errors.Wrap(err, "failed to convert proto message to struct"))
 	}
-	return envoylistener.Filter{
-		Name:       envoyutil.HTTPConnectionManager,
-		ConfigType: &envoylistener.Filter_Config{Config: httpConnMgrCfg},
-	}
+	return hcmFilter
 }
 
 func (t *translator) computeHttpFilters(params plugins.Params, listener *v1.HttpListener, report reportFunc) []*envoyhttp.HttpFilter {

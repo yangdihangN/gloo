@@ -4,7 +4,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/solo-io/gloo/projects/gloo/cli/pkg/argsutils"
-
+	"github.com/solo-io/gloo/projects/gloo/cli/pkg/cmd/create"
 	"github.com/solo-io/gloo/projects/gloo/cli/pkg/helpers"
 	"github.com/solo-io/gloo/projects/gloo/cli/pkg/testutils"
 	v1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
@@ -23,6 +23,14 @@ var _ = Describe("Upstream", func() {
 		Expect(err).NotTo(HaveOccurred())
 		return up
 	}
+
+	Context("Empty args and flags", func() {
+		It("should give clear error message", func() {
+			err := testutils.Glooctl("create upstream")
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal(create.EmptyUpstreamCreateError))
+		})
+	})
 
 	Context("static", func() {
 		It("should error when no name provided", func() {
@@ -156,6 +164,28 @@ var _ = Describe("Upstream", func() {
 			err := testutils.Glooctl("create upstream kube --name kube-upstream --kube-service kube-service --kube-service-labels foo=bar,gloo=baz")
 			Expect(err).NotTo(HaveOccurred())
 			expectKubeUpstream("kube-service", "default", uint32(80), map[string]string{"foo": "bar", "gloo": "baz"})
+		})
+
+		It("can print as kube yaml in dry-run", func() {
+			out, err := testutils.GlooctlOut("create upstream kube --dry-run --name kube-upstream --kube-service kube-service --kube-service-labels foo=bar,gloo=baz")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(out).To(Equal(`apiVersion: gloo.solo.io/v1
+kind: Upstream
+metadata:
+  creationTimestamp: null
+  name: kube-upstream
+  namespace: gloo-system
+spec:
+  upstreamSpec:
+    kube:
+      selector:
+        foo: bar
+        gloo: baz
+      serviceName: kube-service
+      serviceNamespace: default
+      servicePort: 80
+status: {}
+`))
 		})
 	})
 

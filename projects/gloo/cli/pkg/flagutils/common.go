@@ -9,3 +9,8 @@ func AddOutputFlag(set *pflag.FlagSet, strptr *string) {
 func AddFileFlag(set *pflag.FlagSet, strptr *string) {
 	set.StringVarP(strptr, "file", "f", "", "file to be read or written to")
 }
+
+func AddDryRunFlag(set *pflag.FlagSet, dryRun *bool) {
+	set.BoolVarP(dryRun, "dry-run", "", false, "print kubernetes-formatted yaml "+
+		"rather than creating or updating a resource")
+}

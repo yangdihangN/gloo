@@ -3,7 +3,6 @@ module github.com/solo-io/gloo
 go 1.12
 
 require (
-	bitbucket.org/ww/goautoneg v0.0.0-20120707110453-75cd24fc2f2c // indirect
 	github.com/Azure/go-autorest v11.1.1+incompatible // indirect
 	github.com/DataDog/datadog-go v0.0.0-20180330214955-e67964b4021a // indirect
 	github.com/MakeNowJust/heredoc v0.0.0-20171113091838-e9091a26100e // indirect
@@ -27,17 +26,14 @@ require (
 	github.com/docker/docker v0.7.3-0.20190323110219-e4cc3adf81cc // indirect
 	github.com/docker/spdystream v0.0.0-20181023171402-6480d4af844c // indirect
 	github.com/elazarl/goproxy v0.0.0-20181111060418-2ce16c963a8a // indirect
-	github.com/emicklei/go-restful-swagger12 v0.0.0-20170926063155-7524189396c6 // indirect
 	github.com/envoyproxy/go-control-plane v0.6.9
 	github.com/exponent-io/jsonpath v0.0.0-20151013193312-d6023ce2651d // indirect
 	github.com/fatih/camelcase v1.0.0 // indirect
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-ini/ini v1.38.2 // indirect
 	github.com/go-openapi/loads v0.17.0
-	github.com/go-openapi/spec v0.17.0
-	github.com/go-openapi/strfmt v0.19.0 // indirect
-	github.com/go-openapi/swag v0.17.0
-	github.com/go-openapi/validate v0.19.0 // indirect
+	github.com/go-openapi/spec v0.19.0
+	github.com/go-openapi/swag v0.17.2
 	github.com/go-yaml/yaml v2.1.0+incompatible // indirect
 	github.com/gogo/googleapis v1.0.0
 	github.com/gogo/protobuf v1.2.1
@@ -45,7 +41,6 @@ require (
 	github.com/golang/protobuf v1.2.0
 	github.com/google/go-containerregistry v0.0.0-20180801194910-5f7b0e489541 // indirect
 	github.com/google/go-github v17.0.0+incompatible
-	github.com/gophercloud/gophercloud v0.0.0-20190106001728-f27ceddc323f // indirect
 	github.com/gorilla/context v1.1.1 // indirect
 	github.com/gorilla/mux v1.6.2
 	github.com/gorilla/websocket v1.4.0 // indirect
@@ -91,7 +86,7 @@ require (
 	github.com/solo-io/go-checkpoint v0.0.0-20181217204546-b798a7563f83
 	github.com/solo-io/go-utils v0.6.0
 	github.com/solo-io/kubecontroller v0.0.0-20181113180850-241bc627d540
-	github.com/solo-io/solo-kit v0.3.11-0.20190407213936-7da1530f9402
+	github.com/solo-io/solo-kit v0.3.11-0.20190408141823-8d3f0181e3a0
 	github.com/spf13/cobra v0.0.3
 	github.com/spf13/pflag v1.0.3
 	github.com/technosophos/moniker v0.0.0-20180509230615-a5dbd03a2245 // indirect
@@ -112,11 +107,9 @@ require (
 	k8s.io/api v0.0.0-20181221193117-173ce66c1e39
 	k8s.io/apiextensions-apiserver v0.0.0-20190103235604-e7617803aceb
 	k8s.io/apimachinery v0.0.0-20190104073114-849b284f3b75
-	k8s.io/apiserver v0.0.0-20181213151703-3ccfe8365421 // indirect
 	k8s.io/cli-runtime v0.0.0-20181128200044-4c1cca297204 // indirect
 	k8s.io/client-go v10.0.0+incompatible
 	k8s.io/helm v2.13.0+incompatible
 	k8s.io/kubernetes v1.13.1
-	k8s.io/utils v0.0.0-20181221173059-8a16e7dd8fb6 // indirect
 	vbom.ml/util v0.0.0-20180919145318-efcd4e0f9787 // indirect
 )

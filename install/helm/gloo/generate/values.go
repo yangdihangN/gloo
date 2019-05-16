@@ -1,16 +1,17 @@
 package generate
 
 type Config struct {
-	Namespace      *Namespace              `json:"namespace,omitempty"`
-	Rbac           *Rbac                   `json:"rbac,omitempty"`
-	Crds           *Crds                   `json:"crds,omitempty"`
-	Settings       *Settings               `json:"settings,omitempty"`
-	Gloo           *Gloo                   `json:"gloo,omitempty"`
-	Discovery      *Discovery              `json:"discovery,omitempty"`
-	Gateway        *Gateway                `json:"gateway,omitempty"`
-	GatewayProxies map[string]GatewayProxy `json:"gatewayProxies,omitempty"`
-	Ingress        *Ingress                `json:"ingress,omitempty"`
-	IngressProxy   *IngressProxy           `json:"ingressProxy,omitempty"`
+	Namespace               *Namespace               `json:"namespace,omitempty"`
+	Rbac                    *Rbac                    `json:"rbac,omitempty"`
+	Crds                    *Crds                    `json:"crds,omitempty"`
+	Settings                *Settings                `json:"settings,omitempty"`
+	Gloo                    *Gloo                    `json:"gloo,omitempty"`
+	Discovery               *Discovery               `json:"discovery,omitempty"`
+	Gateway                 *Gateway                 `json:"gateway,omitempty"`
+	GatewayProxies          map[string]GatewayProxy  `json:"gatewayProxies,omitempty"`
+	Ingress                 *Ingress                 `json:"ingress,omitempty"`
+	IngressProxy            *IngressProxy            `json:"ingressProxy,omitempty"`
+	HorizontalPodAutoscaler *HorizontalPodAutoscaler `json:"hpa,omitempty"`
 }
 
 type Namespace struct {
@@ -105,12 +106,12 @@ type GatewayProxyDeployment struct {
 	*DeploymentSpec
 }
 type GatewayProxyService struct {
-	Type             string            `json:"type,omitempty"`
-	HttpPort         string            `json:"httpPort,omitempty"`
-	HttpsPort        string            `json:"httpsPort,omitempty"`
-	ClusterIP        string            `json:"clusterIP,omitempty"`
-	ExtraAnnotations map[string]string `json:"extraAnnotations,omitempty"`
-	ExternalTrafficPolicy string       `json:"externalTrafficPolicy,omitempty"`
+	Type                  string            `json:"type,omitempty"`
+	HttpPort              string            `json:"httpPort,omitempty"`
+	HttpsPort             string            `json:"httpsPort,omitempty"`
+	ClusterIP             string            `json:"clusterIP,omitempty"`
+	ExtraAnnotations      map[string]string `json:"extraAnnotations,omitempty"`
+	ExternalTrafficPolicy string            `json:"externalTrafficPolicy,omitempty"`
 }
 
 type GatewayProxyConfigMap struct {
@@ -120,6 +121,10 @@ type GatewayProxyConfigMap struct {
 type Ingress struct {
 	Enabled    *bool              `json:"enabled"`
 	Deployment *IngressDeployment `json:"deployment,omitempty"`
+}
+
+type HorizontalPodAutoscaler struct {
+	Enabled *bool `json:"enabled"`
 }
 
 type IngressDeployment struct {

@@ -38,6 +38,19 @@ message ListenerPlugins {
     hcm.plugins.gloo.solo.io.HttpConnectionManagerSettings http_connection_manager_settings = 2;
 }
 
+
+message Headers {
+    message AddHeader {
+        string header = 1;
+        string value = 2;
+        bool append = 3;
+    }
+    repeated AddHeader add_to_request = 1;
+    repeated string remove_from_request = 2;
+    repeated AddHeader add_to_response = 3;
+    repeated string remove_from_response = 4;
+}
+
 // Plugin-specific configuration that lives on virtual hosts
 // Each VirtualHostPlugin object contains configuration for a specific plugin
 // Note to developers: new Virtual Host Plugins must be added to this struct
@@ -45,6 +58,7 @@ message ListenerPlugins {
 message VirtualHostPlugins {
     Extensions extensions = 1;
     retries.plugins.gloo.solo.io.RetryPolicy retries = 5;
+    Headers headers = 4;
 }
 
 // Plugin-specific configuration that lives on routes
@@ -70,6 +84,8 @@ message DestinationSpec {
         rest.plugins.gloo.solo.io.DestinationSpec rest = 3;
         grpc.plugins.gloo.solo.io.DestinationSpec grpc = 4;
     }
+
+    Headers headers = 5;
 }
 
 // Each upstream in Gloo has a type. Supported types include `static`, `kubernetes`, `aws`, `consul`, and more.

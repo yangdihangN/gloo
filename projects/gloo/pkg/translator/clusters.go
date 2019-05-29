@@ -4,6 +4,7 @@ import (
 	envoyapi "github.com/envoyproxy/go-control-plane/envoy/api/v2"
 	envoycluster "github.com/envoyproxy/go-control-plane/envoy/api/v2/cluster"
 	envoycore "github.com/envoyproxy/go-control-plane/envoy/api/v2/core"
+	utilskube "github.com/solo-io/gloo/projects/gloo/pkg/utils/kube"
 
 	"github.com/pkg/errors"
 	v1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
@@ -14,7 +15,7 @@ import (
 	"go.opencensus.io/trace"
 )
 
-func (t *translator) computeClusters(params plugins.Params, resourceErrs reporter.ResourceErrors) []*envoyapi.Cluster {
+func (t *translator) computeClusters(params plugins.Params, destinations []*v1.Destination, resourceErrs reporter.ResourceErrors) []*envoyapi.Cluster {
 
 	ctx, span := trace.StartSpan(params.Ctx, "gloo.translator.computeClusters")
 	params.Ctx = ctx
@@ -24,10 +25,20 @@ func (t *translator) computeClusters(params plugins.Params, resourceErrs reporte
 	var (
 		clusters []*envoyapi.Cluster
 	)
-	for _, upstream := range params.Snapshot.Upstreams {
-		cluster := t.computeCluster(params, upstream, resourceErrs)
-		clusters = append(clusters, cluster)
+	//var services []*v1.Service
+	// convert services to upstreams in memory, and continue as usual?
+	// when having a service ref in a route, change it to upstream ref?
+	// endpoints?
+	for _, destination := range destinations {
+		if upRef := destination.GetUpstream(); upRef.GetName() != "" {
+			// TODO: what to do if namespace empty? same as proxy?
+			if upstream, err := params.Snapshot.Upstreams.Find(upRef.GetNamespace(), upRef.GetName()); err == nil {
+				cluster := t.computeCluster(params, upstream, resourceErrs)
+				clusters = append(clusters, cluster)
+			}
+		}
 	}
+
 	return clusters
 }
 
@@ -42,12 +53,22 @@ func (t *translator) computeCluster(params plugins.Params, upstream *v1.Upstream
 		}
 
 		if err := upstreamPlugin.ProcessUpstream(params, upstream, out); err != nil {
-			resourceErrs.AddError(upstream, err)
+			// TODO: check if this is a realy upstream and don't write error?
+			if utilskube.ShouldStore(upstream) {
+				resourceErrs.AddError(upstream, err)
+			} else {
+				// TODO(yuval-k): just log..
+			}
 		}
 	}
 	if err := validateCluster(out); err != nil {
-		resourceErrs.AddError(upstream, errors.Wrapf(err, "cluster was configured improperly "+
-			"by one or more plugins: %v", out))
+		// TODO: check if this is a realy upstream and don't write error?
+		if utilskube.ShouldStore(upstream) {
+			resourceErrs.AddError(upstream, errors.Wrapf(err, "cluster was configured improperly "+
+				"by one or more plugins: %v", out))
+		} else {
+			// TODO(yuval-k): just log..
+		}
 	}
 	return out
 }

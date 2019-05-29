@@ -5,6 +5,7 @@ import (
 	"time"
 
 	v1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
+	utilskube "github.com/solo-io/gloo/projects/gloo/pkg/utils/kube"
 	"github.com/solo-io/go-utils/contextutils"
 	"github.com/solo-io/solo-kit/pkg/api/v1/clients"
 )
@@ -36,6 +37,9 @@ func (s *syncer) Sync(ctx context.Context, snap *v1.DiscoverySnapshot) error {
 		Ctx:         ctx,
 		RefreshRate: s.refreshRate,
 	}
+
+	// TODO: convert service to upstreams here
+	snap.Upstreams = utilskube.Combine(snap.Services, snap.Upstreams)
 
 	udsErrs, err := s.eds.StartEds(snap.Upstreams, opts)
 	if err != nil {

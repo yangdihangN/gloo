@@ -106,7 +106,7 @@ func configForMultiDestination(destinations []*v1.WeightedDestination, upstreams
 			continue
 		}
 		header := createHeaderForUpstream(kubeUs)
-		clusterName := translator.UpstreamToClusterName(us.GetMetadata().Ref())
+		clusterName := translator.DestinationToClusterName(dest.Destination)
 		clusters := findClustersForName(clusterName, weightedCluster.Clusters)
 		for _, cluster := range clusters {
 			if _, ok := processedClusters[cluster.Name]; ok {

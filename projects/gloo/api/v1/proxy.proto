@@ -260,10 +260,34 @@ message RouteAction {
     };
 }
 
+
+message TypedResourceRef {
+    option (gogoproto.goproto_sizecache) = false;
+    option (gogoproto.goproto_unkeyed) = false;
+    option (gogoproto.goproto_unrecognized) = false;
+
+    string kind = 1;
+    string name = 2;
+    string namespace = 3;
+}
+
 // Destinations define routable destinations for proxied requests
 message Destination {
     // The upstream to route requests to
+    // Type can be Upstream or Service. defaults to Upstream.
+    // TypedResourceRef upstream = 1 [(gogoproto.nullable) = false];
     core.solo.io.ResourceRef upstream = 1 [(gogoproto.nullable) = false];
+    
+    // if the upstream is a kubernetes service, provide the port
+    // uint32 port = 2;
+    
+
+    message ServiceAndPort {
+        core.solo.io.ResourceRef service  = 1 [(gogoproto.nullable) = false];
+        uint32 port = 2;
+    }
+
+    ServiceAndPort service_ref = 4;
 
     // Some upstreams utilize plugins which require or permit additional configuration on routes targeting them.
     // gRPC upstreams, for example, allow specifying REST-style parameters for JSON-to-gRPC transcoding in the
@@ -285,6 +309,14 @@ message UpstreamGroup {
     
     // The destinations that are part of this upstream group.
     repeated WeightedDestination destinations = 1;
+
+/*
+    message ABDestination {
+        Destination destination = 1;
+        repeated HeaderMatcher headers = 2;
+    }
+    repeated ABDestination header_destinations = 1;
+*/
     
     // Status indicates the validation status of this resource.
     // Status is read-only by clients, and set by gloo during validation

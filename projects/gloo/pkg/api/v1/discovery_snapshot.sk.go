@@ -5,18 +5,22 @@ package v1
 import (
 	"fmt"
 
+	github_com_solo_io_solo_kit_pkg_api_v1_resources_common_kubernetes "github.com/solo-io/solo-kit/pkg/api/v1/resources/common/kubernetes"
+
 	"github.com/solo-io/go-utils/hashutils"
 	"go.uber.org/zap"
 )
 
 type DiscoverySnapshot struct {
 	Upstreams UpstreamList
+	Services  github_com_solo_io_solo_kit_pkg_api_v1_resources_common_kubernetes.ServiceList
 	Secrets   SecretList
 }
 
 func (s DiscoverySnapshot) Clone() DiscoverySnapshot {
 	return DiscoverySnapshot{
 		Upstreams: s.Upstreams.Clone(),
+		Services:  s.Services.Clone(),
 		Secrets:   s.Secrets.Clone(),
 	}
 }
@@ -24,12 +28,17 @@ func (s DiscoverySnapshot) Clone() DiscoverySnapshot {
 func (s DiscoverySnapshot) Hash() uint64 {
 	return hashutils.HashAll(
 		s.hashUpstreams(),
+		s.hashServices(),
 		s.hashSecrets(),
 	)
 }
 
 func (s DiscoverySnapshot) hashUpstreams() uint64 {
 	return hashutils.HashAll(s.Upstreams.AsInterfaces()...)
+}
+
+func (s DiscoverySnapshot) hashServices() uint64 {
+	return hashutils.HashAll(s.Services.AsInterfaces()...)
 }
 
 func (s DiscoverySnapshot) hashSecrets() uint64 {
@@ -39,6 +48,7 @@ func (s DiscoverySnapshot) hashSecrets() uint64 {
 func (s DiscoverySnapshot) HashFields() []zap.Field {
 	var fields []zap.Field
 	fields = append(fields, zap.Uint64("upstreams", s.hashUpstreams()))
+	fields = append(fields, zap.Uint64("services", s.hashServices()))
 	fields = append(fields, zap.Uint64("secrets", s.hashSecrets()))
 
 	return append(fields, zap.Uint64("snapshotHash", s.Hash()))
@@ -47,6 +57,7 @@ func (s DiscoverySnapshot) HashFields() []zap.Field {
 type DiscoverySnapshotStringer struct {
 	Version   uint64
 	Upstreams []string
+	Services  []string
 	Secrets   []string
 }
 
@@ -55,6 +66,11 @@ func (ss DiscoverySnapshotStringer) String() string {
 
 	s += fmt.Sprintf("  Upstreams %v\n", len(ss.Upstreams))
 	for _, name := range ss.Upstreams {
+		s += fmt.Sprintf("    %v\n", name)
+	}
+
+	s += fmt.Sprintf("  Services %v\n", len(ss.Services))
+	for _, name := range ss.Services {
 		s += fmt.Sprintf("    %v\n", name)
 	}
 
@@ -70,6 +86,7 @@ func (s DiscoverySnapshot) Stringer() DiscoverySnapshotStringer {
 	return DiscoverySnapshotStringer{
 		Version:   s.Hash(),
 		Upstreams: s.Upstreams.NamespacesDotNames(),
+		Services:  s.Services.NamespacesDotNames(),
 		Secrets:   s.Secrets.NamespacesDotNames(),
 	}
 }

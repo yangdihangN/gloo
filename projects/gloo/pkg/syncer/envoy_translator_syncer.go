@@ -113,6 +113,8 @@ func (s *translatorSyncer) syncEnvoy(ctx context.Context, snap *v1.ApiSnapshot) 
 
 		logger.Debugf("Full snapshot for proxy %v: %v", proxy.Metadata.Name, xdsSnapshot)
 	}
+	// TODO not write report for fake upstreams there are just there because of a service.... :(
+	// maybe the easiest way would be to not to add them to begin with?
 	if err := s.reporter.WriteReports(ctx, allResourceErrs, nil); err != nil {
 		logger.Debugf("Failed writing report for proxies: %v", err)
 		return errors.Wrapf(err, "writing reports")

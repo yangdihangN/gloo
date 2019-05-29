@@ -9,6 +9,8 @@ import (
 	"sync"
 	"time"
 
+	github_com_solo_io_solo_kit_pkg_api_v1_resources_common_kubernetes "github.com/solo-io/solo-kit/pkg/api/v1/resources/common/kubernetes"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/solo-io/solo-kit/pkg/api/v1/clients"
@@ -61,7 +63,13 @@ var _ = Describe("ApiEventLoop", func() {
 		upstreamClient, err := NewUpstreamClient(upstreamClientFactory)
 		Expect(err).NotTo(HaveOccurred())
 
-		emitter = NewApiEmitter(artifactClient, endpointClient, proxyClient, upstreamGroupClient, secretClient, upstreamClient)
+		serviceClientFactory := &factory.MemoryResourceClientFactory{
+			Cache: memory.NewInMemoryResourceCache(),
+		}
+		serviceClient, err := github_com_solo_io_solo_kit_pkg_api_v1_resources_common_kubernetes.NewServiceClient(serviceClientFactory)
+		Expect(err).NotTo(HaveOccurred())
+
+		emitter = NewApiEmitter(artifactClient, endpointClient, proxyClient, upstreamGroupClient, secretClient, upstreamClient, serviceClient)
 	})
 	It("runs sync function on a new snapshot", func() {
 		_, err = emitter.Artifact().Write(NewArtifact(namespace, "jerry"), clients.WriteOpts{})
@@ -75,6 +83,8 @@ var _ = Describe("ApiEventLoop", func() {
 		_, err = emitter.Secret().Write(NewSecret(namespace, "jerry"), clients.WriteOpts{})
 		Expect(err).NotTo(HaveOccurred())
 		_, err = emitter.Upstream().Write(NewUpstream(namespace, "jerry"), clients.WriteOpts{})
+		Expect(err).NotTo(HaveOccurred())
+		_, err = emitter.Service().Write(github_com_solo_io_solo_kit_pkg_api_v1_resources_common_kubernetes.NewService(namespace, "jerry"), clients.WriteOpts{})
 		Expect(err).NotTo(HaveOccurred())
 		sync := &mockApiSyncer{}
 		el := NewApiEventLoop(emitter, sync)

@@ -6,6 +6,8 @@ import (
 	"sync"
 	"time"
 
+	github_com_solo_io_solo_kit_pkg_api_v1_resources_common_kubernetes "github.com/solo-io/solo-kit/pkg/api/v1/resources/common/kubernetes"
+
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/tag"
@@ -47,14 +49,15 @@ type ApiEmitter interface {
 	UpstreamGroup() UpstreamGroupClient
 	Secret() SecretClient
 	Upstream() UpstreamClient
+	Service() github_com_solo_io_solo_kit_pkg_api_v1_resources_common_kubernetes.ServiceClient
 	Snapshots(watchNamespaces []string, opts clients.WatchOpts) (<-chan *ApiSnapshot, <-chan error, error)
 }
 
-func NewApiEmitter(artifactClient ArtifactClient, endpointClient EndpointClient, proxyClient ProxyClient, upstreamGroupClient UpstreamGroupClient, secretClient SecretClient, upstreamClient UpstreamClient) ApiEmitter {
-	return NewApiEmitterWithEmit(artifactClient, endpointClient, proxyClient, upstreamGroupClient, secretClient, upstreamClient, make(chan struct{}))
+func NewApiEmitter(artifactClient ArtifactClient, endpointClient EndpointClient, proxyClient ProxyClient, upstreamGroupClient UpstreamGroupClient, secretClient SecretClient, upstreamClient UpstreamClient, serviceClient github_com_solo_io_solo_kit_pkg_api_v1_resources_common_kubernetes.ServiceClient) ApiEmitter {
+	return NewApiEmitterWithEmit(artifactClient, endpointClient, proxyClient, upstreamGroupClient, secretClient, upstreamClient, serviceClient, make(chan struct{}))
 }
 
-func NewApiEmitterWithEmit(artifactClient ArtifactClient, endpointClient EndpointClient, proxyClient ProxyClient, upstreamGroupClient UpstreamGroupClient, secretClient SecretClient, upstreamClient UpstreamClient, emit <-chan struct{}) ApiEmitter {
+func NewApiEmitterWithEmit(artifactClient ArtifactClient, endpointClient EndpointClient, proxyClient ProxyClient, upstreamGroupClient UpstreamGroupClient, secretClient SecretClient, upstreamClient UpstreamClient, serviceClient github_com_solo_io_solo_kit_pkg_api_v1_resources_common_kubernetes.ServiceClient, emit <-chan struct{}) ApiEmitter {
 	return &apiEmitter{
 		artifact:      artifactClient,
 		endpoint:      endpointClient,
@@ -62,6 +65,7 @@ func NewApiEmitterWithEmit(artifactClient ArtifactClient, endpointClient Endpoin
 		upstreamGroup: upstreamGroupClient,
 		secret:        secretClient,
 		upstream:      upstreamClient,
+		service:       serviceClient,
 		forceEmit:     emit,
 	}
 }
@@ -74,6 +78,7 @@ type apiEmitter struct {
 	upstreamGroup UpstreamGroupClient
 	secret        SecretClient
 	upstream      UpstreamClient
+	service       github_com_solo_io_solo_kit_pkg_api_v1_resources_common_kubernetes.ServiceClient
 }
 
 func (c *apiEmitter) Register() error {
@@ -93,6 +98,9 @@ func (c *apiEmitter) Register() error {
 		return err
 	}
 	if err := c.upstream.Register(); err != nil {
+		return err
+	}
+	if err := c.service.Register(); err != nil {
 		return err
 	}
 	return nil
@@ -120,6 +128,10 @@ func (c *apiEmitter) Secret() SecretClient {
 
 func (c *apiEmitter) Upstream() UpstreamClient {
 	return c.upstream
+}
+
+func (c *apiEmitter) Service() github_com_solo_io_solo_kit_pkg_api_v1_resources_common_kubernetes.ServiceClient {
+	return c.service
 }
 
 func (c *apiEmitter) Snapshots(watchNamespaces []string, opts clients.WatchOpts) (<-chan *ApiSnapshot, <-chan error, error) {
@@ -174,6 +186,12 @@ func (c *apiEmitter) Snapshots(watchNamespaces []string, opts clients.WatchOpts)
 		namespace string
 	}
 	upstreamChan := make(chan upstreamListWithNamespace)
+	/* Create channel for Service */
+	type serviceListWithNamespace struct {
+		list      github_com_solo_io_solo_kit_pkg_api_v1_resources_common_kubernetes.ServiceList
+		namespace string
+	}
+	serviceChan := make(chan serviceListWithNamespace)
 
 	for _, namespace := range watchNamespaces {
 		/* Setup namespaced watch for Artifact */
@@ -242,6 +260,17 @@ func (c *apiEmitter) Snapshots(watchNamespaces []string, opts clients.WatchOpts)
 			defer done.Done()
 			errutils.AggregateErrs(ctx, errs, upstreamErrs, namespace+"-upstreams")
 		}(namespace)
+		/* Setup namespaced watch for Service */
+		serviceNamespacesChan, serviceErrs, err := c.service.Watch(namespace, opts)
+		if err != nil {
+			return nil, nil, errors.Wrapf(err, "starting Service watch")
+		}
+
+		done.Add(1)
+		go func(namespace string) {
+			defer done.Done()
+			errutils.AggregateErrs(ctx, errs, serviceErrs, namespace+"-services")
+		}(namespace)
 
 		/* Watch for changes and update snapshot */
 		go func(namespace string) {
@@ -285,6 +314,12 @@ func (c *apiEmitter) Snapshots(watchNamespaces []string, opts clients.WatchOpts)
 						return
 					case upstreamChan <- upstreamListWithNamespace{list: upstreamList, namespace: namespace}:
 					}
+				case serviceList := <-serviceNamespacesChan:
+					select {
+					case <-ctx.Done():
+						return
+					case serviceChan <- serviceListWithNamespace{list: serviceList, namespace: namespace}:
+					}
 				}
 			}
 		}(namespace)
@@ -311,6 +346,7 @@ func (c *apiEmitter) Snapshots(watchNamespaces []string, opts clients.WatchOpts)
 		upstreamgroupsByNamespace := make(map[string]UpstreamGroupList)
 		secretsByNamespace := make(map[string]SecretList)
 		upstreamsByNamespace := make(map[string]UpstreamList)
+		servicesByNamespace := make(map[string]github_com_solo_io_solo_kit_pkg_api_v1_resources_common_kubernetes.ServiceList)
 
 		for {
 			record := func() { stats.Record(ctx, mApiSnapshotIn.M(1)) }
@@ -398,6 +434,18 @@ func (c *apiEmitter) Snapshots(watchNamespaces []string, opts clients.WatchOpts)
 					upstreamList = append(upstreamList, upstreams...)
 				}
 				currentSnapshot.Upstreams = upstreamList.Sort()
+			case serviceNamespacedList := <-serviceChan:
+				record()
+
+				namespace := serviceNamespacedList.namespace
+
+				// merge lists by namespace
+				servicesByNamespace[namespace] = serviceNamespacedList.list
+				var serviceList github_com_solo_io_solo_kit_pkg_api_v1_resources_common_kubernetes.ServiceList
+				for _, services := range servicesByNamespace {
+					serviceList = append(serviceList, services...)
+				}
+				currentSnapshot.Services = serviceList.Sort()
 			}
 		}
 	}()

@@ -20,7 +20,9 @@ weight: 5
 - [HeaderMatcher](#headermatcher)
 - [QueryParameterMatcher](#queryparametermatcher)
 - [RouteAction](#routeaction)
+- [TypedResourceRef](#typedresourceref)
 - [Destination](#destination)
+- [ServiceAndPort](#serviceandport)
 - [UpstreamGroup](#upstreamgroup) **Top-Level Resource**
 - [MultiDestination](#multidestination)
 - [WeightedDestination](#weighteddestination)
@@ -280,6 +282,27 @@ RouteActions are used to route matched requests to upstreams.
 
 
 ---
+### TypedResourceRef
+
+
+
+```yaml
+"kind": string
+"name": string
+"namespace": string
+
+```
+
+| Field | Type | Description | Default |
+| ----- | ---- | ----------- |----------- | 
+| `kind` | `string` |  |  |
+| `name` | `string` |  |  |
+| `namespace` | `string` |  |  |
+
+
+
+
+---
 ### Destination
 
  
@@ -287,6 +310,7 @@ Destinations define routable destinations for proxied requests
 
 ```yaml
 "upstream": .core.solo.io.ResourceRef
+"serviceRef": .gloo.solo.io.Destination.ServiceAndPort
 "destinationSpec": .gloo.solo.io.DestinationSpec
 "subset": .gloo.solo.io.Subset
 
@@ -294,9 +318,29 @@ Destinations define routable destinations for proxied requests
 
 | Field | Type | Description | Default |
 | ----- | ---- | ----------- |----------- | 
-| `upstream` | [.core.solo.io.ResourceRef](../../../../../../solo-kit/api/v1/ref.proto.sk#resourceref) | The upstream to route requests to |  |
+| `upstream` | [.core.solo.io.ResourceRef](../../../../../../solo-kit/api/v1/ref.proto.sk#resourceref) | The upstream to route requests to Type can be Upstream or Service. defaults to Upstream. TypedResourceRef upstream = 1 [(gogoproto.nullable) = false]; |  |
+| `serviceRef` | [.gloo.solo.io.Destination.ServiceAndPort](../proxy.proto.sk#serviceandport) |  |  |
 | `destinationSpec` | [.gloo.solo.io.DestinationSpec](../plugins.proto.sk#destinationspec) | Some upstreams utilize plugins which require or permit additional configuration on routes targeting them. gRPC upstreams, for example, allow specifying REST-style parameters for JSON-to-gRPC transcoding in the destination config. If the destination config is required for the upstream and not provided by the user, Gloo will invalidate the destination and its parent resources. |  |
 | `subset` | [.gloo.solo.io.Subset](../subset.proto.sk#subset) | If specified, traffic will only be routed to a subset of the upstream. If upstream doesn't contain the specified subset, we will fallback to normal upstream routing. |  |
+
+
+
+
+---
+### ServiceAndPort
+
+
+
+```yaml
+"service": .core.solo.io.ResourceRef
+"port": int
+
+```
+
+| Field | Type | Description | Default |
+| ----- | ---- | ----------- |----------- | 
+| `service` | [.core.solo.io.ResourceRef](../../../../../../solo-kit/api/v1/ref.proto.sk#resourceref) |  |  |
+| `port` | `int` |  |  |
 
 
 

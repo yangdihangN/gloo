@@ -1576,9 +1576,14 @@
   version = "v0.8.4"
 
 [[projects]]
-  digest = "1:bb488600a6b498095a87e4df2267b0566c377faa1a138023c162a9775bab3d7c"
+  digest = "1:3d35f8673a34221abb033d427b2f37c9e29fb7c3f30b30fdff0ae92570e898c4"
   name = "github.com/solo-io/solo-kit"
   packages = [
+    "api/external/kubernetes/configmap",
+    "api/external/kubernetes/namespace",
+    "api/external/kubernetes/pod",
+    "api/external/kubernetes/service",
+    "pkg/api/external/kubernetes/service",
     "pkg/api/v1/clients",
     "pkg/api/v1/clients/common",
     "pkg/api/v1/clients/configmap",
@@ -1606,6 +1611,7 @@
     "pkg/api/v1/reconcile",
     "pkg/api/v1/reporter",
     "pkg/api/v1/resources",
+    "pkg/api/v1/resources/common/kubernetes",
     "pkg/api/v1/resources/core",
     "pkg/code-generator",
     "pkg/code-generator/cmd",
@@ -1627,8 +1633,8 @@
     "test/tests/typed",
   ]
   pruneopts = "UT"
-  revision = "c9b4cc6f229cdf7508b99609b87ca7074251ae8d"
-  version = "v0.9.0"
+  revision = "f40d30112db04fbd2cc4ba85f9df66af3607f344"
+  version = "v0.9.6"
 
 [[projects]]
   digest = "1:3e39bafd6c2f4bf3c76c3bfd16a2e09e016510ad5db90dc02b88e2f565d6d595"
@@ -2736,6 +2742,7 @@
     "github.com/solo-io/go-utils/testutils/exec",
     "github.com/solo-io/go-utils/testutils/helper",
     "github.com/solo-io/go-utils/versionutils",
+    "github.com/solo-io/solo-kit/pkg/api/external/kubernetes/service",
     "github.com/solo-io/solo-kit/pkg/api/v1/clients",
     "github.com/solo-io/solo-kit/pkg/api/v1/clients/factory",
     "github.com/solo-io/solo-kit/pkg/api/v1/clients/kube",
@@ -2752,6 +2759,7 @@
     "github.com/solo-io/solo-kit/pkg/api/v1/reconcile",
     "github.com/solo-io/solo-kit/pkg/api/v1/reporter",
     "github.com/solo-io/solo-kit/pkg/api/v1/resources",
+    "github.com/solo-io/solo-kit/pkg/api/v1/resources/common/kubernetes",
     "github.com/solo-io/solo-kit/pkg/api/v1/resources/core",
     "github.com/solo-io/solo-kit/pkg/code-generator/cmd",
     "github.com/solo-io/solo-kit/pkg/code-generator/docgen/options",
@@ -2775,7 +2783,6 @@
     "gopkg.in/AlecAivazis/survey.v1/terminal",
     "k8s.io/api/core/v1",
     "k8s.io/api/extensions/v1beta1",
-    "k8s.io/api/rbac/v1",
     "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1",
     "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset",
     "k8s.io/apimachinery/pkg/api/errors",

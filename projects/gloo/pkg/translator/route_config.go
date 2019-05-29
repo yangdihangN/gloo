@@ -195,7 +195,7 @@ func setRouteAction(params plugins.Params, in *v1.RouteAction, out *envoyroute.R
 	switch dest := in.Destination.(type) {
 	case *v1.RouteAction_Single:
 		out.ClusterSpecifier = &envoyroute.RouteAction_Cluster{
-			Cluster: UpstreamToClusterName(dest.Single.Upstream),
+			Cluster: DestinationToClusterName(dest.Single),
 		}
 		out.MetadataMatch = getSubsetMatch(dest.Single.Subset)
 
@@ -229,7 +229,7 @@ func setWeightedClusters(params plugins.Params, multiDest *v1.MultiDestination, 
 	for _, weightedDest := range multiDest.Destinations {
 		totalWeight += weightedDest.Weight
 		clusterSpecifier.WeightedClusters.Clusters = append(clusterSpecifier.WeightedClusters.Clusters, &envoyroute.WeightedCluster_ClusterWeight{
-			Name:          UpstreamToClusterName(weightedDest.Destination.Upstream),
+			Name:          DestinationToClusterName(weightedDest.Destination),
 			Weight:        &types.UInt32Value{Value: weightedDest.Weight},
 			MetadataMatch: getSubsetMatch(weightedDest.Destination.Subset),
 		})

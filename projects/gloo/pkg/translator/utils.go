@@ -7,8 +7,13 @@ import (
 	envoyutil "github.com/envoyproxy/go-control-plane/pkg/util"
 	"github.com/gogo/protobuf/proto"
 	"github.com/gogo/protobuf/types"
+	v1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
 	"github.com/solo-io/solo-kit/pkg/api/v1/resources/core"
 )
+
+func DestinationToClusterName(d *v1.Destination) string {
+	return UpstreamToClusterName(d.Upstream)
+}
 
 func UpstreamToClusterName(upstream core.ResourceRef) string {
 	// Don't use dots in the name as it messes up prometheus stats

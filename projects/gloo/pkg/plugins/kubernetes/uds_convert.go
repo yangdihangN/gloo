@@ -138,14 +138,17 @@ func getServiceSpec(svc *kubev1.Service, port kubev1.ServicePort) *plugins.Servi
 			Grpc: &grpcplugin.ServiceSpec{},
 		},
 	}
-	if strings.HasPrefix(port.Name, "grpc") || strings.HasPrefix(port.Name, "h2") {
-		return grpcSpec
-	}
 
 	if svc.Annotations != nil {
 		if svc.Annotations[GlooH2Annotation] == "true" {
 			return grpcSpec
+		} else if svc.Annotations[GlooH2Annotation] == "false" {
+			return nil
 		}
+	}
+
+	if strings.HasPrefix(port.Name, "grpc") || strings.HasPrefix(port.Name, "h2") {
+		return grpcSpec
 	}
 
 	return nil

@@ -6,6 +6,8 @@ import (
 	"sync"
 	"time"
 
+	github_com_solo_io_solo_kit_pkg_api_v1_resources_common_kubernetes "github.com/solo-io/solo-kit/pkg/api/v1/resources/common/kubernetes"
+
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/tag"
@@ -42,17 +44,19 @@ func init() {
 type DiscoveryEmitter interface {
 	Register() error
 	Upstream() UpstreamClient
+	Service() github_com_solo_io_solo_kit_pkg_api_v1_resources_common_kubernetes.ServiceClient
 	Secret() SecretClient
 	Snapshots(watchNamespaces []string, opts clients.WatchOpts) (<-chan *DiscoverySnapshot, <-chan error, error)
 }
 
-func NewDiscoveryEmitter(upstreamClient UpstreamClient, secretClient SecretClient) DiscoveryEmitter {
-	return NewDiscoveryEmitterWithEmit(upstreamClient, secretClient, make(chan struct{}))
+func NewDiscoveryEmitter(upstreamClient UpstreamClient, serviceClient github_com_solo_io_solo_kit_pkg_api_v1_resources_common_kubernetes.ServiceClient, secretClient SecretClient) DiscoveryEmitter {
+	return NewDiscoveryEmitterWithEmit(upstreamClient, serviceClient, secretClient, make(chan struct{}))
 }
 
-func NewDiscoveryEmitterWithEmit(upstreamClient UpstreamClient, secretClient SecretClient, emit <-chan struct{}) DiscoveryEmitter {
+func NewDiscoveryEmitterWithEmit(upstreamClient UpstreamClient, serviceClient github_com_solo_io_solo_kit_pkg_api_v1_resources_common_kubernetes.ServiceClient, secretClient SecretClient, emit <-chan struct{}) DiscoveryEmitter {
 	return &discoveryEmitter{
 		upstream:  upstreamClient,
+		service:   serviceClient,
 		secret:    secretClient,
 		forceEmit: emit,
 	}
@@ -61,11 +65,15 @@ func NewDiscoveryEmitterWithEmit(upstreamClient UpstreamClient, secretClient Sec
 type discoveryEmitter struct {
 	forceEmit <-chan struct{}
 	upstream  UpstreamClient
+	service   github_com_solo_io_solo_kit_pkg_api_v1_resources_common_kubernetes.ServiceClient
 	secret    SecretClient
 }
 
 func (c *discoveryEmitter) Register() error {
 	if err := c.upstream.Register(); err != nil {
+		return err
+	}
+	if err := c.service.Register(); err != nil {
 		return err
 	}
 	if err := c.secret.Register(); err != nil {
@@ -76,6 +84,10 @@ func (c *discoveryEmitter) Register() error {
 
 func (c *discoveryEmitter) Upstream() UpstreamClient {
 	return c.upstream
+}
+
+func (c *discoveryEmitter) Service() github_com_solo_io_solo_kit_pkg_api_v1_resources_common_kubernetes.ServiceClient {
+	return c.service
 }
 
 func (c *discoveryEmitter) Secret() SecretClient {
@@ -104,6 +116,12 @@ func (c *discoveryEmitter) Snapshots(watchNamespaces []string, opts clients.Watc
 		namespace string
 	}
 	upstreamChan := make(chan upstreamListWithNamespace)
+	/* Create channel for Service */
+	type serviceListWithNamespace struct {
+		list      github_com_solo_io_solo_kit_pkg_api_v1_resources_common_kubernetes.ServiceList
+		namespace string
+	}
+	serviceChan := make(chan serviceListWithNamespace)
 	/* Create channel for Secret */
 	type secretListWithNamespace struct {
 		list      SecretList
@@ -122,6 +140,17 @@ func (c *discoveryEmitter) Snapshots(watchNamespaces []string, opts clients.Watc
 		go func(namespace string) {
 			defer done.Done()
 			errutils.AggregateErrs(ctx, errs, upstreamErrs, namespace+"-upstreams")
+		}(namespace)
+		/* Setup namespaced watch for Service */
+		serviceNamespacesChan, serviceErrs, err := c.service.Watch(namespace, opts)
+		if err != nil {
+			return nil, nil, errors.Wrapf(err, "starting Service watch")
+		}
+
+		done.Add(1)
+		go func(namespace string) {
+			defer done.Done()
+			errutils.AggregateErrs(ctx, errs, serviceErrs, namespace+"-services")
 		}(namespace)
 		/* Setup namespaced watch for Secret */
 		secretNamespacesChan, secretErrs, err := c.secret.Watch(namespace, opts)
@@ -146,6 +175,12 @@ func (c *discoveryEmitter) Snapshots(watchNamespaces []string, opts clients.Watc
 					case <-ctx.Done():
 						return
 					case upstreamChan <- upstreamListWithNamespace{list: upstreamList, namespace: namespace}:
+					}
+				case serviceList := <-serviceNamespacesChan:
+					select {
+					case <-ctx.Done():
+						return
+					case serviceChan <- serviceListWithNamespace{list: serviceList, namespace: namespace}:
 					}
 				case secretList := <-secretNamespacesChan:
 					select {
@@ -174,6 +209,7 @@ func (c *discoveryEmitter) Snapshots(watchNamespaces []string, opts clients.Watc
 			snapshots <- &sentSnapshot
 		}
 		upstreamsByNamespace := make(map[string]UpstreamList)
+		servicesByNamespace := make(map[string]github_com_solo_io_solo_kit_pkg_api_v1_resources_common_kubernetes.ServiceList)
 		secretsByNamespace := make(map[string]SecretList)
 
 		for {
@@ -202,6 +238,18 @@ func (c *discoveryEmitter) Snapshots(watchNamespaces []string, opts clients.Watc
 					upstreamList = append(upstreamList, upstreams...)
 				}
 				currentSnapshot.Upstreams = upstreamList.Sort()
+			case serviceNamespacedList := <-serviceChan:
+				record()
+
+				namespace := serviceNamespacedList.namespace
+
+				// merge lists by namespace
+				servicesByNamespace[namespace] = serviceNamespacedList.list
+				var serviceList github_com_solo_io_solo_kit_pkg_api_v1_resources_common_kubernetes.ServiceList
+				for _, services := range servicesByNamespace {
+					serviceList = append(serviceList, services...)
+				}
+				currentSnapshot.Services = serviceList.Sort()
 			case secretNamespacedList := <-secretChan:
 				record()
 

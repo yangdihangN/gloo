@@ -9,6 +9,8 @@ import (
 	"os"
 	"time"
 
+	github_com_solo_io_solo_kit_pkg_api_v1_resources_common_kubernetes "github.com/solo-io/solo-kit/pkg/api/v1/resources/common/kubernetes"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/solo-io/go-utils/kubeutils"
@@ -41,6 +43,7 @@ var _ = Describe("V1Emitter", func() {
 		kube           kubernetes.Interface
 		emitter        DiscoveryEmitter
 		upstreamClient UpstreamClient
+		serviceClient  github_com_solo_io_solo_kit_pkg_api_v1_resources_common_kubernetes.ServiceClient
 		secretClient   SecretClient
 	)
 
@@ -61,6 +64,13 @@ var _ = Describe("V1Emitter", func() {
 
 		upstreamClient, err = NewUpstreamClient(upstreamClientFactory)
 		Expect(err).NotTo(HaveOccurred())
+		// Service Constructor
+		serviceClientFactory := &factory.MemoryResourceClientFactory{
+			Cache: memory.NewInMemoryResourceCache(),
+		}
+
+		serviceClient, err = github_com_solo_io_solo_kit_pkg_api_v1_resources_common_kubernetes.NewServiceClient(serviceClientFactory)
+		Expect(err).NotTo(HaveOccurred())
 		// Secret Constructor
 		secretClientFactory := &factory.MemoryResourceClientFactory{
 			Cache: memory.NewInMemoryResourceCache(),
@@ -68,7 +78,7 @@ var _ = Describe("V1Emitter", func() {
 
 		secretClient, err = NewSecretClient(secretClientFactory)
 		Expect(err).NotTo(HaveOccurred())
-		emitter = NewDiscoveryEmitter(upstreamClient, secretClient)
+		emitter = NewDiscoveryEmitter(upstreamClient, serviceClient, secretClient)
 	})
 	AfterEach(func() {
 		err := kubeutils.DeleteNamespacesInParallelBlocking(kube, namespace1, namespace2)
@@ -143,6 +153,63 @@ var _ = Describe("V1Emitter", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		assertSnapshotUpstreams(nil, UpstreamList{upstream1a, upstream1b, upstream2a, upstream2b})
+
+		/*
+			Service
+		*/
+
+		assertSnapshotservices := func(expectservices github_com_solo_io_solo_kit_pkg_api_v1_resources_common_kubernetes.ServiceList, unexpectservices github_com_solo_io_solo_kit_pkg_api_v1_resources_common_kubernetes.ServiceList) {
+		drain:
+			for {
+				select {
+				case snap = <-snapshots:
+					for _, expected := range expectservices {
+						if _, err := snap.Services.Find(expected.GetMetadata().Ref().Strings()); err != nil {
+							continue drain
+						}
+					}
+					for _, unexpected := range unexpectservices {
+						if _, err := snap.Services.Find(unexpected.GetMetadata().Ref().Strings()); err == nil {
+							continue drain
+						}
+					}
+					break drain
+				case err := <-errs:
+					Expect(err).NotTo(HaveOccurred())
+				case <-time.After(time.Second * 10):
+					nsList1, _ := serviceClient.List(namespace1, clients.ListOpts{})
+					nsList2, _ := serviceClient.List(namespace2, clients.ListOpts{})
+					combined := append(nsList1, nsList2...)
+					Fail("expected final snapshot before 10 seconds. expected " + log.Sprintf("%v", combined))
+				}
+			}
+		}
+		service1a, err := serviceClient.Write(github_com_solo_io_solo_kit_pkg_api_v1_resources_common_kubernetes.NewService(namespace1, name1), clients.WriteOpts{Ctx: ctx})
+		Expect(err).NotTo(HaveOccurred())
+		service1b, err := serviceClient.Write(github_com_solo_io_solo_kit_pkg_api_v1_resources_common_kubernetes.NewService(namespace2, name1), clients.WriteOpts{Ctx: ctx})
+		Expect(err).NotTo(HaveOccurred())
+
+		assertSnapshotservices(github_com_solo_io_solo_kit_pkg_api_v1_resources_common_kubernetes.ServiceList{service1a, service1b}, nil)
+		service2a, err := serviceClient.Write(github_com_solo_io_solo_kit_pkg_api_v1_resources_common_kubernetes.NewService(namespace1, name2), clients.WriteOpts{Ctx: ctx})
+		Expect(err).NotTo(HaveOccurred())
+		service2b, err := serviceClient.Write(github_com_solo_io_solo_kit_pkg_api_v1_resources_common_kubernetes.NewService(namespace2, name2), clients.WriteOpts{Ctx: ctx})
+		Expect(err).NotTo(HaveOccurred())
+
+		assertSnapshotservices(github_com_solo_io_solo_kit_pkg_api_v1_resources_common_kubernetes.ServiceList{service1a, service1b, service2a, service2b}, nil)
+
+		err = serviceClient.Delete(service2a.GetMetadata().Namespace, service2a.GetMetadata().Name, clients.DeleteOpts{Ctx: ctx})
+		Expect(err).NotTo(HaveOccurred())
+		err = serviceClient.Delete(service2b.GetMetadata().Namespace, service2b.GetMetadata().Name, clients.DeleteOpts{Ctx: ctx})
+		Expect(err).NotTo(HaveOccurred())
+
+		assertSnapshotservices(github_com_solo_io_solo_kit_pkg_api_v1_resources_common_kubernetes.ServiceList{service1a, service1b}, github_com_solo_io_solo_kit_pkg_api_v1_resources_common_kubernetes.ServiceList{service2a, service2b})
+
+		err = serviceClient.Delete(service1a.GetMetadata().Namespace, service1a.GetMetadata().Name, clients.DeleteOpts{Ctx: ctx})
+		Expect(err).NotTo(HaveOccurred())
+		err = serviceClient.Delete(service1b.GetMetadata().Namespace, service1b.GetMetadata().Name, clients.DeleteOpts{Ctx: ctx})
+		Expect(err).NotTo(HaveOccurred())
+
+		assertSnapshotservices(nil, github_com_solo_io_solo_kit_pkg_api_v1_resources_common_kubernetes.ServiceList{service1a, service1b, service2a, service2b})
 
 		/*
 			Secret
@@ -270,6 +337,63 @@ var _ = Describe("V1Emitter", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		assertSnapshotUpstreams(nil, UpstreamList{upstream1a, upstream1b, upstream2a, upstream2b})
+
+		/*
+			Service
+		*/
+
+		assertSnapshotservices := func(expectservices github_com_solo_io_solo_kit_pkg_api_v1_resources_common_kubernetes.ServiceList, unexpectservices github_com_solo_io_solo_kit_pkg_api_v1_resources_common_kubernetes.ServiceList) {
+		drain:
+			for {
+				select {
+				case snap = <-snapshots:
+					for _, expected := range expectservices {
+						if _, err := snap.Services.Find(expected.GetMetadata().Ref().Strings()); err != nil {
+							continue drain
+						}
+					}
+					for _, unexpected := range unexpectservices {
+						if _, err := snap.Services.Find(unexpected.GetMetadata().Ref().Strings()); err == nil {
+							continue drain
+						}
+					}
+					break drain
+				case err := <-errs:
+					Expect(err).NotTo(HaveOccurred())
+				case <-time.After(time.Second * 10):
+					nsList1, _ := serviceClient.List(namespace1, clients.ListOpts{})
+					nsList2, _ := serviceClient.List(namespace2, clients.ListOpts{})
+					combined := append(nsList1, nsList2...)
+					Fail("expected final snapshot before 10 seconds. expected " + log.Sprintf("%v", combined))
+				}
+			}
+		}
+		service1a, err := serviceClient.Write(github_com_solo_io_solo_kit_pkg_api_v1_resources_common_kubernetes.NewService(namespace1, name1), clients.WriteOpts{Ctx: ctx})
+		Expect(err).NotTo(HaveOccurred())
+		service1b, err := serviceClient.Write(github_com_solo_io_solo_kit_pkg_api_v1_resources_common_kubernetes.NewService(namespace2, name1), clients.WriteOpts{Ctx: ctx})
+		Expect(err).NotTo(HaveOccurred())
+
+		assertSnapshotservices(github_com_solo_io_solo_kit_pkg_api_v1_resources_common_kubernetes.ServiceList{service1a, service1b}, nil)
+		service2a, err := serviceClient.Write(github_com_solo_io_solo_kit_pkg_api_v1_resources_common_kubernetes.NewService(namespace1, name2), clients.WriteOpts{Ctx: ctx})
+		Expect(err).NotTo(HaveOccurred())
+		service2b, err := serviceClient.Write(github_com_solo_io_solo_kit_pkg_api_v1_resources_common_kubernetes.NewService(namespace2, name2), clients.WriteOpts{Ctx: ctx})
+		Expect(err).NotTo(HaveOccurred())
+
+		assertSnapshotservices(github_com_solo_io_solo_kit_pkg_api_v1_resources_common_kubernetes.ServiceList{service1a, service1b, service2a, service2b}, nil)
+
+		err = serviceClient.Delete(service2a.GetMetadata().Namespace, service2a.GetMetadata().Name, clients.DeleteOpts{Ctx: ctx})
+		Expect(err).NotTo(HaveOccurred())
+		err = serviceClient.Delete(service2b.GetMetadata().Namespace, service2b.GetMetadata().Name, clients.DeleteOpts{Ctx: ctx})
+		Expect(err).NotTo(HaveOccurred())
+
+		assertSnapshotservices(github_com_solo_io_solo_kit_pkg_api_v1_resources_common_kubernetes.ServiceList{service1a, service1b}, github_com_solo_io_solo_kit_pkg_api_v1_resources_common_kubernetes.ServiceList{service2a, service2b})
+
+		err = serviceClient.Delete(service1a.GetMetadata().Namespace, service1a.GetMetadata().Name, clients.DeleteOpts{Ctx: ctx})
+		Expect(err).NotTo(HaveOccurred())
+		err = serviceClient.Delete(service1b.GetMetadata().Namespace, service1b.GetMetadata().Name, clients.DeleteOpts{Ctx: ctx})
+		Expect(err).NotTo(HaveOccurred())
+
+		assertSnapshotservices(nil, github_com_solo_io_solo_kit_pkg_api_v1_resources_common_kubernetes.ServiceList{service1a, service1b, service2a, service2b})
 
 		/*
 			Secret

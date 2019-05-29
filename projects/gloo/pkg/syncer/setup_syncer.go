@@ -11,7 +11,9 @@ import (
 	"github.com/solo-io/gloo/projects/gloo/pkg/plugins"
 
 	"github.com/gogo/protobuf/types"
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
+	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
 	"github.com/solo-io/gloo/pkg/utils"
 	"github.com/solo-io/gloo/pkg/utils/setuputils"
 	v1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
@@ -27,14 +29,11 @@ import (
 	"github.com/solo-io/solo-kit/pkg/api/v1/clients/factory"
 	"github.com/solo-io/solo-kit/pkg/api/v1/clients/kube"
 	"github.com/solo-io/solo-kit/pkg/api/v1/clients/memory"
+	"github.com/solo-io/solo-kit/pkg/api/v1/control-plane/cache"
+	"github.com/solo-io/solo-kit/pkg/api/v1/control-plane/server"
 	xdsserver "github.com/solo-io/solo-kit/pkg/api/v1/control-plane/server"
 	"github.com/solo-io/solo-kit/pkg/api/v1/reporter"
 	"github.com/solo-io/solo-kit/pkg/errors"
-
-	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
-	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
-	"github.com/solo-io/solo-kit/pkg/api/v1/control-plane/cache"
-	"github.com/solo-io/solo-kit/pkg/api/v1/control-plane/server"
 	"go.uber.org/zap"
 
 	envoyv2 "github.com/envoyproxy/go-control-plane/envoy/service/discovery/v2"
@@ -198,6 +197,9 @@ func RunGlooWithExtensions(opts bootstrap.Opts, extensions Extensions) error {
 	if err := upstreamClient.Register(); err != nil {
 		return err
 	}
+	if err := opts.Services.Register(); err != nil {
+		return err
+	}
 
 	proxyClient, err := v1.NewProxyClient(opts.Proxies)
 	if err != nil {
@@ -230,8 +232,8 @@ func RunGlooWithExtensions(opts bootstrap.Opts, extensions Extensions) error {
 		return err
 	}
 
-	apiCache := v1.NewApiEmitter(artifactClient, endpointClient, proxyClient, upstreamGroupClient, secretClient, upstreamClient)
-	discoveryCache := v1.NewDiscoveryEmitter(upstreamClient, secretClient)
+	apiCache := v1.NewApiEmitter(artifactClient, endpointClient, proxyClient, upstreamGroupClient, secretClient, upstreamClient, opts.Services)
+	discoveryCache := v1.NewDiscoveryEmitter(upstreamClient, opts.Services, secretClient)
 
 	// Register grpc endpoints to the grpc server
 	xdsHasher := xds.SetupEnvoyXds(opts.ControlPlane.GrpcServer, opts.ControlPlane.XDSServer, opts.ControlPlane.SnapshotCache)
@@ -332,6 +334,23 @@ func BootstrapFactories(ctx context.Context, clientset *kubernetes.Interface, ku
 		return bootstrap.Opts{}, err
 	}
 
+	// if we get the upstreams from kuberenetes, combine it with services
+	// TODO: can i wrap this with a service converter factory, that uses the same kube cache?
+	// disadvantage: this will not have good way of translating the service ref to upstream ref.
+	// unless we use the interface?
+	// probably better to keep this concern isolated to the translator and EDS.
+	// if not then:
+	// if upstreams is kube thing, use kube client
+	// if not add a mem cache client so an empty snapshot is sent.
+	serviceClient, err := bootstrap.ServiceClientForSettings(
+		ctx,
+		settings,
+		memCache,
+		&cfg,
+		clientset,
+		&kubeCoreCache,
+	)
+
 	proxyFactory, err := bootstrap.ConfigFactoryForSettings(
 		settings,
 		memCache,
@@ -381,6 +400,7 @@ func BootstrapFactories(ctx context.Context, clientset *kubernetes.Interface, ku
 	}
 	return bootstrap.Opts{
 		Upstreams:      upstreamFactory,
+		Services:       serviceClient,
 		Proxies:        proxyFactory,
 		UpstreamGroups: upstreamGroupFactory,
 		Secrets:        secretFactory,

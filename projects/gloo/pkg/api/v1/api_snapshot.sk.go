@@ -5,6 +5,8 @@ package v1
 import (
 	"fmt"
 
+	github_com_solo_io_solo_kit_pkg_api_v1_resources_common_kubernetes "github.com/solo-io/solo-kit/pkg/api/v1/resources/common/kubernetes"
+
 	"github.com/solo-io/go-utils/hashutils"
 	"go.uber.org/zap"
 )
@@ -16,6 +18,7 @@ type ApiSnapshot struct {
 	Upstreamgroups UpstreamGroupList
 	Secrets        SecretList
 	Upstreams      UpstreamList
+	Services       github_com_solo_io_solo_kit_pkg_api_v1_resources_common_kubernetes.ServiceList
 }
 
 func (s ApiSnapshot) Clone() ApiSnapshot {
@@ -26,6 +29,7 @@ func (s ApiSnapshot) Clone() ApiSnapshot {
 		Upstreamgroups: s.Upstreamgroups.Clone(),
 		Secrets:        s.Secrets.Clone(),
 		Upstreams:      s.Upstreams.Clone(),
+		Services:       s.Services.Clone(),
 	}
 }
 
@@ -37,6 +41,7 @@ func (s ApiSnapshot) Hash() uint64 {
 		s.hashUpstreamgroups(),
 		s.hashSecrets(),
 		s.hashUpstreams(),
+		s.hashServices(),
 	)
 }
 
@@ -64,6 +69,10 @@ func (s ApiSnapshot) hashUpstreams() uint64 {
 	return hashutils.HashAll(s.Upstreams.AsInterfaces()...)
 }
 
+func (s ApiSnapshot) hashServices() uint64 {
+	return hashutils.HashAll(s.Services.AsInterfaces()...)
+}
+
 func (s ApiSnapshot) HashFields() []zap.Field {
 	var fields []zap.Field
 	fields = append(fields, zap.Uint64("artifacts", s.hashArtifacts()))
@@ -72,6 +81,7 @@ func (s ApiSnapshot) HashFields() []zap.Field {
 	fields = append(fields, zap.Uint64("upstreamgroups", s.hashUpstreamgroups()))
 	fields = append(fields, zap.Uint64("secrets", s.hashSecrets()))
 	fields = append(fields, zap.Uint64("upstreams", s.hashUpstreams()))
+	fields = append(fields, zap.Uint64("services", s.hashServices()))
 
 	return append(fields, zap.Uint64("snapshotHash", s.Hash()))
 }
@@ -84,6 +94,7 @@ type ApiSnapshotStringer struct {
 	Upstreamgroups []string
 	Secrets        []string
 	Upstreams      []string
+	Services       []string
 }
 
 func (ss ApiSnapshotStringer) String() string {
@@ -119,6 +130,11 @@ func (ss ApiSnapshotStringer) String() string {
 		s += fmt.Sprintf("    %v\n", name)
 	}
 
+	s += fmt.Sprintf("  Services %v\n", len(ss.Services))
+	for _, name := range ss.Services {
+		s += fmt.Sprintf("    %v\n", name)
+	}
+
 	return s
 }
 
@@ -131,5 +147,6 @@ func (s ApiSnapshot) Stringer() ApiSnapshotStringer {
 		Upstreamgroups: s.Upstreamgroups.NamespacesDotNames(),
 		Secrets:        s.Secrets.NamespacesDotNames(),
 		Upstreams:      s.Upstreams.NamespacesDotNames(),
+		Services:       s.Services.NamespacesDotNames(),
 	}
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/pkg/errors"
 	v1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
 	"github.com/solo-io/gloo/projects/gloo/pkg/plugins"
+	utilskube "github.com/solo-io/gloo/projects/gloo/pkg/utils/kube"
 	"github.com/solo-io/gloo/projects/gloo/pkg/xds"
 	"github.com/solo-io/go-utils/contextutils"
 	envoycache "github.com/solo-io/solo-kit/pkg/api/v1/control-plane/cache"
@@ -53,14 +54,20 @@ func (t *translator) Translate(params plugins.Params, proxy *v1.Proxy) (envoycac
 
 	resourceErrs := make(reporter.ResourceErrors)
 
+	// TODO: add svc to upstreams to the snapshot here
+	params.Snapshot.Upstreams = utilskube.Combine(params.Snapshot.Services, params.Snapshot.Upstreams)
+	// TODO(yuval-k): CONVERT service refs to upstream refs. all as before now.
+
 	logger.Debugf("verifing upstream groups: %v", proxy.Metadata.Name)
 	t.verifyUpstreamGroups(params, resourceErrs)
 
+	destinations := getDestinations(params, proxy)
+
 	// endpoints and listeners are shared between listeners
 	logger.Debugf("computing envoy clusters for proxy: %v", proxy.Metadata.Name)
-	clusters := t.computeClusters(params, resourceErrs)
-	logger.Debugf("computing envoy endpoints for proxy: %v", proxy.Metadata.Name)
+	clusters := t.computeClusters(params, destinations, resourceErrs)
 
+	logger.Debugf("computing envoy endpoints for proxy: %v", proxy.Metadata.Name)
 	endpoints := computeClusterEndpoints(params.Ctx, params.Snapshot.Upstreams, params.Snapshot.Endpoints)
 
 	// find all the eds clusters without endpoints (can happen with kube service that have no enpoints), and create a zero sized load assignment
@@ -123,6 +130,56 @@ ClusterLoop:
 type listenerResources struct {
 	routeConfig *envoyapi.RouteConfiguration
 	listener    *envoyapi.Listener
+}
+
+func getDestinations(params plugins.Params, proxy *v1.Proxy) []*v1.Destination {
+	var dests []*v1.Destination
+	forEachDestination(params, proxy, func(dest *v1.Destination) {
+		dests = append(dests, dest)
+	})
+	return dests
+}
+func forEachDestination(params plugins.Params, proxy *v1.Proxy, visitDestination func(*v1.Destination)) {
+
+	// get all destinations to build upstream
+	for _, l := range proxy.GetListeners() {
+		if http := l.GetHttpListener(); http != nil {
+			for _, vh := range http.GetVirtualHosts() {
+				for _, r := range vh.GetRoutes() {
+					if ra := r.GetRouteAction(); ra != nil {
+						switch dest := ra.GetDestination().(type) {
+						case *v1.RouteAction_Single:
+							visitDestination(dest.Single)
+						case *v1.RouteAction_Multi:
+							for _, singleDest := range dest.Multi.Destinations {
+								visitDestination(singleDest.Destination)
+							}
+						case *v1.RouteAction_UpstreamGroup:
+							ug, err := params.Snapshot.Upstreamgroups.Find(dest.UpstreamGroup.GetNamespace(), dest.UpstreamGroup.GetName())
+							// err will be caught later, where it will error the specific listener. so ignore it for now
+							if err == nil {
+								for _, singleDest := range ug.Destinations {
+									visitDestination(singleDest.Destination)
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+func convertDestinations(params plugins.Params, proxy *v1.Proxy) {
+	// get all destinations to build upstream
+	forEachDestination(params, proxy, convertDestinationToUpsteam)
+}
+
+func convertDestinationToUpsteam(d *v1.Destination) {
+	if ref := d.GetServiceRef(); ref != nil {
+		sref := ref.GetService()
+		d.Upstream = utilskube.SvcRefToUpstreamRef(sref.GetNamespace(), sref.GetName(), int32(ref.GetPort()))
+		d.ServiceRef = nil
+	}
 }
 
 func (t *translator) computeListenerResources(params plugins.Params, proxy *v1.Proxy, listener *v1.Listener, report reportFunc) *listenerResources {

@@ -53,7 +53,7 @@ func (t *translator) computeCluster(params plugins.Params, upstream *v1.Upstream
 		}
 
 		if err := upstreamPlugin.ProcessUpstream(params, upstream, out); err != nil {
-			// TODO: check if this is a realy upstream and don't write error?
+			// TODO: check if this is a really upstream and don't write error?
 			if utilskube.ShouldStore(upstream) {
 				resourceErrs.AddError(upstream, err)
 			} else {
@@ -62,7 +62,7 @@ func (t *translator) computeCluster(params plugins.Params, upstream *v1.Upstream
 		}
 	}
 	if err := validateCluster(out); err != nil {
-		// TODO: check if this is a realy upstream and don't write error?
+		// TODO: check if this is a really upstream and don't write error?
 		if utilskube.ShouldStore(upstream) {
 			resourceErrs.AddError(upstream, errors.Wrapf(err, "cluster was configured improperly "+
 				"by one or more plugins: %v", out))

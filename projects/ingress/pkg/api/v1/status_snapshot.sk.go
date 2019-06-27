@@ -10,21 +10,21 @@ import (
 )
 
 type StatusSnapshot struct {
-	Services  KubeServiceList
-	Ingresses IngressList
+	Services   KubeServiceList
+	Insgresses IngressList
 }
 
 func (s StatusSnapshot) Clone() StatusSnapshot {
 	return StatusSnapshot{
-		Services:  s.Services.Clone(),
-		Ingresses: s.Ingresses.Clone(),
+		Services:   s.Services.Clone(),
+		Insgresses: s.Insgresses.Clone(),
 	}
 }
 
 func (s StatusSnapshot) Hash() uint64 {
 	return hashutils.HashAll(
 		s.hashServices(),
-		s.hashIngresses(),
+		s.hashInsgresses(),
 	)
 }
 
@@ -32,22 +32,22 @@ func (s StatusSnapshot) hashServices() uint64 {
 	return hashutils.HashAll(s.Services.AsInterfaces()...)
 }
 
-func (s StatusSnapshot) hashIngresses() uint64 {
-	return hashutils.HashAll(s.Ingresses.AsInterfaces()...)
+func (s StatusSnapshot) hashInsgresses() uint64 {
+	return hashutils.HashAll(s.Insgresses.AsInterfaces()...)
 }
 
 func (s StatusSnapshot) HashFields() []zap.Field {
 	var fields []zap.Field
 	fields = append(fields, zap.Uint64("services", s.hashServices()))
-	fields = append(fields, zap.Uint64("ingresses", s.hashIngresses()))
+	fields = append(fields, zap.Uint64("insgresses", s.hashInsgresses()))
 
 	return append(fields, zap.Uint64("snapshotHash", s.Hash()))
 }
 
 type StatusSnapshotStringer struct {
-	Version   uint64
-	Services  []string
-	Ingresses []string
+	Version    uint64
+	Services   []string
+	Insgresses []string
 }
 
 func (ss StatusSnapshotStringer) String() string {
@@ -58,8 +58,8 @@ func (ss StatusSnapshotStringer) String() string {
 		s += fmt.Sprintf("    %v\n", name)
 	}
 
-	s += fmt.Sprintf("  Ingresses %v\n", len(ss.Ingresses))
-	for _, name := range ss.Ingresses {
+	s += fmt.Sprintf("  Insgresses %v\n", len(ss.Insgresses))
+	for _, name := range ss.Insgresses {
 		s += fmt.Sprintf("    %v\n", name)
 	}
 
@@ -68,8 +68,8 @@ func (ss StatusSnapshotStringer) String() string {
 
 func (s StatusSnapshot) Stringer() StatusSnapshotStringer {
 	return StatusSnapshotStringer{
-		Version:   s.Hash(),
-		Services:  s.Services.NamespacesDotNames(),
-		Ingresses: s.Ingresses.NamespacesDotNames(),
+		Version:    s.Hash(),
+		Services:   s.Services.NamespacesDotNames(),
+		Insgresses: s.Insgresses.NamespacesDotNames(),
 	}
 }

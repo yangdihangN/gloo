@@ -123,7 +123,7 @@ func (o *Ingress) DeepCopyObject() runtime.Object {
 }
 
 var IngressCrd = crd.NewCrd("ingress.solo.io",
-	"ingresses",
+	"insgresses",
 	"ingress.solo.io",
 	"v1",
 	"Ingress",

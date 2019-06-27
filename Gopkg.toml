@@ -2,6 +2,11 @@
   go-tests = true
   unused-packages = true
 
+
+[[override]]
+  name = "gopkg.in/fsnotify.v1"
+  source = "https://github.com/fsnotify/fsnotify.git"
+
 [[constraint]]
   version = ">=0.8.0"
   name = "github.com/envoyproxy/go-control-plane"
@@ -24,7 +29,8 @@
 
 [[constraint]]
   name = "github.com/solo-io/solo-kit"
-  version = "0.9.9"
+  branch = "support-resource-multiversion"
+#  version = "0.9.9"
 
 [[constraint]]
   name = "github.com/solo-io/go-utils"

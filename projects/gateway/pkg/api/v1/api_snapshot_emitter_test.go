@@ -39,8 +39,8 @@ var _ = Describe("V1Emitter", func() {
 		cfg                  *rest.Config
 		kube                 kubernetes.Interface
 		emitter              ApiEmitter
-		gatewayClient        GatewayClient
 		virtualServiceClient VirtualServiceClient
+		gatewayClient        GatewayClient
 	)
 
 	BeforeEach(func() {
@@ -51,15 +51,6 @@ var _ = Describe("V1Emitter", func() {
 		Expect(err).NotTo(HaveOccurred())
 		cfg, err = kubeutils.GetConfig("", "")
 		Expect(err).NotTo(HaveOccurred())
-		// Gateway Constructor
-		gatewayClientFactory := &factory.KubeResourceClientFactory{
-			Crd:         GatewayCrd,
-			Cfg:         cfg,
-			SharedCache: kuberc.NewKubeCache(context.TODO()),
-		}
-
-		gatewayClient, err = NewGatewayClient(gatewayClientFactory)
-		Expect(err).NotTo(HaveOccurred())
 		// VirtualService Constructor
 		virtualServiceClientFactory := &factory.KubeResourceClientFactory{
 			Crd:         VirtualServiceCrd,
@@ -69,7 +60,16 @@ var _ = Describe("V1Emitter", func() {
 
 		virtualServiceClient, err = NewVirtualServiceClient(virtualServiceClientFactory)
 		Expect(err).NotTo(HaveOccurred())
-		emitter = NewApiEmitter(gatewayClient, virtualServiceClient)
+		// Gateway Constructor
+		gatewayClientFactory := &factory.KubeResourceClientFactory{
+			Crd:         GatewayCrd,
+			Cfg:         cfg,
+			SharedCache: kuberc.NewKubeCache(context.TODO()),
+		}
+
+		gatewayClient, err = NewGatewayClient(gatewayClientFactory)
+		Expect(err).NotTo(HaveOccurred())
+		emitter = NewApiEmitter(virtualServiceClient, gatewayClient)
 	})
 	AfterEach(func() {
 		err := kubeutils.DeleteNamespacesInParallelBlocking(kube, namespace1, namespace2)
@@ -89,6 +89,63 @@ var _ = Describe("V1Emitter", func() {
 		var snap *ApiSnapshot
 
 		/*
+			VirtualService
+		*/
+
+		assertSnapshotVirtualservices := func(expectVirtualservices VirtualServiceList, unexpectVirtualservices VirtualServiceList) {
+		drain:
+			for {
+				select {
+				case snap = <-snapshots:
+					for _, expected := range expectVirtualservices {
+						if _, err := snap.Virtualservices.Find(expected.GetMetadata().Ref().Strings()); err != nil {
+							continue drain
+						}
+					}
+					for _, unexpected := range unexpectVirtualservices {
+						if _, err := snap.Virtualservices.Find(unexpected.GetMetadata().Ref().Strings()); err == nil {
+							continue drain
+						}
+					}
+					break drain
+				case err := <-errs:
+					Expect(err).NotTo(HaveOccurred())
+				case <-time.After(time.Second * 10):
+					nsList1, _ := virtualServiceClient.List(namespace1, clients.ListOpts{})
+					nsList2, _ := virtualServiceClient.List(namespace2, clients.ListOpts{})
+					combined := append(nsList1, nsList2...)
+					Fail("expected final snapshot before 10 seconds. expected " + log.Sprintf("%v", combined))
+				}
+			}
+		}
+		virtualService1a, err := virtualServiceClient.Write(NewVirtualService(namespace1, name1), clients.WriteOpts{Ctx: ctx})
+		Expect(err).NotTo(HaveOccurred())
+		virtualService1b, err := virtualServiceClient.Write(NewVirtualService(namespace2, name1), clients.WriteOpts{Ctx: ctx})
+		Expect(err).NotTo(HaveOccurred())
+
+		assertSnapshotVirtualservices(VirtualServiceList{virtualService1a, virtualService1b}, nil)
+		virtualService2a, err := virtualServiceClient.Write(NewVirtualService(namespace1, name2), clients.WriteOpts{Ctx: ctx})
+		Expect(err).NotTo(HaveOccurred())
+		virtualService2b, err := virtualServiceClient.Write(NewVirtualService(namespace2, name2), clients.WriteOpts{Ctx: ctx})
+		Expect(err).NotTo(HaveOccurred())
+
+		assertSnapshotVirtualservices(VirtualServiceList{virtualService1a, virtualService1b, virtualService2a, virtualService2b}, nil)
+
+		err = virtualServiceClient.Delete(virtualService2a.GetMetadata().Namespace, virtualService2a.GetMetadata().Name, clients.DeleteOpts{Ctx: ctx})
+		Expect(err).NotTo(HaveOccurred())
+		err = virtualServiceClient.Delete(virtualService2b.GetMetadata().Namespace, virtualService2b.GetMetadata().Name, clients.DeleteOpts{Ctx: ctx})
+		Expect(err).NotTo(HaveOccurred())
+
+		assertSnapshotVirtualservices(VirtualServiceList{virtualService1a, virtualService1b}, VirtualServiceList{virtualService2a, virtualService2b})
+
+		err = virtualServiceClient.Delete(virtualService1a.GetMetadata().Namespace, virtualService1a.GetMetadata().Name, clients.DeleteOpts{Ctx: ctx})
+		Expect(err).NotTo(HaveOccurred())
+		err = virtualServiceClient.Delete(virtualService1b.GetMetadata().Namespace, virtualService1b.GetMetadata().Name, clients.DeleteOpts{Ctx: ctx})
+		Expect(err).NotTo(HaveOccurred())
+
+		assertSnapshotVirtualservices(nil, VirtualServiceList{virtualService1a, virtualService1b, virtualService2a, virtualService2b})
+
+		/*
 			Gateway
 		*/
 
@@ -144,63 +201,6 @@ var _ = Describe("V1Emitter", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		assertSnapshotGateways(nil, GatewayList{gateway1a, gateway1b, gateway2a, gateway2b})
-
-		/*
-			VirtualService
-		*/
-
-		assertSnapshotVirtualServices := func(expectVirtualServices VirtualServiceList, unexpectVirtualServices VirtualServiceList) {
-		drain:
-			for {
-				select {
-				case snap = <-snapshots:
-					for _, expected := range expectVirtualServices {
-						if _, err := snap.VirtualServices.Find(expected.GetMetadata().Ref().Strings()); err != nil {
-							continue drain
-						}
-					}
-					for _, unexpected := range unexpectVirtualServices {
-						if _, err := snap.VirtualServices.Find(unexpected.GetMetadata().Ref().Strings()); err == nil {
-							continue drain
-						}
-					}
-					break drain
-				case err := <-errs:
-					Expect(err).NotTo(HaveOccurred())
-				case <-time.After(time.Second * 10):
-					nsList1, _ := virtualServiceClient.List(namespace1, clients.ListOpts{})
-					nsList2, _ := virtualServiceClient.List(namespace2, clients.ListOpts{})
-					combined := append(nsList1, nsList2...)
-					Fail("expected final snapshot before 10 seconds. expected " + log.Sprintf("%v", combined))
-				}
-			}
-		}
-		virtualService1a, err := virtualServiceClient.Write(NewVirtualService(namespace1, name1), clients.WriteOpts{Ctx: ctx})
-		Expect(err).NotTo(HaveOccurred())
-		virtualService1b, err := virtualServiceClient.Write(NewVirtualService(namespace2, name1), clients.WriteOpts{Ctx: ctx})
-		Expect(err).NotTo(HaveOccurred())
-
-		assertSnapshotVirtualServices(VirtualServiceList{virtualService1a, virtualService1b}, nil)
-		virtualService2a, err := virtualServiceClient.Write(NewVirtualService(namespace1, name2), clients.WriteOpts{Ctx: ctx})
-		Expect(err).NotTo(HaveOccurred())
-		virtualService2b, err := virtualServiceClient.Write(NewVirtualService(namespace2, name2), clients.WriteOpts{Ctx: ctx})
-		Expect(err).NotTo(HaveOccurred())
-
-		assertSnapshotVirtualServices(VirtualServiceList{virtualService1a, virtualService1b, virtualService2a, virtualService2b}, nil)
-
-		err = virtualServiceClient.Delete(virtualService2a.GetMetadata().Namespace, virtualService2a.GetMetadata().Name, clients.DeleteOpts{Ctx: ctx})
-		Expect(err).NotTo(HaveOccurred())
-		err = virtualServiceClient.Delete(virtualService2b.GetMetadata().Namespace, virtualService2b.GetMetadata().Name, clients.DeleteOpts{Ctx: ctx})
-		Expect(err).NotTo(HaveOccurred())
-
-		assertSnapshotVirtualServices(VirtualServiceList{virtualService1a, virtualService1b}, VirtualServiceList{virtualService2a, virtualService2b})
-
-		err = virtualServiceClient.Delete(virtualService1a.GetMetadata().Namespace, virtualService1a.GetMetadata().Name, clients.DeleteOpts{Ctx: ctx})
-		Expect(err).NotTo(HaveOccurred())
-		err = virtualServiceClient.Delete(virtualService1b.GetMetadata().Namespace, virtualService1b.GetMetadata().Name, clients.DeleteOpts{Ctx: ctx})
-		Expect(err).NotTo(HaveOccurred())
-
-		assertSnapshotVirtualServices(nil, VirtualServiceList{virtualService1a, virtualService1b, virtualService2a, virtualService2b})
 	})
 	It("tracks snapshots on changes to any resource using AllNamespace", func() {
 		ctx := context.Background()
@@ -216,6 +216,63 @@ var _ = Describe("V1Emitter", func() {
 		var snap *ApiSnapshot
 
 		/*
+			VirtualService
+		*/
+
+		assertSnapshotVirtualservices := func(expectVirtualservices VirtualServiceList, unexpectVirtualservices VirtualServiceList) {
+		drain:
+			for {
+				select {
+				case snap = <-snapshots:
+					for _, expected := range expectVirtualservices {
+						if _, err := snap.Virtualservices.Find(expected.GetMetadata().Ref().Strings()); err != nil {
+							continue drain
+						}
+					}
+					for _, unexpected := range unexpectVirtualservices {
+						if _, err := snap.Virtualservices.Find(unexpected.GetMetadata().Ref().Strings()); err == nil {
+							continue drain
+						}
+					}
+					break drain
+				case err := <-errs:
+					Expect(err).NotTo(HaveOccurred())
+				case <-time.After(time.Second * 10):
+					nsList1, _ := virtualServiceClient.List(namespace1, clients.ListOpts{})
+					nsList2, _ := virtualServiceClient.List(namespace2, clients.ListOpts{})
+					combined := append(nsList1, nsList2...)
+					Fail("expected final snapshot before 10 seconds. expected " + log.Sprintf("%v", combined))
+				}
+			}
+		}
+		virtualService1a, err := virtualServiceClient.Write(NewVirtualService(namespace1, name1), clients.WriteOpts{Ctx: ctx})
+		Expect(err).NotTo(HaveOccurred())
+		virtualService1b, err := virtualServiceClient.Write(NewVirtualService(namespace2, name1), clients.WriteOpts{Ctx: ctx})
+		Expect(err).NotTo(HaveOccurred())
+
+		assertSnapshotVirtualservices(VirtualServiceList{virtualService1a, virtualService1b}, nil)
+		virtualService2a, err := virtualServiceClient.Write(NewVirtualService(namespace1, name2), clients.WriteOpts{Ctx: ctx})
+		Expect(err).NotTo(HaveOccurred())
+		virtualService2b, err := virtualServiceClient.Write(NewVirtualService(namespace2, name2), clients.WriteOpts{Ctx: ctx})
+		Expect(err).NotTo(HaveOccurred())
+
+		assertSnapshotVirtualservices(VirtualServiceList{virtualService1a, virtualService1b, virtualService2a, virtualService2b}, nil)
+
+		err = virtualServiceClient.Delete(virtualService2a.GetMetadata().Namespace, virtualService2a.GetMetadata().Name, clients.DeleteOpts{Ctx: ctx})
+		Expect(err).NotTo(HaveOccurred())
+		err = virtualServiceClient.Delete(virtualService2b.GetMetadata().Namespace, virtualService2b.GetMetadata().Name, clients.DeleteOpts{Ctx: ctx})
+		Expect(err).NotTo(HaveOccurred())
+
+		assertSnapshotVirtualservices(VirtualServiceList{virtualService1a, virtualService1b}, VirtualServiceList{virtualService2a, virtualService2b})
+
+		err = virtualServiceClient.Delete(virtualService1a.GetMetadata().Namespace, virtualService1a.GetMetadata().Name, clients.DeleteOpts{Ctx: ctx})
+		Expect(err).NotTo(HaveOccurred())
+		err = virtualServiceClient.Delete(virtualService1b.GetMetadata().Namespace, virtualService1b.GetMetadata().Name, clients.DeleteOpts{Ctx: ctx})
+		Expect(err).NotTo(HaveOccurred())
+
+		assertSnapshotVirtualservices(nil, VirtualServiceList{virtualService1a, virtualService1b, virtualService2a, virtualService2b})
+
+		/*
 			Gateway
 		*/
 
@@ -271,62 +328,5 @@ var _ = Describe("V1Emitter", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		assertSnapshotGateways(nil, GatewayList{gateway1a, gateway1b, gateway2a, gateway2b})
-
-		/*
-			VirtualService
-		*/
-
-		assertSnapshotVirtualServices := func(expectVirtualServices VirtualServiceList, unexpectVirtualServices VirtualServiceList) {
-		drain:
-			for {
-				select {
-				case snap = <-snapshots:
-					for _, expected := range expectVirtualServices {
-						if _, err := snap.VirtualServices.Find(expected.GetMetadata().Ref().Strings()); err != nil {
-							continue drain
-						}
-					}
-					for _, unexpected := range unexpectVirtualServices {
-						if _, err := snap.VirtualServices.Find(unexpected.GetMetadata().Ref().Strings()); err == nil {
-							continue drain
-						}
-					}
-					break drain
-				case err := <-errs:
-					Expect(err).NotTo(HaveOccurred())
-				case <-time.After(time.Second * 10):
-					nsList1, _ := virtualServiceClient.List(namespace1, clients.ListOpts{})
-					nsList2, _ := virtualServiceClient.List(namespace2, clients.ListOpts{})
-					combined := append(nsList1, nsList2...)
-					Fail("expected final snapshot before 10 seconds. expected " + log.Sprintf("%v", combined))
-				}
-			}
-		}
-		virtualService1a, err := virtualServiceClient.Write(NewVirtualService(namespace1, name1), clients.WriteOpts{Ctx: ctx})
-		Expect(err).NotTo(HaveOccurred())
-		virtualService1b, err := virtualServiceClient.Write(NewVirtualService(namespace2, name1), clients.WriteOpts{Ctx: ctx})
-		Expect(err).NotTo(HaveOccurred())
-
-		assertSnapshotVirtualServices(VirtualServiceList{virtualService1a, virtualService1b}, nil)
-		virtualService2a, err := virtualServiceClient.Write(NewVirtualService(namespace1, name2), clients.WriteOpts{Ctx: ctx})
-		Expect(err).NotTo(HaveOccurred())
-		virtualService2b, err := virtualServiceClient.Write(NewVirtualService(namespace2, name2), clients.WriteOpts{Ctx: ctx})
-		Expect(err).NotTo(HaveOccurred())
-
-		assertSnapshotVirtualServices(VirtualServiceList{virtualService1a, virtualService1b, virtualService2a, virtualService2b}, nil)
-
-		err = virtualServiceClient.Delete(virtualService2a.GetMetadata().Namespace, virtualService2a.GetMetadata().Name, clients.DeleteOpts{Ctx: ctx})
-		Expect(err).NotTo(HaveOccurred())
-		err = virtualServiceClient.Delete(virtualService2b.GetMetadata().Namespace, virtualService2b.GetMetadata().Name, clients.DeleteOpts{Ctx: ctx})
-		Expect(err).NotTo(HaveOccurred())
-
-		assertSnapshotVirtualServices(VirtualServiceList{virtualService1a, virtualService1b}, VirtualServiceList{virtualService2a, virtualService2b})
-
-		err = virtualServiceClient.Delete(virtualService1a.GetMetadata().Namespace, virtualService1a.GetMetadata().Name, clients.DeleteOpts{Ctx: ctx})
-		Expect(err).NotTo(HaveOccurred())
-		err = virtualServiceClient.Delete(virtualService1b.GetMetadata().Namespace, virtualService1b.GetMetadata().Name, clients.DeleteOpts{Ctx: ctx})
-		Expect(err).NotTo(HaveOccurred())
-
-		assertSnapshotVirtualServices(nil, VirtualServiceList{virtualService1a, virtualService1b, virtualService2a, virtualService2b})
 	})
 })

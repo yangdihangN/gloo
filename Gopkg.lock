@@ -116,6 +116,14 @@
   version = "v1.3.0"
 
 [[projects]]
+  digest = "1:464aef731a5f82ded547c62e249a2e9ec59fbbc9ddab53cda7b9857852630a61"
+  name = "github.com/appscode/jsonpatch"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "7c0e3b262f30165a8ec3d0b4c6059fd92703bfb2"
+  version = "1.0.0"
+
+[[projects]]
   branch = "master"
   digest = "1:ceb9dbcca57204e8a431a81f367c16b4c8ebeda57204f2dbbe0ac399f13bd0ee"
   name = "github.com/armon/go-metrics"
@@ -207,17 +215,6 @@
   pruneopts = "UT"
   revision = "2f1ce7a837dcb8da3ec595b1dac9d0632f0f99e8"
   version = "v1.3.1"
-
-[[projects]]
-  branch = "master"
-  digest = "1:7310ec5042e3a0dd73ed9f23f812e73ce0ae88d08039e4473472ebba20bf2996"
-  name = "github.com/bxcodec/faker"
-  packages = [
-    ".",
-    "support/slice",
-  ]
-  pruneopts = "UT"
-  revision = "bf89c38ff1742f295e15df0bd5e8b3e81da95855"
 
 [[projects]]
   branch = "master"
@@ -410,6 +407,14 @@
   pruneopts = "UT"
   revision = "5cf292cae48347c2490ac1a58fe36735fb78df7e"
   version = "v1.38.2"
+
+[[projects]]
+  digest = "1:edd2fa4578eb086265db78a9201d15e76b298dfd0d5c379da83e9c61712cf6df"
+  name = "github.com/go-logr/logr"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "9fb12b3b21c5415d16ac18dc5cd42c1cfdd40c4e"
+  version = "v0.1.0"
 
 [[projects]]
   digest = "1:50d6bc4aa3e70803230bb98a4b0e0f1331fefc2eb324e087adf7e986b8da082e"
@@ -1574,10 +1579,12 @@
   version = "v0.8.18"
 
 [[projects]]
-  digest = "1:57beeeddb6c4fad09aa3870390f9ee78aa2e2ede46e12654bc65cee16c382f91"
+  branch = "support-resource-multiversion"
+  digest = "1:0880bf42cfd2bbf25f9fdd906677be6de4b90b89150abf1d0b6928ecd074034c"
   name = "github.com/solo-io/solo-kit"
   packages = [
     "api/external/kubernetes/configmap",
+    "api/external/kubernetes/customresourcedefinition",
     "api/external/kubernetes/deployment",
     "api/external/kubernetes/namespace",
     "api/external/kubernetes/pod",
@@ -1632,8 +1639,7 @@
     "test/tests/typed",
   ]
   pruneopts = "UT"
-  revision = "1edf3f38af4cf7569fc66e53d115032d3385706d"
-  version = "v0.9.9"
+  revision = "ce0131e689af592f4acc795d04391aa783339a2f"
 
 [[projects]]
   digest = "1:3e39bafd6c2f4bf3c76c3bfd16a2e09e016510ad5db90dc02b88e2f565d6d595"
@@ -1994,6 +2000,15 @@
   pruneopts = "UT"
   revision = "fb519f89e19299d852ffdd9b734af122d2dcbd30"
   version = "v1.7.0"
+
+[[projects]]
+  digest = "1:abeb38ade3f32a92943e5be54f55ed6d6e3b6602761d74b4aab4c9dd45c18abd"
+  name = "gopkg.in/fsnotify.v1"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "c2828203cd70a50dcccfb2761f8b1f8ceef9a8e9"
+  source = "https://github.com/fsnotify/fsnotify.git"
+  version = "v1.4.7"
 
 [[projects]]
   digest = "1:abeb38ade3f32a92943e5be54f55ed6d6e3b6602761d74b4aab4c9dd45c18abd"
@@ -2648,6 +2663,30 @@
   revision = "8a16e7dd8fb6d97d1331b0c79a16722f934b00b1"
 
 [[projects]]
+  digest = "1:74f8cd697eb1d364a740d61cbafc1764dd3b084addb2c569b1752dbca47de2ed"
+  name = "sigs.k8s.io/controller-runtime"
+  packages = [
+    "pkg/cache",
+    "pkg/cache/internal",
+    "pkg/client",
+    "pkg/client/apiutil",
+    "pkg/conversion",
+    "pkg/internal/log",
+    "pkg/internal/objectutil",
+    "pkg/log",
+    "pkg/metrics",
+    "pkg/runtime/inject",
+    "pkg/webhook",
+    "pkg/webhook/admission",
+    "pkg/webhook/conversion",
+    "pkg/webhook/internal/certwatcher",
+    "pkg/webhook/internal/metrics",
+  ]
+  pruneopts = "UT"
+  revision = "f60c87ec713cb8da81257228530605457ebf7220"
+  version = "v0.2.0-beta.2"
+
+[[projects]]
   digest = "1:7719608fe0b52a4ece56c2dde37bedd95b938677d1ab0f84b8a7852e4c59f849"
   name = "sigs.k8s.io/yaml"
   packages = ["."]
@@ -2818,6 +2857,9 @@
     "k8s.io/helm/pkg/tiller",
     "k8s.io/kubernetes/pkg/apis/core",
     "k8s.io/kubernetes/pkg/apis/core/validation",
+    "sigs.k8s.io/controller-runtime/pkg/conversion",
+    "sigs.k8s.io/controller-runtime/pkg/webhook",
+    "sigs.k8s.io/controller-runtime/pkg/webhook/conversion",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

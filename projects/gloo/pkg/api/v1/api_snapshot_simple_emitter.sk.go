@@ -85,9 +85,9 @@ func (c *apiSimpleEmitter) Snapshots(ctx context.Context) (<-chan *ApiSnapshot, 
 						currentSnapshot.Artifacts = append(currentSnapshot.Artifacts, typed)
 					case *Endpoint:
 						currentSnapshot.Endpoints = append(currentSnapshot.Endpoints, typed)
-					case *Proxy:
+					case *gloo_solo_io.Proxy:
 						currentSnapshot.Proxies = append(currentSnapshot.Proxies, typed)
-					case *UpstreamGroup:
+					case *gloo_solo_io.UpstreamGroup:
 						currentSnapshot.Upstreamgroups = append(currentSnapshot.Upstreamgroups, typed)
 					case *Secret:
 						currentSnapshot.Secrets = append(currentSnapshot.Secrets, typed)

@@ -43,18 +43,18 @@ type ApiEmitter interface {
 	Register() error
 	Artifact() ArtifactClient
 	Endpoint() EndpointClient
-	Proxy() ProxyClient
-	UpstreamGroup() UpstreamGroupClient
+	Proxy() gloo_solo_io.ProxyClient
+	UpstreamGroup() gloo_solo_io.UpstreamGroupClient
 	Secret() SecretClient
 	Upstream() UpstreamClient
 	Snapshots(watchNamespaces []string, opts clients.WatchOpts) (<-chan *ApiSnapshot, <-chan error, error)
 }
 
-func NewApiEmitter(artifactClient ArtifactClient, endpointClient EndpointClient, proxyClient ProxyClient, upstreamGroupClient UpstreamGroupClient, secretClient SecretClient, upstreamClient UpstreamClient) ApiEmitter {
+func NewApiEmitter(artifactClient ArtifactClient, endpointClient EndpointClient, proxyClient gloo_solo_io.ProxyClient, upstreamGroupClient gloo_solo_io.UpstreamGroupClient, secretClient SecretClient, upstreamClient UpstreamClient) ApiEmitter {
 	return NewApiEmitterWithEmit(artifactClient, endpointClient, proxyClient, upstreamGroupClient, secretClient, upstreamClient, make(chan struct{}))
 }
 
-func NewApiEmitterWithEmit(artifactClient ArtifactClient, endpointClient EndpointClient, proxyClient ProxyClient, upstreamGroupClient UpstreamGroupClient, secretClient SecretClient, upstreamClient UpstreamClient, emit <-chan struct{}) ApiEmitter {
+func NewApiEmitterWithEmit(artifactClient ArtifactClient, endpointClient EndpointClient, proxyClient gloo_solo_io.ProxyClient, upstreamGroupClient gloo_solo_io.UpstreamGroupClient, secretClient SecretClient, upstreamClient UpstreamClient, emit <-chan struct{}) ApiEmitter {
 	return &apiEmitter{
 		artifact:      artifactClient,
 		endpoint:      endpointClient,
@@ -70,8 +70,8 @@ type apiEmitter struct {
 	forceEmit     <-chan struct{}
 	artifact      ArtifactClient
 	endpoint      EndpointClient
-	proxy         ProxyClient
-	upstreamGroup UpstreamGroupClient
+	proxy         gloo_solo_io.ProxyClient
+	upstreamGroup gloo_solo_io.UpstreamGroupClient
 	secret        SecretClient
 	upstream      UpstreamClient
 }
@@ -106,11 +106,11 @@ func (c *apiEmitter) Endpoint() EndpointClient {
 	return c.endpoint
 }
 
-func (c *apiEmitter) Proxy() ProxyClient {
+func (c *apiEmitter) Proxy() gloo_solo_io.ProxyClient {
 	return c.proxy
 }
 
-func (c *apiEmitter) UpstreamGroup() UpstreamGroupClient {
+func (c *apiEmitter) UpstreamGroup() gloo_solo_io.UpstreamGroupClient {
 	return c.upstreamGroup
 }
 
@@ -152,13 +152,13 @@ func (c *apiEmitter) Snapshots(watchNamespaces []string, opts clients.WatchOpts)
 	endpointChan := make(chan endpointListWithNamespace)
 	/* Create channel for Proxy */
 	type proxyListWithNamespace struct {
-		list      ProxyList
+		list      gloo_solo_io.ProxyList
 		namespace string
 	}
 	proxyChan := make(chan proxyListWithNamespace)
 	/* Create channel for UpstreamGroup */
 	type upstreamGroupListWithNamespace struct {
-		list      UpstreamGroupList
+		list      gloo_solo_io.UpstreamGroupList
 		namespace string
 	}
 	upstreamGroupChan := make(chan upstreamGroupListWithNamespace)
@@ -307,8 +307,8 @@ func (c *apiEmitter) Snapshots(watchNamespaces []string, opts clients.WatchOpts)
 		}
 		artifactsByNamespace := make(map[string]ArtifactList)
 		endpointsByNamespace := make(map[string]EndpointList)
-		proxiesByNamespace := make(map[string]ProxyList)
-		upstreamgroupsByNamespace := make(map[string]UpstreamGroupList)
+		proxiesByNamespace := make(map[string]gloo_solo_io.ProxyList)
+		upstreamgroupsByNamespace := make(map[string]gloo_solo_io.UpstreamGroupList)
 		secretsByNamespace := make(map[string]SecretList)
 		upstreamsByNamespace := make(map[string]UpstreamList)
 
@@ -357,7 +357,7 @@ func (c *apiEmitter) Snapshots(watchNamespaces []string, opts clients.WatchOpts)
 
 				// merge lists by namespace
 				proxiesByNamespace[namespace] = proxyNamespacedList.list
-				var proxyList ProxyList
+				var proxyList gloo_solo_io.ProxyList
 				for _, proxies := range proxiesByNamespace {
 					proxyList = append(proxyList, proxies...)
 				}
@@ -369,7 +369,7 @@ func (c *apiEmitter) Snapshots(watchNamespaces []string, opts clients.WatchOpts)
 
 				// merge lists by namespace
 				upstreamgroupsByNamespace[namespace] = upstreamGroupNamespacedList.list
-				var upstreamGroupList UpstreamGroupList
+				var upstreamGroupList gloo_solo_io.UpstreamGroupList
 				for _, upstreamgroups := range upstreamgroupsByNamespace {
 					upstreamGroupList = append(upstreamGroupList, upstreamgroups...)
 				}

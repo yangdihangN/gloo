@@ -1,3 +1,4 @@
+
 syntax = "proto3";
 package gloo.solo.io;
 option go_package = "github.com/solo-io/gloo/projects/gloo/pkg/api/v1";
@@ -7,6 +8,7 @@ option (gogoproto.equal_all) = true;
 
 import "github.com/solo-io/solo-kit/api/v1/metadata.proto";
 import "github.com/solo-io/solo-kit/api/v1/status.proto";
+import "github.com/solo-io/solo-kit/api/v1/solo-kit.proto";
 
 import "github.com/solo-io/gloo/projects/gloo/api/v1/plugins.proto";
 
@@ -20,6 +22,9 @@ import "github.com/solo-io/gloo/projects/gloo/api/v1/plugins.proto";
  * Each upstream type is handled by a corresponding Gloo plugin.
  */
 message Upstream {
+
+    option (core.solo.io.resource).short_name = "us";
+    option (core.solo.io.resource).plural_name = "upstreams";
     // Type-specific configuration. Examples include static, kubernetes, and aws.
     // The type-specific config for the upstream is called a spec.
     UpstreamSpec upstream_spec = 2;

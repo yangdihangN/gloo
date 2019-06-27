@@ -40,13 +40,13 @@ var _ = Describe("ApiEventLoop", func() {
 		proxyClientFactory := &factory.MemoryResourceClientFactory{
 			Cache: memory.NewInMemoryResourceCache(),
 		}
-		proxyClient, err := NewProxyClient(proxyClientFactory)
+		proxyClient, err := gloo_solo_io.NewProxyClient(proxyClientFactory)
 		Expect(err).NotTo(HaveOccurred())
 
 		upstreamGroupClientFactory := &factory.MemoryResourceClientFactory{
 			Cache: memory.NewInMemoryResourceCache(),
 		}
-		upstreamGroupClient, err := NewUpstreamGroupClient(upstreamGroupClientFactory)
+		upstreamGroupClient, err := gloo_solo_io.NewUpstreamGroupClient(upstreamGroupClientFactory)
 		Expect(err).NotTo(HaveOccurred())
 
 		secretClientFactory := &factory.MemoryResourceClientFactory{
@@ -68,9 +68,9 @@ var _ = Describe("ApiEventLoop", func() {
 		Expect(err).NotTo(HaveOccurred())
 		_, err = emitter.Endpoint().Write(NewEndpoint(namespace, "jerry"), clients.WriteOpts{})
 		Expect(err).NotTo(HaveOccurred())
-		_, err = emitter.Proxy().Write(NewProxy(namespace, "jerry"), clients.WriteOpts{})
+		_, err = emitter.Proxy().Write(gloo_solo_io.NewProxy(namespace, "jerry"), clients.WriteOpts{})
 		Expect(err).NotTo(HaveOccurred())
-		_, err = emitter.UpstreamGroup().Write(NewUpstreamGroup(namespace, "jerry"), clients.WriteOpts{})
+		_, err = emitter.UpstreamGroup().Write(gloo_solo_io.NewUpstreamGroup(namespace, "jerry"), clients.WriteOpts{})
 		Expect(err).NotTo(HaveOccurred())
 		_, err = emitter.Secret().Write(NewSecret(namespace, "jerry"), clients.WriteOpts{})
 		Expect(err).NotTo(HaveOccurred())

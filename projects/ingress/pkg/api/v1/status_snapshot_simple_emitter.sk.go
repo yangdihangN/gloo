@@ -84,7 +84,7 @@ func (c *statusSimpleEmitter) Snapshots(ctx context.Context) (<-chan *StatusSnap
 					case *KubeService:
 						currentSnapshot.Services = append(currentSnapshot.Services, typed)
 					case *Ingress:
-						currentSnapshot.Ingresses = append(currentSnapshot.Ingresses, typed)
+						currentSnapshot.Insgresses = append(currentSnapshot.Insgresses, typed)
 					default:
 						select {
 						case errs <- fmt.Errorf("StatusSnapshotEmitter "+

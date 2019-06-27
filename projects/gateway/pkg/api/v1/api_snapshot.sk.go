@@ -10,56 +10,56 @@ import (
 )
 
 type ApiSnapshot struct {
+	Virtualservices VirtualServiceList
 	Gateways        GatewayList
-	VirtualServices VirtualServiceList
 }
 
 func (s ApiSnapshot) Clone() ApiSnapshot {
 	return ApiSnapshot{
+		Virtualservices: s.Virtualservices.Clone(),
 		Gateways:        s.Gateways.Clone(),
-		VirtualServices: s.VirtualServices.Clone(),
 	}
 }
 
 func (s ApiSnapshot) Hash() uint64 {
 	return hashutils.HashAll(
+		s.hashVirtualservices(),
 		s.hashGateways(),
-		s.hashVirtualServices(),
 	)
+}
+
+func (s ApiSnapshot) hashVirtualservices() uint64 {
+	return hashutils.HashAll(s.Virtualservices.AsInterfaces()...)
 }
 
 func (s ApiSnapshot) hashGateways() uint64 {
 	return hashutils.HashAll(s.Gateways.AsInterfaces()...)
 }
 
-func (s ApiSnapshot) hashVirtualServices() uint64 {
-	return hashutils.HashAll(s.VirtualServices.AsInterfaces()...)
-}
-
 func (s ApiSnapshot) HashFields() []zap.Field {
 	var fields []zap.Field
+	fields = append(fields, zap.Uint64("virtualservices", s.hashVirtualservices()))
 	fields = append(fields, zap.Uint64("gateways", s.hashGateways()))
-	fields = append(fields, zap.Uint64("virtualServices", s.hashVirtualServices()))
 
 	return append(fields, zap.Uint64("snapshotHash", s.Hash()))
 }
 
 type ApiSnapshotStringer struct {
 	Version         uint64
+	Virtualservices []string
 	Gateways        []string
-	VirtualServices []string
 }
 
 func (ss ApiSnapshotStringer) String() string {
 	s := fmt.Sprintf("ApiSnapshot %v\n", ss.Version)
 
-	s += fmt.Sprintf("  Gateways %v\n", len(ss.Gateways))
-	for _, name := range ss.Gateways {
+	s += fmt.Sprintf("  Virtualservices %v\n", len(ss.Virtualservices))
+	for _, name := range ss.Virtualservices {
 		s += fmt.Sprintf("    %v\n", name)
 	}
 
-	s += fmt.Sprintf("  VirtualServices %v\n", len(ss.VirtualServices))
-	for _, name := range ss.VirtualServices {
+	s += fmt.Sprintf("  Gateways %v\n", len(ss.Gateways))
+	for _, name := range ss.Gateways {
 		s += fmt.Sprintf("    %v\n", name)
 	}
 
@@ -69,7 +69,7 @@ func (ss ApiSnapshotStringer) String() string {
 func (s ApiSnapshot) Stringer() ApiSnapshotStringer {
 	return ApiSnapshotStringer{
 		Version:         s.Hash(),
+		Virtualservices: s.Virtualservices.NamespacesDotNames(),
 		Gateways:        s.Gateways.NamespacesDotNames(),
-		VirtualServices: s.VirtualServices.NamespacesDotNames(),
 	}
 }

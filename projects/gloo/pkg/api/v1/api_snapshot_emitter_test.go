@@ -42,8 +42,8 @@ var _ = Describe("V1Emitter", func() {
 		emitter             ApiEmitter
 		artifactClient      ArtifactClient
 		endpointClient      EndpointClient
-		proxyClient         ProxyClient
-		upstreamGroupClient UpstreamGroupClient
+		proxyClient         gloo_solo_io.ProxyClient
+		upstreamGroupClient gloo_solo_io.UpstreamGroupClient
 		secretClient        SecretClient
 		upstreamClient      UpstreamClient
 	)
@@ -72,21 +72,21 @@ var _ = Describe("V1Emitter", func() {
 		Expect(err).NotTo(HaveOccurred())
 		// Proxy Constructor
 		proxyClientFactory := &factory.KubeResourceClientFactory{
-			Crd:         ProxyCrd,
+			Crd:         gloo_solo_io.ProxyCrd,
 			Cfg:         cfg,
 			SharedCache: kuberc.NewKubeCache(context.TODO()),
 		}
 
-		proxyClient, err = NewProxyClient(proxyClientFactory)
+		proxyClient, err = gloo_solo_io.NewProxyClient(proxyClientFactory)
 		Expect(err).NotTo(HaveOccurred())
 		// UpstreamGroup Constructor
 		upstreamGroupClientFactory := &factory.KubeResourceClientFactory{
-			Crd:         UpstreamGroupCrd,
+			Crd:         gloo_solo_io.UpstreamGroupCrd,
 			Cfg:         cfg,
 			SharedCache: kuberc.NewKubeCache(context.TODO()),
 		}
 
-		upstreamGroupClient, err = NewUpstreamGroupClient(upstreamGroupClientFactory)
+		upstreamGroupClient, err = gloo_solo_io.NewUpstreamGroupClient(upstreamGroupClientFactory)
 		Expect(err).NotTo(HaveOccurred())
 		// Secret Constructor
 		secretClientFactory := &factory.MemoryResourceClientFactory{
@@ -241,7 +241,7 @@ var _ = Describe("V1Emitter", func() {
 			Proxy
 		*/
 
-		assertSnapshotProxies := func(expectProxies ProxyList, unexpectProxies ProxyList) {
+		assertSnapshotProxies := func(expectProxies gloo_solo_io.ProxyList, unexpectProxies gloo_solo_io.ProxyList) {
 		drain:
 			for {
 				select {
@@ -267,38 +267,38 @@ var _ = Describe("V1Emitter", func() {
 				}
 			}
 		}
-		proxy1a, err := proxyClient.Write(NewProxy(namespace1, name1), clients.WriteOpts{Ctx: ctx})
+		proxy1a, err := proxyClient.Write(gloo_solo_io.NewProxy(namespace1, name1), clients.WriteOpts{Ctx: ctx})
 		Expect(err).NotTo(HaveOccurred())
-		proxy1b, err := proxyClient.Write(NewProxy(namespace2, name1), clients.WriteOpts{Ctx: ctx})
-		Expect(err).NotTo(HaveOccurred())
-
-		assertSnapshotProxies(ProxyList{proxy1a, proxy1b}, nil)
-		proxy2a, err := proxyClient.Write(NewProxy(namespace1, name2), clients.WriteOpts{Ctx: ctx})
-		Expect(err).NotTo(HaveOccurred())
-		proxy2b, err := proxyClient.Write(NewProxy(namespace2, name2), clients.WriteOpts{Ctx: ctx})
+		proxy1b, err := proxyClient.Write(gloo_solo_io.NewProxy(namespace2, name1), clients.WriteOpts{Ctx: ctx})
 		Expect(err).NotTo(HaveOccurred())
 
-		assertSnapshotProxies(ProxyList{proxy1a, proxy1b, proxy2a, proxy2b}, nil)
+		assertSnapshotProxies(gloo_solo_io.ProxyList{proxy1a, proxy1b}, nil)
+		proxy2a, err := proxyClient.Write(gloo_solo_io.NewProxy(namespace1, name2), clients.WriteOpts{Ctx: ctx})
+		Expect(err).NotTo(HaveOccurred())
+		proxy2b, err := proxyClient.Write(gloo_solo_io.NewProxy(namespace2, name2), clients.WriteOpts{Ctx: ctx})
+		Expect(err).NotTo(HaveOccurred())
+
+		assertSnapshotProxies(gloo_solo_io.ProxyList{proxy1a, proxy1b, proxy2a, proxy2b}, nil)
 
 		err = proxyClient.Delete(proxy2a.GetMetadata().Namespace, proxy2a.GetMetadata().Name, clients.DeleteOpts{Ctx: ctx})
 		Expect(err).NotTo(HaveOccurred())
 		err = proxyClient.Delete(proxy2b.GetMetadata().Namespace, proxy2b.GetMetadata().Name, clients.DeleteOpts{Ctx: ctx})
 		Expect(err).NotTo(HaveOccurred())
 
-		assertSnapshotProxies(ProxyList{proxy1a, proxy1b}, ProxyList{proxy2a, proxy2b})
+		assertSnapshotProxies(gloo_solo_io.ProxyList{proxy1a, proxy1b}, gloo_solo_io.ProxyList{proxy2a, proxy2b})
 
 		err = proxyClient.Delete(proxy1a.GetMetadata().Namespace, proxy1a.GetMetadata().Name, clients.DeleteOpts{Ctx: ctx})
 		Expect(err).NotTo(HaveOccurred())
 		err = proxyClient.Delete(proxy1b.GetMetadata().Namespace, proxy1b.GetMetadata().Name, clients.DeleteOpts{Ctx: ctx})
 		Expect(err).NotTo(HaveOccurred())
 
-		assertSnapshotProxies(nil, ProxyList{proxy1a, proxy1b, proxy2a, proxy2b})
+		assertSnapshotProxies(nil, gloo_solo_io.ProxyList{proxy1a, proxy1b, proxy2a, proxy2b})
 
 		/*
 			UpstreamGroup
 		*/
 
-		assertSnapshotUpstreamgroups := func(expectUpstreamgroups UpstreamGroupList, unexpectUpstreamgroups UpstreamGroupList) {
+		assertSnapshotUpstreamgroups := func(expectUpstreamgroups gloo_solo_io.UpstreamGroupList, unexpectUpstreamgroups gloo_solo_io.UpstreamGroupList) {
 		drain:
 			for {
 				select {
@@ -324,32 +324,32 @@ var _ = Describe("V1Emitter", func() {
 				}
 			}
 		}
-		upstreamGroup1a, err := upstreamGroupClient.Write(NewUpstreamGroup(namespace1, name1), clients.WriteOpts{Ctx: ctx})
+		upstreamGroup1a, err := upstreamGroupClient.Write(gloo_solo_io.NewUpstreamGroup(namespace1, name1), clients.WriteOpts{Ctx: ctx})
 		Expect(err).NotTo(HaveOccurred())
-		upstreamGroup1b, err := upstreamGroupClient.Write(NewUpstreamGroup(namespace2, name1), clients.WriteOpts{Ctx: ctx})
-		Expect(err).NotTo(HaveOccurred())
-
-		assertSnapshotUpstreamgroups(UpstreamGroupList{upstreamGroup1a, upstreamGroup1b}, nil)
-		upstreamGroup2a, err := upstreamGroupClient.Write(NewUpstreamGroup(namespace1, name2), clients.WriteOpts{Ctx: ctx})
-		Expect(err).NotTo(HaveOccurred())
-		upstreamGroup2b, err := upstreamGroupClient.Write(NewUpstreamGroup(namespace2, name2), clients.WriteOpts{Ctx: ctx})
+		upstreamGroup1b, err := upstreamGroupClient.Write(gloo_solo_io.NewUpstreamGroup(namespace2, name1), clients.WriteOpts{Ctx: ctx})
 		Expect(err).NotTo(HaveOccurred())
 
-		assertSnapshotUpstreamgroups(UpstreamGroupList{upstreamGroup1a, upstreamGroup1b, upstreamGroup2a, upstreamGroup2b}, nil)
+		assertSnapshotUpstreamgroups(gloo_solo_io.UpstreamGroupList{upstreamGroup1a, upstreamGroup1b}, nil)
+		upstreamGroup2a, err := upstreamGroupClient.Write(gloo_solo_io.NewUpstreamGroup(namespace1, name2), clients.WriteOpts{Ctx: ctx})
+		Expect(err).NotTo(HaveOccurred())
+		upstreamGroup2b, err := upstreamGroupClient.Write(gloo_solo_io.NewUpstreamGroup(namespace2, name2), clients.WriteOpts{Ctx: ctx})
+		Expect(err).NotTo(HaveOccurred())
+
+		assertSnapshotUpstreamgroups(gloo_solo_io.UpstreamGroupList{upstreamGroup1a, upstreamGroup1b, upstreamGroup2a, upstreamGroup2b}, nil)
 
 		err = upstreamGroupClient.Delete(upstreamGroup2a.GetMetadata().Namespace, upstreamGroup2a.GetMetadata().Name, clients.DeleteOpts{Ctx: ctx})
 		Expect(err).NotTo(HaveOccurred())
 		err = upstreamGroupClient.Delete(upstreamGroup2b.GetMetadata().Namespace, upstreamGroup2b.GetMetadata().Name, clients.DeleteOpts{Ctx: ctx})
 		Expect(err).NotTo(HaveOccurred())
 
-		assertSnapshotUpstreamgroups(UpstreamGroupList{upstreamGroup1a, upstreamGroup1b}, UpstreamGroupList{upstreamGroup2a, upstreamGroup2b})
+		assertSnapshotUpstreamgroups(gloo_solo_io.UpstreamGroupList{upstreamGroup1a, upstreamGroup1b}, gloo_solo_io.UpstreamGroupList{upstreamGroup2a, upstreamGroup2b})
 
 		err = upstreamGroupClient.Delete(upstreamGroup1a.GetMetadata().Namespace, upstreamGroup1a.GetMetadata().Name, clients.DeleteOpts{Ctx: ctx})
 		Expect(err).NotTo(HaveOccurred())
 		err = upstreamGroupClient.Delete(upstreamGroup1b.GetMetadata().Namespace, upstreamGroup1b.GetMetadata().Name, clients.DeleteOpts{Ctx: ctx})
 		Expect(err).NotTo(HaveOccurred())
 
-		assertSnapshotUpstreamgroups(nil, UpstreamGroupList{upstreamGroup1a, upstreamGroup1b, upstreamGroup2a, upstreamGroup2b})
+		assertSnapshotUpstreamgroups(nil, gloo_solo_io.UpstreamGroupList{upstreamGroup1a, upstreamGroup1b, upstreamGroup2a, upstreamGroup2b})
 
 		/*
 			Secret
@@ -596,7 +596,7 @@ var _ = Describe("V1Emitter", func() {
 			Proxy
 		*/
 
-		assertSnapshotProxies := func(expectProxies ProxyList, unexpectProxies ProxyList) {
+		assertSnapshotProxies := func(expectProxies gloo_solo_io.ProxyList, unexpectProxies gloo_solo_io.ProxyList) {
 		drain:
 			for {
 				select {
@@ -622,38 +622,38 @@ var _ = Describe("V1Emitter", func() {
 				}
 			}
 		}
-		proxy1a, err := proxyClient.Write(NewProxy(namespace1, name1), clients.WriteOpts{Ctx: ctx})
+		proxy1a, err := proxyClient.Write(gloo_solo_io.NewProxy(namespace1, name1), clients.WriteOpts{Ctx: ctx})
 		Expect(err).NotTo(HaveOccurred())
-		proxy1b, err := proxyClient.Write(NewProxy(namespace2, name1), clients.WriteOpts{Ctx: ctx})
-		Expect(err).NotTo(HaveOccurred())
-
-		assertSnapshotProxies(ProxyList{proxy1a, proxy1b}, nil)
-		proxy2a, err := proxyClient.Write(NewProxy(namespace1, name2), clients.WriteOpts{Ctx: ctx})
-		Expect(err).NotTo(HaveOccurred())
-		proxy2b, err := proxyClient.Write(NewProxy(namespace2, name2), clients.WriteOpts{Ctx: ctx})
+		proxy1b, err := proxyClient.Write(gloo_solo_io.NewProxy(namespace2, name1), clients.WriteOpts{Ctx: ctx})
 		Expect(err).NotTo(HaveOccurred())
 
-		assertSnapshotProxies(ProxyList{proxy1a, proxy1b, proxy2a, proxy2b}, nil)
+		assertSnapshotProxies(gloo_solo_io.ProxyList{proxy1a, proxy1b}, nil)
+		proxy2a, err := proxyClient.Write(gloo_solo_io.NewProxy(namespace1, name2), clients.WriteOpts{Ctx: ctx})
+		Expect(err).NotTo(HaveOccurred())
+		proxy2b, err := proxyClient.Write(gloo_solo_io.NewProxy(namespace2, name2), clients.WriteOpts{Ctx: ctx})
+		Expect(err).NotTo(HaveOccurred())
+
+		assertSnapshotProxies(gloo_solo_io.ProxyList{proxy1a, proxy1b, proxy2a, proxy2b}, nil)
 
 		err = proxyClient.Delete(proxy2a.GetMetadata().Namespace, proxy2a.GetMetadata().Name, clients.DeleteOpts{Ctx: ctx})
 		Expect(err).NotTo(HaveOccurred())
 		err = proxyClient.Delete(proxy2b.GetMetadata().Namespace, proxy2b.GetMetadata().Name, clients.DeleteOpts{Ctx: ctx})
 		Expect(err).NotTo(HaveOccurred())
 
-		assertSnapshotProxies(ProxyList{proxy1a, proxy1b}, ProxyList{proxy2a, proxy2b})
+		assertSnapshotProxies(gloo_solo_io.ProxyList{proxy1a, proxy1b}, gloo_solo_io.ProxyList{proxy2a, proxy2b})
 
 		err = proxyClient.Delete(proxy1a.GetMetadata().Namespace, proxy1a.GetMetadata().Name, clients.DeleteOpts{Ctx: ctx})
 		Expect(err).NotTo(HaveOccurred())
 		err = proxyClient.Delete(proxy1b.GetMetadata().Namespace, proxy1b.GetMetadata().Name, clients.DeleteOpts{Ctx: ctx})
 		Expect(err).NotTo(HaveOccurred())
 
-		assertSnapshotProxies(nil, ProxyList{proxy1a, proxy1b, proxy2a, proxy2b})
+		assertSnapshotProxies(nil, gloo_solo_io.ProxyList{proxy1a, proxy1b, proxy2a, proxy2b})
 
 		/*
 			UpstreamGroup
 		*/
 
-		assertSnapshotUpstreamgroups := func(expectUpstreamgroups UpstreamGroupList, unexpectUpstreamgroups UpstreamGroupList) {
+		assertSnapshotUpstreamgroups := func(expectUpstreamgroups gloo_solo_io.UpstreamGroupList, unexpectUpstreamgroups gloo_solo_io.UpstreamGroupList) {
 		drain:
 			for {
 				select {
@@ -679,32 +679,32 @@ var _ = Describe("V1Emitter", func() {
 				}
 			}
 		}
-		upstreamGroup1a, err := upstreamGroupClient.Write(NewUpstreamGroup(namespace1, name1), clients.WriteOpts{Ctx: ctx})
+		upstreamGroup1a, err := upstreamGroupClient.Write(gloo_solo_io.NewUpstreamGroup(namespace1, name1), clients.WriteOpts{Ctx: ctx})
 		Expect(err).NotTo(HaveOccurred())
-		upstreamGroup1b, err := upstreamGroupClient.Write(NewUpstreamGroup(namespace2, name1), clients.WriteOpts{Ctx: ctx})
-		Expect(err).NotTo(HaveOccurred())
-
-		assertSnapshotUpstreamgroups(UpstreamGroupList{upstreamGroup1a, upstreamGroup1b}, nil)
-		upstreamGroup2a, err := upstreamGroupClient.Write(NewUpstreamGroup(namespace1, name2), clients.WriteOpts{Ctx: ctx})
-		Expect(err).NotTo(HaveOccurred())
-		upstreamGroup2b, err := upstreamGroupClient.Write(NewUpstreamGroup(namespace2, name2), clients.WriteOpts{Ctx: ctx})
+		upstreamGroup1b, err := upstreamGroupClient.Write(gloo_solo_io.NewUpstreamGroup(namespace2, name1), clients.WriteOpts{Ctx: ctx})
 		Expect(err).NotTo(HaveOccurred())
 
-		assertSnapshotUpstreamgroups(UpstreamGroupList{upstreamGroup1a, upstreamGroup1b, upstreamGroup2a, upstreamGroup2b}, nil)
+		assertSnapshotUpstreamgroups(gloo_solo_io.UpstreamGroupList{upstreamGroup1a, upstreamGroup1b}, nil)
+		upstreamGroup2a, err := upstreamGroupClient.Write(gloo_solo_io.NewUpstreamGroup(namespace1, name2), clients.WriteOpts{Ctx: ctx})
+		Expect(err).NotTo(HaveOccurred())
+		upstreamGroup2b, err := upstreamGroupClient.Write(gloo_solo_io.NewUpstreamGroup(namespace2, name2), clients.WriteOpts{Ctx: ctx})
+		Expect(err).NotTo(HaveOccurred())
+
+		assertSnapshotUpstreamgroups(gloo_solo_io.UpstreamGroupList{upstreamGroup1a, upstreamGroup1b, upstreamGroup2a, upstreamGroup2b}, nil)
 
 		err = upstreamGroupClient.Delete(upstreamGroup2a.GetMetadata().Namespace, upstreamGroup2a.GetMetadata().Name, clients.DeleteOpts{Ctx: ctx})
 		Expect(err).NotTo(HaveOccurred())
 		err = upstreamGroupClient.Delete(upstreamGroup2b.GetMetadata().Namespace, upstreamGroup2b.GetMetadata().Name, clients.DeleteOpts{Ctx: ctx})
 		Expect(err).NotTo(HaveOccurred())
 
-		assertSnapshotUpstreamgroups(UpstreamGroupList{upstreamGroup1a, upstreamGroup1b}, UpstreamGroupList{upstreamGroup2a, upstreamGroup2b})
+		assertSnapshotUpstreamgroups(gloo_solo_io.UpstreamGroupList{upstreamGroup1a, upstreamGroup1b}, gloo_solo_io.UpstreamGroupList{upstreamGroup2a, upstreamGroup2b})
 
 		err = upstreamGroupClient.Delete(upstreamGroup1a.GetMetadata().Namespace, upstreamGroup1a.GetMetadata().Name, clients.DeleteOpts{Ctx: ctx})
 		Expect(err).NotTo(HaveOccurred())
 		err = upstreamGroupClient.Delete(upstreamGroup1b.GetMetadata().Namespace, upstreamGroup1b.GetMetadata().Name, clients.DeleteOpts{Ctx: ctx})
 		Expect(err).NotTo(HaveOccurred())
 
-		assertSnapshotUpstreamgroups(nil, UpstreamGroupList{upstreamGroup1a, upstreamGroup1b, upstreamGroup2a, upstreamGroup2b})
+		assertSnapshotUpstreamgroups(nil, gloo_solo_io.UpstreamGroupList{upstreamGroup1a, upstreamGroup1b, upstreamGroup2a, upstreamGroup2b})
 
 		/*
 			Secret

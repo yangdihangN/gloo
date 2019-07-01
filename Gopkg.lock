@@ -2663,7 +2663,7 @@
   revision = "8a16e7dd8fb6d97d1331b0c79a16722f934b00b1"
 
 [[projects]]
-  digest = "1:74f8cd697eb1d364a740d61cbafc1764dd3b084addb2c569b1752dbca47de2ed"
+  digest = "1:87652a78c108320df4664e919e3b6221108475ff8f8cfc4bb402c13691e123c9"
   name = "sigs.k8s.io/controller-runtime"
   packages = [
     "pkg/cache",
@@ -2676,6 +2676,7 @@
     "pkg/log",
     "pkg/metrics",
     "pkg/runtime/inject",
+    "pkg/scheme",
     "pkg/webhook",
     "pkg/webhook/admission",
     "pkg/webhook/conversion",
@@ -2858,6 +2859,7 @@
     "k8s.io/kubernetes/pkg/apis/core",
     "k8s.io/kubernetes/pkg/apis/core/validation",
     "sigs.k8s.io/controller-runtime/pkg/conversion",
+    "sigs.k8s.io/controller-runtime/pkg/scheme",
     "sigs.k8s.io/controller-runtime/pkg/webhook",
     "sigs.k8s.io/controller-runtime/pkg/webhook/conversion",
   ]

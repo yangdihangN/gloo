@@ -10,7 +10,7 @@ import (
 )
 
 type VirtualServiceWatcher interface {
-	// watch namespace-scoped Virtualservices
+	// watch namespace-scoped VirtualServices
 	Watch(namespace string, opts clients.WatchOpts) (<-chan VirtualServiceList, <-chan error, error)
 }
 
@@ -99,19 +99,19 @@ func (client *virtualServiceClient) Watch(namespace string, opts clients.WatchOp
 	if initErr != nil {
 		return nil, nil, initErr
 	}
-	virtualservicesChan := make(chan VirtualServiceList)
+	virtualServicesChan := make(chan VirtualServiceList)
 	go func() {
 		for {
 			select {
 			case resourceList := <-resourcesChan:
-				virtualservicesChan <- convertToVirtualService(resourceList)
+				virtualServicesChan <- convertToVirtualService(resourceList)
 			case <-opts.Ctx.Done():
-				close(virtualservicesChan)
+				close(virtualServicesChan)
 				return
 			}
 		}
 	}()
-	return virtualservicesChan, errs, nil
+	return virtualServicesChan, errs, nil
 }
 
 func convertToVirtualService(resources resources.ResourceList) VirtualServiceList {

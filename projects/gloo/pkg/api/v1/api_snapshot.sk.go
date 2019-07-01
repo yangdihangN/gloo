@@ -12,8 +12,8 @@ import (
 type ApiSnapshot struct {
 	Artifacts      ArtifactList
 	Endpoints      EndpointList
-	Proxies        gloo_solo_io.ProxyList
-	Upstreamgroups gloo_solo_io.UpstreamGroupList
+	Proxies        ProxyList
+	Upstreamgroups UpstreamGroupList
 	Secrets        SecretList
 	Upstreams      UpstreamList
 }

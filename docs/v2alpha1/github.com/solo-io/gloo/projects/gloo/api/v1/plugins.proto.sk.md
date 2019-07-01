@@ -12,6 +12,8 @@ weight: 5
 
 
 - [ListenerPlugins](#listenerplugins)
+- [TcpListenerPlugins](#tcplistenerplugins)
+- [HttpListenerPlugins](#httplistenerplugins)
 - [VirtualHostPlugins](#virtualhostplugins)
 - [RoutePlugins](#routeplugins)
 - [DestinationSpec](#destinationspec)
@@ -30,7 +32,47 @@ weight: 5
 ### ListenerPlugins
 
  
-Plugin-specific configuration that lives on listeners
+Plugin-specific configuration that lives on gateways
+Each ListenerPlugin object contains configuration for a specific plugin
+Note to developers: new Listener Plugins must be added to this struct
+to be usable by Gloo.
+
+```yaml
+
+```
+
+| Field | Type | Description | Default |
+| ----- | ---- | ----------- |----------- | 
+
+
+
+
+---
+### TcpListenerPlugins
+
+ 
+Plugin-specific configuration that lives on tcp listeners
+Each ListenerPlugin object contains configuration for a specific plugin
+Note to developers: new Listener Plugins must be added to this struct
+to be usable by Gloo.
+
+```yaml
+"tcpProxySettings": .tcp.plugins.gloo.solo.io.TcpProxySettings
+
+```
+
+| Field | Type | Description | Default |
+| ----- | ---- | ----------- |----------- | 
+| `tcpProxySettings` | [.tcp.plugins.gloo.solo.io.TcpProxySettings](../plugins/tcp/tcp.proto.sk#tcpproxysettings) |  |  |
+
+
+
+
+---
+### HttpListenerPlugins
+
+ 
+Plugin-specific configuration that lives on listeners using http_connection_manager
 Each ListenerPlugin object contains configuration for a specific plugin
 Note to developers: new Listener Plugins must be added to this struct
 to be usable by Gloo.
@@ -38,7 +80,6 @@ to be usable by Gloo.
 ```yaml
 "grpcWeb": .grpc_web.plugins.gloo.solo.io.GrpcWeb
 "httpConnectionManagerSettings": .hcm.plugins.gloo.solo.io.HttpConnectionManagerSettings
-"tcpProxySettings": .tcp.plugins.gloo.solo.io.TcpProxySettings
 
 ```
 
@@ -46,7 +87,6 @@ to be usable by Gloo.
 | ----- | ---- | ----------- |----------- | 
 | `grpcWeb` | [.grpc_web.plugins.gloo.solo.io.GrpcWeb](../plugins/grpc_web/grpc_web.proto.sk#grpcweb) |  |  |
 | `httpConnectionManagerSettings` | [.hcm.plugins.gloo.solo.io.HttpConnectionManagerSettings](../plugins/hcm/hcm.proto.sk#httpconnectionmanagersettings) |  |  |
-| `tcpProxySettings` | [.tcp.plugins.gloo.solo.io.TcpProxySettings](../plugins/tcp/tcp.proto.sk#tcpproxysettings) |  |  |
 
 
 

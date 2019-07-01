@@ -3,16 +3,20 @@ package defaults
 import (
 	"github.com/gogo/protobuf/types"
 	v1 "github.com/solo-io/gloo/projects/gateway/pkg/api/v1"
+	"github.com/solo-io/gloo/projects/gateway/pkg/api/v2alpha1"
 	gloov1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
 	"github.com/solo-io/gloo/projects/gloo/pkg/defaults"
 	"github.com/solo-io/solo-kit/pkg/api/v1/resources/core"
 )
 
-func DefaultGateway(writeNamespace string) *v1.Gateway {
-	return &v1.Gateway{
+func DefaultGateway(writeNamespace string) *v2alpha1.Gateway {
+	return &v2alpha1.Gateway{
 		Metadata: core.Metadata{
 			Name:      "gateway",
 			Namespace: writeNamespace,
+		},
+		GatewayType: &v2alpha1.Gateway_HttpGateway{
+			HttpGateway: &v2alpha1.HttpGateway{},
 		},
 		BindAddress:   "::",
 		BindPort:      defaults.HttpPort,
@@ -21,7 +25,7 @@ func DefaultGateway(writeNamespace string) *v1.Gateway {
 	}
 }
 
-func DefaultSslGateway(writeNamespace string) *v1.Gateway {
+func DefaultSslGateway(writeNamespace string) *v2alpha1.Gateway {
 	defaultgw := DefaultGateway(writeNamespace)
 	defaultgw.Metadata.Name = defaultgw.Metadata.Name + "-ssl"
 	defaultgw.BindPort = defaults.HttpsPort

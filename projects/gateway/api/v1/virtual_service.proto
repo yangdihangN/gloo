@@ -19,7 +19,7 @@ Domains must be unique across all virtual services within a gateway (i.e. no ove
 message VirtualService {
 
     option (core.solo.io.resource).short_name = "vs";
-    option (core.solo.io.resource).plural_name = "virtualservices";
+    option (core.solo.io.resource).plural_name = "virtual_services";
 
     gloo.solo.io.VirtualHost virtual_host = 1;
 

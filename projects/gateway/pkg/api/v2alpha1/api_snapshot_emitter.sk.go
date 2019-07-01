@@ -123,7 +123,7 @@ func (c *apiEmitter) Snapshots(watchNamespaces []string, opts clients.WatchOpts)
 		done.Add(1)
 		go func(namespace string) {
 			defer done.Done()
-			errutils.AggregateErrs(ctx, errs, virtualServiceErrs, namespace+"-virtualservices")
+			errutils.AggregateErrs(ctx, errs, virtualServiceErrs, namespace+"-virtualServices")
 		}(namespace)
 		/* Setup namespaced watch for Gateway */
 		gatewayNamespacesChan, gatewayErrs, err := c.gateway.Watch(namespace, opts)
@@ -175,7 +175,7 @@ func (c *apiEmitter) Snapshots(watchNamespaces []string, opts clients.WatchOpts)
 			sentSnapshot := currentSnapshot.Clone()
 			snapshots <- &sentSnapshot
 		}
-		virtualservicesByNamespace := make(map[string]gateway_solo_io.VirtualServiceList)
+		virtualServicesByNamespace := make(map[string]gateway_solo_io.VirtualServiceList)
 		gatewaysByNamespace := make(map[string]GatewayList)
 
 		for {
@@ -198,12 +198,12 @@ func (c *apiEmitter) Snapshots(watchNamespaces []string, opts clients.WatchOpts)
 				namespace := virtualServiceNamespacedList.namespace
 
 				// merge lists by namespace
-				virtualservicesByNamespace[namespace] = virtualServiceNamespacedList.list
+				virtualServicesByNamespace[namespace] = virtualServiceNamespacedList.list
 				var virtualServiceList gateway_solo_io.VirtualServiceList
-				for _, virtualservices := range virtualservicesByNamespace {
-					virtualServiceList = append(virtualServiceList, virtualservices...)
+				for _, virtualServices := range virtualServicesByNamespace {
+					virtualServiceList = append(virtualServiceList, virtualServices...)
 				}
-				currentSnapshot.Virtualservices = virtualServiceList.Sort()
+				currentSnapshot.VirtualServices = virtualServiceList.Sort()
 			case gatewayNamespacedList := <-gatewayChan:
 				record()
 

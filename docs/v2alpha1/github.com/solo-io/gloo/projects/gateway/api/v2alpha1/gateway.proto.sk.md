@@ -65,12 +65,14 @@ A gateway describes the routes to upstreams that are reachable via a specific po
 
 ```yaml
 "virtualServices": []core.solo.io.ResourceRef
+"plugins": .gloo.solo.io.HttpListenerPlugins
 
 ```
 
 | Field | Type | Description | Default |
 | ----- | ---- | ----------- |----------- | 
 | `virtualServices` | [[]core.solo.io.ResourceRef](../../../../../../solo-kit/api/v1/ref.proto.sk#resourceref) | names of the the virtual services, which contain the actual routes for the gateway if the list is empty, all virtual services will apply to this gateway (with accordance to tls flag above). |  |
+| `plugins` | [.gloo.solo.io.HttpListenerPlugins](../../../../gloo/api/v1/plugins.proto.sk#httplistenerplugins) | http level plugin configuration for all routes on the gateway |  |
 
 
 
@@ -82,12 +84,14 @@ A gateway describes the routes to upstreams that are reachable via a specific po
 
 ```yaml
 "destinations": []gloo.solo.io.RouteAction
+"plugins": .gloo.solo.io.TcpListenerPlugins
 
 ```
 
 | Field | Type | Description | Default |
 | ----- | ---- | ----------- |----------- | 
 | `destinations` | [[]gloo.solo.io.RouteAction](../../../../gloo/api/v1/proxy.proto.sk#routeaction) | Name of the destinations the gateway can route to |  |
+| `plugins` | [.gloo.solo.io.TcpListenerPlugins](../../../../gloo/api/v1/plugins.proto.sk#tcplistenerplugins) | tcp level plugin configuration for all routes on the gateway |  |
 
 
 

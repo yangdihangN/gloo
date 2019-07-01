@@ -12,26 +12,26 @@ import (
 )
 
 type ApiSnapshot struct {
-	Virtualservices gateway_solo_io.VirtualServiceList
+	VirtualServices gateway_solo_io.VirtualServiceList
 	Gateways        GatewayList
 }
 
 func (s ApiSnapshot) Clone() ApiSnapshot {
 	return ApiSnapshot{
-		Virtualservices: s.Virtualservices.Clone(),
+		VirtualServices: s.VirtualServices.Clone(),
 		Gateways:        s.Gateways.Clone(),
 	}
 }
 
 func (s ApiSnapshot) Hash() uint64 {
 	return hashutils.HashAll(
-		s.hashVirtualservices(),
+		s.hashVirtualServices(),
 		s.hashGateways(),
 	)
 }
 
-func (s ApiSnapshot) hashVirtualservices() uint64 {
-	return hashutils.HashAll(s.Virtualservices.AsInterfaces()...)
+func (s ApiSnapshot) hashVirtualServices() uint64 {
+	return hashutils.HashAll(s.VirtualServices.AsInterfaces()...)
 }
 
 func (s ApiSnapshot) hashGateways() uint64 {
@@ -40,7 +40,7 @@ func (s ApiSnapshot) hashGateways() uint64 {
 
 func (s ApiSnapshot) HashFields() []zap.Field {
 	var fields []zap.Field
-	fields = append(fields, zap.Uint64("virtualservices", s.hashVirtualservices()))
+	fields = append(fields, zap.Uint64("virtualServices", s.hashVirtualServices()))
 	fields = append(fields, zap.Uint64("gateways", s.hashGateways()))
 
 	return append(fields, zap.Uint64("snapshotHash", s.Hash()))
@@ -48,15 +48,15 @@ func (s ApiSnapshot) HashFields() []zap.Field {
 
 type ApiSnapshotStringer struct {
 	Version         uint64
-	Virtualservices []string
+	VirtualServices []string
 	Gateways        []string
 }
 
 func (ss ApiSnapshotStringer) String() string {
 	s := fmt.Sprintf("ApiSnapshot %v\n", ss.Version)
 
-	s += fmt.Sprintf("  Virtualservices %v\n", len(ss.Virtualservices))
-	for _, name := range ss.Virtualservices {
+	s += fmt.Sprintf("  VirtualServices %v\n", len(ss.VirtualServices))
+	for _, name := range ss.VirtualServices {
 		s += fmt.Sprintf("    %v\n", name)
 	}
 
@@ -71,7 +71,7 @@ func (ss ApiSnapshotStringer) String() string {
 func (s ApiSnapshot) Stringer() ApiSnapshotStringer {
 	return ApiSnapshotStringer{
 		Version:         s.Hash(),
-		Virtualservices: s.Virtualservices.NamespacesDotNames(),
+		VirtualServices: s.VirtualServices.NamespacesDotNames(),
 		Gateways:        s.Gateways.NamespacesDotNames(),
 	}
 }

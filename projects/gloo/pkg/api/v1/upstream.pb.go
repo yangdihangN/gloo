@@ -24,9 +24,6 @@ var _ = math.Inf
 const _ = proto.GoGoProtoPackageIsVersion2 // please upgrade the proto package
 
 //
-//@solo-kit:resource.short_name=us
-//@solo-kit:resource.plural_name=upstreams
-//
 // Upstreams represent destination for routing HTTP requests. Upstreams can be compared to
 // [clusters](https://www.envoyproxy.io/docs/envoy/latest/api-v1/cluster_manager/cluster.html?highlight=cluster) in Envoy terminology.
 // Each upstream in Gloo has a type. Supported types include `static`, `kubernetes`, `aws`, `consul`, and more.

@@ -30,14 +30,14 @@ Contains various settings for Envoy's tcp proxy filter.
 See here for more information: https://www.envoyproxy.io/docs/envoy/v1.10.0/api-v2/config/filter/network/tcp_proxy/v2/tcp_proxy.proto#envoy-api-msg-config-filter-network-tcp-proxy-v2-tcpproxy
 
 ```yaml
-"maxConnectAttempts": int
+"maxConnectAttempts": .google.protobuf.UInt32Value
 "idleTimeout": .google.protobuf.Duration
 
 ```
 
 | Field | Type | Description | Default |
 | ----- | ---- | ----------- |----------- | 
-| `maxConnectAttempts` | `int` |  |  |
+| `maxConnectAttempts` | [.google.protobuf.UInt32Value](https://developers.google.com/protocol-buffers/docs/reference/csharp/class/google/protobuf/well-known-types/u-int-32-value) |  |  |
 | `idleTimeout` | [.google.protobuf.Duration](https://developers.google.com/protocol-buffers/docs/reference/csharp/class/google/protobuf/well-known-types/duration) |  |  |
 
 

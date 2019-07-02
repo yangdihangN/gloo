@@ -192,7 +192,69 @@ var _ = Describe("Kube2e: gateway", func() {
 				Expect(err).NotTo(HaveOccurred())
 			})
 
-			It("correctly routes to the service", func() {
+			It("correctly routes to the service (http)", func() {
+				defaultGateway := defaults.DefaultGateway(testHelper.InstallNamespace)
+
+				// wait for default gateway to be created
+				Eventually(func() *gatewayv2alpha1.Gateway {
+					gw, _ := gatewayClient.Read(testHelper.InstallNamespace, defaultGateway.Metadata.Name, clients.ReadOpts{Ctx: ctx})
+					return gw
+				}, "15s", "0.5s").Should(Not(BeNil()))
+
+				// wait for the expected proxy configuration to be accepted
+				Eventually(func() error {
+					proxy, err := proxyClient.Read(testHelper.InstallNamespace, translator.GatewayProxyName, clients.ReadOpts{Ctx: ctx})
+					if err != nil {
+						return err
+					}
+
+					if status := proxy.Status; status.State != core.Status_Accepted {
+						return errors.Errorf("unexpected proxy state: %v. Reason: %v", status.State, status.Reason)
+					}
+
+					for _, l := range proxy.Listeners {
+						for _, vh := range l.GetHttpListener().VirtualHosts {
+							for _, r := range vh.Routes {
+								if action := r.GetRouteAction(); action != nil {
+									if single := action.GetSingle(); single != nil {
+										if svcDest := single.GetService(); svcDest != nil {
+											if svcDest.Ref.Name == helper.TestrunnerName &&
+												svcDest.Ref.Namespace == testHelper.InstallNamespace &&
+												svcDest.Port == uint32(helper.TestRunnerPort) {
+												return nil
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+
+					return errors.Errorf("proxy did not contain expected route")
+				}, "15s", "0.5s").Should(BeNil())
+
+				testHelper.CurlEventuallyShouldRespond(helper.CurlOpts{
+					Protocol:          "http",
+					Path:              "/",
+					Method:            "GET",
+					Host:              gatewayProxy,
+					Service:           gatewayProxy,
+					Port:              gatewayPort,
+					ConnectionTimeout: 1, // this is important, as sometimes curl hangs
+					WithoutStats:      true,
+				}, helper.SimpleHttpResponse, 1, 60*time.Second, 1*time.Second)
+			})
+
+
+		})
+
+		Context("tcp", func() {
+
+			BeforeEach(func() {
+
+			})
+
+			It("correctly routes to the service (http)", func() {
 				defaultGateway := defaults.DefaultGateway(testHelper.InstallNamespace)
 
 				// wait for default gateway to be created

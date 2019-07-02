@@ -93,7 +93,7 @@ var _ = Describe("Plugin", func() {
 		})
 	})
 
-	FContext("listener filter chain plugin", func() {
+	Context("listener filter chain plugin", func() {
 		var (
 			tcpListener *v1.TcpListener
 			snap        *v1.ApiSnapshot
@@ -210,8 +210,8 @@ var _ = Describe("Plugin", func() {
 			Expect(clusters.Clusters).To(HaveLen(2))
 			Expect(clusters.Clusters[0].Name).To(Equal(translatorutil.UpstreamToClusterName(core.ResourceRef{Namespace: ns, Name: "one"})))
 			Expect(clusters.Clusters[0].Weight).To(Equal(uint32(5)))
-			Expect(clusters.Clusters[0].Name).To(Equal(translatorutil.UpstreamToClusterName(core.ResourceRef{Namespace: ns, Name: "two"})))
-			Expect(clusters.Clusters[0].Weight).To(Equal(uint32(1)))
+			Expect(clusters.Clusters[1].Name).To(Equal(translatorutil.UpstreamToClusterName(core.ResourceRef{Namespace: ns, Name: "two"})))
+			Expect(clusters.Clusters[1].Weight).To(Equal(uint32(1)))
 		})
 		It("can transform an upstream group", func() {
 			snap.UpstreamGroups = append(snap.UpstreamGroups, &v1.UpstreamGroup{
@@ -245,8 +245,8 @@ var _ = Describe("Plugin", func() {
 			Expect(clusters.Clusters).To(HaveLen(2))
 			Expect(clusters.Clusters[0].Name).To(Equal(translatorutil.UpstreamToClusterName(core.ResourceRef{Namespace: ns, Name: "one"})))
 			Expect(clusters.Clusters[0].Weight).To(Equal(uint32(5)))
-			Expect(clusters.Clusters[0].Name).To(Equal(translatorutil.UpstreamToClusterName(core.ResourceRef{Namespace: ns, Name: "two"})))
-			Expect(clusters.Clusters[0].Weight).To(Equal(uint32(1)))
+			Expect(clusters.Clusters[1].Name).To(Equal(translatorutil.UpstreamToClusterName(core.ResourceRef{Namespace: ns, Name: "two"})))
+			Expect(clusters.Clusters[1].Weight).To(Equal(uint32(1)))
 		})
 	})
 

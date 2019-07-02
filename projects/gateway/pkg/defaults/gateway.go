@@ -9,20 +9,42 @@ import (
 	"github.com/solo-io/solo-kit/pkg/api/v1/resources/core"
 )
 
-func DefaultGateway(writeNamespace string) *v2alpha1.Gateway {
+func defaultGateway() *v2alpha1.Gateway {
 	return &v2alpha1.Gateway{
 		Metadata: core.Metadata{
-			Name:      "gateway",
-			Namespace: writeNamespace,
-		},
-		GatewayType: &v2alpha1.Gateway_HttpGateway{
-			HttpGateway: &v2alpha1.HttpGateway{},
+			Name: "gateway",
 		},
 		BindAddress:   "::",
 		BindPort:      defaults.HttpPort,
 		UseProxyProto: &types.BoolValue{Value: false},
-		// all virtualservices
 	}
+}
+
+func DefaultGateway(writeNamespace string) *v2alpha1.Gateway {
+	gw := defaultGateway()
+	gw.Metadata.Namespace = writeNamespace
+	gw.GatewayType = &v2alpha1.Gateway_HttpGateway{
+		HttpGateway: &v2alpha1.HttpGateway{},
+	}
+	return gw
+}
+
+func DefaultTcpGateway(writeNamespace string) *v2alpha1.Gateway {
+	gw := defaultGateway()
+	gw.Metadata.Namespace = writeNamespace
+	gw.GatewayType = &v2alpha1.Gateway_TcpGateway{
+		TcpGateway: &v2alpha1.TcpGateway{},
+	}
+	return gw
+}
+
+func DefaultTcpSslGateway(writeNamespace string) *v2alpha1.Gateway {
+	defaultgw := DefaultTcpGateway(writeNamespace)
+	defaultgw.Metadata.Name = defaultgw.Metadata.Name + "-ssl"
+	defaultgw.BindPort = defaults.HttpsPort
+	defaultgw.Ssl = true
+
+	return defaultgw
 }
 
 func DefaultSslGateway(writeNamespace string) *v2alpha1.Gateway {

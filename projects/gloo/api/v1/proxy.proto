@@ -88,11 +88,22 @@ message Listener {
 }
 
 message TcpListener {
-    // Name of the destinations the gateway can route to
-    repeated RouteAction destinations = 1;
+    // List of filter chains to match on for this listener
+    repeated TcpHost tcp_hosts = 1;
     // Plugins contains top-level plugin configuration to be applied to a listener
     // Listener config is applied to all tcp traffic that connects to this listener.
     TcpListenerPlugins listener_plugins = 2;
+}
+
+message TcpHost {
+    // the logical name of the tcp host. names must be unique for each tcp host within a listener
+    string name = 1;
+    // Name of the destinations the gateway can route to
+    RouteAction destination = 2;
+    // If provided, the Gateway will serve TLS/SSL traffic for this set of routes
+    gloo.solo.io.SslConfig ssl_config = 3;
+    //matcher
+
 }
 
 // Use this listener to configure proxy behavior for any HTTP-level features including defining routes (via virtual services).

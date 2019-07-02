@@ -14,6 +14,7 @@ weight: 5
 - [Proxy](#proxy) **Top-Level Resource**
 - [Listener](#listener)
 - [TcpListener](#tcplistener)
+- [TcpHost](#tcphost)
 - [HttpListener](#httplistener)
 - [VirtualHost](#virtualhost)
 - [Route](#route)
@@ -111,15 +112,36 @@ e.g. performing SSL termination, HTTP retries, and rate limiting.
 
 
 ```yaml
-"destinations": []gloo.solo.io.RouteAction
+"tcpHosts": []gloo.solo.io.TcpHost
 "listenerPlugins": .gloo.solo.io.TcpListenerPlugins
 
 ```
 
 | Field | Type | Description | Default |
 | ----- | ---- | ----------- |----------- | 
-| `destinations` | [[]gloo.solo.io.RouteAction](../proxy.proto.sk#routeaction) | Name of the destinations the gateway can route to |  |
+| `tcpHosts` | [[]gloo.solo.io.TcpHost](../proxy.proto.sk#tcphost) | List of filter chains to match on for this listener |  |
 | `listenerPlugins` | [.gloo.solo.io.TcpListenerPlugins](../plugins.proto.sk#tcplistenerplugins) | Plugins contains top-level plugin configuration to be applied to a listener Listener config is applied to all tcp traffic that connects to this listener. |  |
+
+
+
+
+---
+### TcpHost
+
+
+
+```yaml
+"name": string
+"destination": .gloo.solo.io.RouteAction
+"sslConfig": .gloo.solo.io.SslConfig
+
+```
+
+| Field | Type | Description | Default |
+| ----- | ---- | ----------- |----------- | 
+| `name` | `string` | the logical name of the tcp host. names must be unique for each tcp host within a listener |  |
+| `destination` | [.gloo.solo.io.RouteAction](../proxy.proto.sk#routeaction) | Name of the destinations the gateway can route to |  |
+| `sslConfig` | [.gloo.solo.io.SslConfig](../ssl.proto.sk#sslconfig) | If provided, the Gateway will serve TLS/SSL traffic for this set of routes |  |
 
 
 

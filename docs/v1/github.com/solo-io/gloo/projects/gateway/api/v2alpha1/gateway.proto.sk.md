@@ -83,14 +83,14 @@ A gateway describes the routes to upstreams that are reachable via a specific po
 
 
 ```yaml
-"destinations": []gloo.solo.io.RouteAction
+"destinations": []gloo.solo.io.TcpHost
 "plugins": .gloo.solo.io.TcpListenerPlugins
 
 ```
 
 | Field | Type | Description | Default |
 | ----- | ---- | ----------- |----------- | 
-| `destinations` | [[]gloo.solo.io.RouteAction](../../../../gloo/api/v1/proxy.proto.sk#routeaction) | Name of the destinations the gateway can route to |  |
+| `destinations` | [[]gloo.solo.io.TcpHost](../../../../gloo/api/v1/proxy.proto.sk#tcphost) | Name of the destinations the gateway can route to |  |
 | `plugins` | [.gloo.solo.io.TcpListenerPlugins](../../../../gloo/api/v1/plugins.proto.sk#tcplistenerplugins) | tcp level plugin configuration for all routes on the gateway |  |
 
 

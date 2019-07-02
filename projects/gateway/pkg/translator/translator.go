@@ -3,6 +3,7 @@ package translator
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/solo-io/gloo/projects/gateway/pkg/api/v2alpha1"
 	gloov1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
@@ -23,10 +24,6 @@ type translator struct {
 
 func NewTranslator(factories []ListenerFactory) *translator {
 	return &translator{factories: factories}
-}
-
-type ListenerFactory interface {
-	GenerateListeners(snap *v2alpha1.ApiSnapshot, filteredGateways []*v2alpha1.Gateway, resourceErrs reporter.ResourceErrors) []*gloov1.Listener
 }
 
 func (t *translator) Translate(ctx context.Context, namespace string, snap *v2alpha1.ApiSnapshot) (*gloov1.Proxy, reporter.ResourceErrors) {
@@ -62,6 +59,46 @@ func (t *translator) Translate(ctx context.Context, namespace string, snap *v2al
 	}, resourceErrs
 }
 
+// https://github.com/solo-io/gloo/issues/538
+// Gloo should only pay attention to gateways it creates, i.e. in it's write namespace, to support
+// handling multiple gloo installations
+func filterGatewaysForNamespace(gateways v2alpha1.GatewayList, namespace string) v2alpha1.GatewayList {
+	var filteredGateways v2alpha1.GatewayList
+	for _, gateway := range gateways {
+		if gateway.Metadata.Namespace == namespace {
+			filteredGateways = append(filteredGateways, gateway)
+		}
+	}
+	return filteredGateways
+}
+
+
+func validateGateways(gateways v2alpha1.GatewayList, resourceErrs reporter.ResourceErrors) {
+	bindAddresses := map[string]v2alpha1.GatewayList{}
+	// if two gateway (=listener) that belong to the same proxy share the same bind address,
+	// they are invalid.
+	for _, gw := range gateways {
+		bindAddress := fmt.Sprintf("%s:%d", gw.BindAddress, gw.BindPort)
+		bindAddresses[bindAddress] = append(bindAddresses[bindAddress], gw)
+	}
+
+	for addr, gateways := range bindAddresses {
+		if len(gateways) > 1 {
+			for _, gw := range gateways {
+				resourceErrs.AddError(gw, fmt.Errorf("bind-address %s is not unique in a proxy. gateways: %s", addr, strings.Join(gatewaysRefsToString(gateways), ",")))
+			}
+		}
+	}
+}
+
+func gatewaysRefsToString(gateways v2alpha1.GatewayList) []string {
+	var ret []string
+	for _, gw := range gateways {
+		ret = append(ret, gw.Metadata.Ref().Key())
+	}
+	return ret
+}
+
 func standardListener(gateway *v2alpha1.Gateway) *gloov1.Listener {
 	return &gloov1.Listener{
 		Name:            gatewayName(gateway),
@@ -76,9 +113,11 @@ func gatewayName(gateway *v2alpha1.Gateway) string {
 	return fmt.Sprintf("listener-%s-%d", gateway.BindAddress, gateway.BindPort)
 }
 
+type ListenerFactory interface {
+	GenerateListeners(snap *v2alpha1.ApiSnapshot, filteredGateways []*v2alpha1.Gateway, resourceErrs reporter.ResourceErrors) []*gloov1.Listener
+}
 
-
-type TcpTranslator struct {}
+type TcpTranslator struct{}
 
 func (t *TcpTranslator) GenerateListeners(snap *v2alpha1.ApiSnapshot, filteredGateways []*v2alpha1.Gateway, resourceErrs reporter.ResourceErrors) []*gloov1.Listener {
 	var result []*gloov1.Listener
@@ -97,4 +136,3 @@ func (t *TcpTranslator) GenerateListeners(snap *v2alpha1.ApiSnapshot, filteredGa
 	}
 	return result
 }
-

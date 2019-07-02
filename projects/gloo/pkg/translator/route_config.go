@@ -24,6 +24,9 @@ import (
 type reportFunc func(error error, format string, args ...interface{})
 
 func (t *translator) computeRouteConfig(params plugins.Params, proxy *v1.Proxy, listener *v1.Listener, routeCfgName string, reportFn reportFunc) *envoyapi.RouteConfiguration {
+	if listener.GetHttpListener() == nil {
+		return nil
+	}
 	report := func(err error, format string, args ...interface{}) {
 		reportFn(err, "route_config."+format, args...)
 	}
@@ -45,7 +48,7 @@ func (t *translator) computeRouteConfig(params plugins.Params, proxy *v1.Proxy, 
 func (t *translator) computeVirtualHosts(params plugins.Params, listener *v1.Listener, report reportFunc) []envoyroute.VirtualHost {
 	httpListener, ok := listener.ListenerType.(*v1.Listener_HttpListener)
 	if !ok {
-		panic("non-HTTP listeners are not currently supported in Gloo")
+		return nil
 	}
 	virtualHosts := httpListener.HttpListener.VirtualHosts
 	if err := validateVirtualHostDomains(virtualHosts); err != nil {

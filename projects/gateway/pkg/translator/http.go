@@ -31,46 +31,6 @@ func (t *HttpTranslator) GenerateListeners(snap *v2alpha1.ApiSnapshot, filteredG
 	return result
 }
 
-// https://github.com/solo-io/gloo/issues/538
-// Gloo should only pay attention to gateways it creates, i.e. in it's write namespace, to support
-// handling multiple gloo installations
-func filterGatewaysForNamespace(gateways v2alpha1.GatewayList, namespace string) v2alpha1.GatewayList {
-	var filteredGateways v2alpha1.GatewayList
-	for _, gateway := range gateways {
-		if gateway.Metadata.Namespace == namespace {
-			filteredGateways = append(filteredGateways, gateway)
-		}
-	}
-	return filteredGateways
-}
-
-
-func validateGateways(gateways v2alpha1.GatewayList, resourceErrs reporter.ResourceErrors) {
-	bindAddresses := map[string]v2alpha1.GatewayList{}
-	// if two gateway (=listener) that belong to the same proxy share the same bind address,
-	// they are invalid.
-	for _, gw := range gateways {
-		bindAddress := fmt.Sprintf("%s:%d", gw.BindAddress, gw.BindPort)
-		bindAddresses[bindAddress] = append(bindAddresses[bindAddress], gw)
-	}
-
-	for addr, gateways := range bindAddresses {
-		if len(gateways) > 1 {
-			for _, gw := range gateways {
-				resourceErrs.AddError(gw, fmt.Errorf("bind-address %s is not unique in a proxy. gateways: %s", addr, strings.Join(gatewaysRefsToString(gateways), ",")))
-			}
-		}
-	}
-}
-
-func gatewaysRefsToString(gateways v2alpha1.GatewayList) []string {
-	var ret []string
-	for _, gw := range gateways {
-		ret = append(ret, gw.Metadata.Ref().Key())
-	}
-	return ret
-}
-
 func domainsToKey(domains []string) string {
 	// copy before mutating for good measure
 	domains = append([]string{}, domains...)

@@ -23,13 +23,33 @@ func (t *translator) computeListener(params plugins.Params, proxy *v1.Proxy, lis
 	}
 	validateListenerPorts(proxy, report)
 
-	listenerFilters := t.computeListenerFilters(params, listener, report)
-	if len(listenerFilters) == 0 {
-		// nothing to do, return nil
-		return nil
+
+	var filterChains []envoylistener.FilterChain
+	switch listenerType := listener.GetListenerType().(type) {
+	case *v1.Listener_HttpListener:
+		listenerFilters := t.computeListenerFilters(params, listener, report)
+		if len(listenerFilters) == 0 {
+			// nothing to do, return nil
+			return nil
+		}
+
+		filterChains = computeFilterChainsFromSslConfig(params.Snapshot, listener, listenerFilters, report)
+	case *v1.Listener_TcpListener:
+		for _, tcpHost := range listenerType.TcpListener.TcpHosts {
+			listenerFilters := t.computeListenerFilters(params, listener, report)
+			if len(listenerFilters) == 0 {
+				// nothing to do, return nil
+				return nil
+			}
+			filterChain, err := computerTcpFilterChain(params.Snapshot, listener, listenerFilters, tcpHost)
+			if err != nil {
+				report(err, "could not computer tcp filter chain for %v", tcpHost)
+			}
+			filterChains = append(filterChains,  filterChain)
+		}
 	}
 
-	filterChains := computeFilterChainsFromSslConfig(params.Snapshot, listener, listenerFilters, report)
+
 
 	out := &envoyapi.Listener{
 		Name: listener.Name,
@@ -123,6 +143,24 @@ func computeFilterChainsFromSslConfig(snap *v1.ApiSnapshot, listener *v1.Listene
 		secureFilterChains = append(secureFilterChains, filterChain)
 	}
 	return secureFilterChains
+}
+
+// create a duplicate of the listener filter chain for each ssl cert we want to serve
+// if there is no SSL config on the listener, the envoy listener will have one insecure filter chain
+func computerTcpFilterChain(snap *v1.ApiSnapshot, listener *v1.Listener, listenerFilters []envoylistener.Filter, host *v1.TcpHost) (envoylistener.FilterChain, error) {
+	sslConfig := host.GetSslConfig()
+	if sslConfig == nil {
+		return envoylistener.FilterChain{
+			Filters:       listenerFilters,
+			UseProxyProto: listener.UseProxyProto,
+		}, nil
+	}
+	sslCfgTranslator := utils.NewSslConfigTranslator(snap.Secrets)
+	downstreamConfig, err := sslCfgTranslator.ResolveDownstreamSslConfig(sslConfig)
+	if err != nil {
+		return envoylistener.FilterChain{}, errors.Wrapf(err, "invalid secrets for listener %v", listener.Name)
+	}
+	return newSslFilterChain(downstreamConfig, sslConfig.SniDomains, listener.UseProxyProto, listenerFilters), nil
 }
 
 func validateListenerPorts(proxy *v1.Proxy, report reportFunc) {

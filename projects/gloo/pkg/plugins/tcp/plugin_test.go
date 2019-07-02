@@ -20,9 +20,16 @@ import (
 )
 
 var _ = Describe("Plugin", func() {
-	It("copy all settings to hcm filter", func() {
+	var (
+		in      *v1.Listener
+		outl    *envoyapi.Listener
+		filters []envoylistener.Filter
+		tcps    *tcp.TcpProxySettings
+	)
+
+	BeforeEach(func() {
 		pd := func(t time.Duration) *time.Duration { return &t }
-		tcps := &tcp.TcpProxySettings{
+		tcps = &tcp.TcpProxySettings{
 			MaxConnectAttempts: &types.UInt32Value{
 				Value: 5,
 			},
@@ -34,21 +41,21 @@ var _ = Describe("Plugin", func() {
 			},
 		}
 
-		in := &v1.Listener{
+		in = &v1.Listener{
 			ListenerType: &v1.Listener_TcpListener{
 				TcpListener: tl,
 			},
 		}
-
-		filters := []envoylistener.Filter{{
+		filters = []envoylistener.Filter{{
 			Name: envoyutil.TCPProxy,
 		}}
-
-		outl := &envoyapi.Listener{
+		outl = &envoyapi.Listener{
 			FilterChains: []envoylistener.FilterChain{{
 				Filters: filters,
 			}},
 		}
+	})
+	It("copy all settings to tcp filter", func() {
 
 		p := NewPlugin()
 		err := p.ProcessListener(plugins.Params{}, in, outl)
@@ -60,6 +67,23 @@ var _ = Describe("Plugin", func() {
 
 		Expect(cfg.IdleTimeout).To(Equal(tcps.IdleTimeout))
 		Expect(cfg.MaxConnectAttempts).To(Equal(tcps.MaxConnectAttempts))
+	})
+
+	It("appends the tls inspector listener filter", func() {
+		p := NewPlugin()
+		err := p.ProcessListener(plugins.Params{}, in, outl)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(outl.ListenerFilters).To(HaveLen(1))
+	})
+
+	It("does not append the tls inspector if it already exists", func() {
+		p := NewPlugin()
+		outl.ListenerFilters = append(outl.ListenerFilters, envoylistener.ListenerFilter{
+			Name: envoyutil.TlsInspector,
+		})
+		err := p.ProcessListener(plugins.Params{}, in, outl)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(outl.ListenerFilters).To(HaveLen(1))
 	})
 
 })

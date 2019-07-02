@@ -16,14 +16,13 @@ func main() {
 	// log.Printf("starting generate")
 
 	generateOptions := cmd.GenerateOptions{
-		SkipGenMocks: true,
+		SkipGenMocks:  true,
 		CustomImports: nil,
-		SkipDirs: nil,
-		RelativeRoot: "projects",
+		SkipDirs:      nil,
+		RelativeRoot:  "projects",
 		CompileProtos: true,
 		GenDocs: &cmd.DocsOptions{
 			Output: options.Hugo,
-
 		},
 	}
 	if err := cmd.Generate(generateOptions); err != nil {

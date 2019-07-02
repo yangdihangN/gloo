@@ -141,18 +141,18 @@ var _ = Describe("V1Emitter", func() {
 			Ingress
 		*/
 
-		assertSnapshotInsgresses := func(expectInsgresses IngressList, unexpectInsgresses IngressList) {
+		assertSnapshotIngresses := func(expectIngresses IngressList, unexpectIngresses IngressList) {
 		drain:
 			for {
 				select {
 				case snap = <-snapshots:
-					for _, expected := range expectInsgresses {
-						if _, err := snap.Insgresses.Find(expected.GetMetadata().Ref().Strings()); err != nil {
+					for _, expected := range expectIngresses {
+						if _, err := snap.Ingresses.Find(expected.GetMetadata().Ref().Strings()); err != nil {
 							continue drain
 						}
 					}
-					for _, unexpected := range unexpectInsgresses {
-						if _, err := snap.Insgresses.Find(unexpected.GetMetadata().Ref().Strings()); err == nil {
+					for _, unexpected := range unexpectIngresses {
+						if _, err := snap.Ingresses.Find(unexpected.GetMetadata().Ref().Strings()); err == nil {
 							continue drain
 						}
 					}
@@ -172,27 +172,27 @@ var _ = Describe("V1Emitter", func() {
 		ingress1b, err := ingressClient.Write(NewIngress(namespace2, name1), clients.WriteOpts{Ctx: ctx})
 		Expect(err).NotTo(HaveOccurred())
 
-		assertSnapshotInsgresses(IngressList{ingress1a, ingress1b}, nil)
+		assertSnapshotIngresses(IngressList{ingress1a, ingress1b}, nil)
 		ingress2a, err := ingressClient.Write(NewIngress(namespace1, name2), clients.WriteOpts{Ctx: ctx})
 		Expect(err).NotTo(HaveOccurred())
 		ingress2b, err := ingressClient.Write(NewIngress(namespace2, name2), clients.WriteOpts{Ctx: ctx})
 		Expect(err).NotTo(HaveOccurred())
 
-		assertSnapshotInsgresses(IngressList{ingress1a, ingress1b, ingress2a, ingress2b}, nil)
+		assertSnapshotIngresses(IngressList{ingress1a, ingress1b, ingress2a, ingress2b}, nil)
 
 		err = ingressClient.Delete(ingress2a.GetMetadata().Namespace, ingress2a.GetMetadata().Name, clients.DeleteOpts{Ctx: ctx})
 		Expect(err).NotTo(HaveOccurred())
 		err = ingressClient.Delete(ingress2b.GetMetadata().Namespace, ingress2b.GetMetadata().Name, clients.DeleteOpts{Ctx: ctx})
 		Expect(err).NotTo(HaveOccurred())
 
-		assertSnapshotInsgresses(IngressList{ingress1a, ingress1b}, IngressList{ingress2a, ingress2b})
+		assertSnapshotIngresses(IngressList{ingress1a, ingress1b}, IngressList{ingress2a, ingress2b})
 
 		err = ingressClient.Delete(ingress1a.GetMetadata().Namespace, ingress1a.GetMetadata().Name, clients.DeleteOpts{Ctx: ctx})
 		Expect(err).NotTo(HaveOccurred())
 		err = ingressClient.Delete(ingress1b.GetMetadata().Namespace, ingress1b.GetMetadata().Name, clients.DeleteOpts{Ctx: ctx})
 		Expect(err).NotTo(HaveOccurred())
 
-		assertSnapshotInsgresses(nil, IngressList{ingress1a, ingress1b, ingress2a, ingress2b})
+		assertSnapshotIngresses(nil, IngressList{ingress1a, ingress1b, ingress2a, ingress2b})
 	})
 	It("tracks snapshots on changes to any resource using AllNamespace", func() {
 		ctx := context.Background()
@@ -268,18 +268,18 @@ var _ = Describe("V1Emitter", func() {
 			Ingress
 		*/
 
-		assertSnapshotInsgresses := func(expectInsgresses IngressList, unexpectInsgresses IngressList) {
+		assertSnapshotIngresses := func(expectIngresses IngressList, unexpectIngresses IngressList) {
 		drain:
 			for {
 				select {
 				case snap = <-snapshots:
-					for _, expected := range expectInsgresses {
-						if _, err := snap.Insgresses.Find(expected.GetMetadata().Ref().Strings()); err != nil {
+					for _, expected := range expectIngresses {
+						if _, err := snap.Ingresses.Find(expected.GetMetadata().Ref().Strings()); err != nil {
 							continue drain
 						}
 					}
-					for _, unexpected := range unexpectInsgresses {
-						if _, err := snap.Insgresses.Find(unexpected.GetMetadata().Ref().Strings()); err == nil {
+					for _, unexpected := range unexpectIngresses {
+						if _, err := snap.Ingresses.Find(unexpected.GetMetadata().Ref().Strings()); err == nil {
 							continue drain
 						}
 					}
@@ -299,26 +299,26 @@ var _ = Describe("V1Emitter", func() {
 		ingress1b, err := ingressClient.Write(NewIngress(namespace2, name1), clients.WriteOpts{Ctx: ctx})
 		Expect(err).NotTo(HaveOccurred())
 
-		assertSnapshotInsgresses(IngressList{ingress1a, ingress1b}, nil)
+		assertSnapshotIngresses(IngressList{ingress1a, ingress1b}, nil)
 		ingress2a, err := ingressClient.Write(NewIngress(namespace1, name2), clients.WriteOpts{Ctx: ctx})
 		Expect(err).NotTo(HaveOccurred())
 		ingress2b, err := ingressClient.Write(NewIngress(namespace2, name2), clients.WriteOpts{Ctx: ctx})
 		Expect(err).NotTo(HaveOccurred())
 
-		assertSnapshotInsgresses(IngressList{ingress1a, ingress1b, ingress2a, ingress2b}, nil)
+		assertSnapshotIngresses(IngressList{ingress1a, ingress1b, ingress2a, ingress2b}, nil)
 
 		err = ingressClient.Delete(ingress2a.GetMetadata().Namespace, ingress2a.GetMetadata().Name, clients.DeleteOpts{Ctx: ctx})
 		Expect(err).NotTo(HaveOccurred())
 		err = ingressClient.Delete(ingress2b.GetMetadata().Namespace, ingress2b.GetMetadata().Name, clients.DeleteOpts{Ctx: ctx})
 		Expect(err).NotTo(HaveOccurred())
 
-		assertSnapshotInsgresses(IngressList{ingress1a, ingress1b}, IngressList{ingress2a, ingress2b})
+		assertSnapshotIngresses(IngressList{ingress1a, ingress1b}, IngressList{ingress2a, ingress2b})
 
 		err = ingressClient.Delete(ingress1a.GetMetadata().Namespace, ingress1a.GetMetadata().Name, clients.DeleteOpts{Ctx: ctx})
 		Expect(err).NotTo(HaveOccurred())
 		err = ingressClient.Delete(ingress1b.GetMetadata().Namespace, ingress1b.GetMetadata().Name, clients.DeleteOpts{Ctx: ctx})
 		Expect(err).NotTo(HaveOccurred())
 
-		assertSnapshotInsgresses(nil, IngressList{ingress1a, ingress1b, ingress2a, ingress2b})
+		assertSnapshotIngresses(nil, IngressList{ingress1a, ingress1b, ingress2a, ingress2b})
 	})
 })

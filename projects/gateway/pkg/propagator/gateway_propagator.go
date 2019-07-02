@@ -30,7 +30,7 @@ func NewPropagator(controller string, gwClient v2alpha1.GatewayClient, vsClient 
 func (p *Propagator) PropagateStatuses(snap *v2alpha1.ApiSnapshot,
 	proxy *gloov1.Proxy,
 	opts clients.WatchOpts) error {
-	parents := append(snap.Gateways.AsInputResources(), snap.Virtualservices.AsInputResources()...)
+	parents := append(snap.Gateways.AsInputResources(), snap.VirtualServices.AsInputResources()...)
 	rcs := make(clients.ResourceClients)
 	// this is where buggy things happen
 	// would generics really solved this problem?

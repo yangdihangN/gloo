@@ -132,7 +132,7 @@ func (c *statusEmitter) Snapshots(watchNamespaces []string, opts clients.WatchOp
 		done.Add(1)
 		go func(namespace string) {
 			defer done.Done()
-			errutils.AggregateErrs(ctx, errs, ingressErrs, namespace+"-insgresses")
+			errutils.AggregateErrs(ctx, errs, ingressErrs, namespace+"-ingresses")
 		}(namespace)
 
 		/* Watch for changes and update snapshot */
@@ -174,7 +174,7 @@ func (c *statusEmitter) Snapshots(watchNamespaces []string, opts clients.WatchOp
 			snapshots <- &sentSnapshot
 		}
 		servicesByNamespace := make(map[string]KubeServiceList)
-		insgressesByNamespace := make(map[string]IngressList)
+		ingressesByNamespace := make(map[string]IngressList)
 
 		for {
 			record := func() { stats.Record(ctx, mStatusSnapshotIn.M(1)) }
@@ -208,12 +208,12 @@ func (c *statusEmitter) Snapshots(watchNamespaces []string, opts clients.WatchOp
 				namespace := ingressNamespacedList.namespace
 
 				// merge lists by namespace
-				insgressesByNamespace[namespace] = ingressNamespacedList.list
+				ingressesByNamespace[namespace] = ingressNamespacedList.list
 				var ingressList IngressList
-				for _, insgresses := range insgressesByNamespace {
-					ingressList = append(ingressList, insgresses...)
+				for _, ingresses := range ingressesByNamespace {
+					ingressList = append(ingressList, ingresses...)
 				}
-				currentSnapshot.Insgresses = ingressList.Sort()
+				currentSnapshot.Ingresses = ingressList.Sort()
 			}
 		}
 	}()

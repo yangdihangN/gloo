@@ -22,30 +22,30 @@ func (t *translator) computeListener(params plugins.Params, proxy *v1.Proxy, lis
 		translatorReport(err, "listener."+format, args...)
 	}
 	validateListenerPorts(proxy, report)
-
 	var filterChains []envoylistener.FilterChain
 	switch listenerType := listener.GetListenerType().(type) {
 	case *v1.Listener_HttpListener:
 		listenerFilters := t.computeListenerFilters(params, listener, report)
 		if len(listenerFilters) == 0 {
-			// nothing to do, return nil
 			return nil
 		}
-
-		filterChains = computeFilterChainsFromSslConfig(params.Snapshot, listener, listenerFilters, report)
+		t.httpConnectionManager(params, listener, listenerFilters, report)
+		computeFilterChainsFromSslConfig(params.Snapshot, listener, sortListenerFilters(listenerFilters), report)
 	case *v1.Listener_TcpListener:
-		for _, tcpHost := range listenerType.TcpListener.TcpHosts {
-			listenerFilters := t.computeListenerFilters(params, listener, report)
-			if len(listenerFilters) == 0 {
-				// nothing to do, return nil
-				return nil
+		// run the Listener Plugins
+		for _, plug := range t.plugins {
+			listenerPlugin, ok := plug.(plugins.ListenerFilterChainPlugin)
+			if !ok {
+				continue
 			}
-			filterChain, err := computerTcpFilterChain(params.Snapshot, listener, listenerFilters, tcpHost)
+			result, err := listenerPlugin.ProcessListenerFilterChain(params, listener)
 			if err != nil {
-				report(err, "could not computer tcp filter chain for %v", tcpHost)
+				report(err, "plugin error on listener filter chain")
+				continue
 			}
-			filterChains = append(filterChains, filterChain)
+			filterChains = append(filterChains, result...)
 		}
+		filterChains = t.tcpFilterChains(params, listener, listenerType.TcpListener, report)
 	}
 
 	out := &envoyapi.Listener{
@@ -79,7 +79,26 @@ func (t *translator) computeListener(params plugins.Params, proxy *v1.Proxy, lis
 	return out
 }
 
-func (t *translator) computeListenerFilters(params plugins.Params, listener *v1.Listener, report reportFunc) []envoylistener.Filter {
+func (t *translator) tcpFilterChains(params plugins.Params, listener *v1.Listener, tcpListener *v1.TcpListener, report reportFunc) []envoylistener.FilterChain {
+	var filterChains []envoylistener.FilterChain
+	for _, tcpHost := range tcpListener.TcpHosts {
+		listenerFilters := t.computeListenerFilters(params, listener, report)
+		if len(listenerFilters) == 0 {
+			// nothing to do, return nil
+			return nil
+		}
+
+		filterChain, err := computerTcpFilterChain(params.Snapshot, listener, sortListenerFilters(listenerFilters), tcpHost)
+		if err != nil {
+			report(err, "could not compute tcp filter chain for %v", tcpHost)
+			continue
+		}
+		filterChains = append(filterChains, filterChain)
+	}
+	return filterChains
+}
+
+func (t *translator) computeListenerFilters(params plugins.Params, listener *v1.Listener, report reportFunc) []plugins.StagedListenerFilter {
 	var listenerFilters []plugins.StagedListenerFilter
 	// run the Listener Filter Plugins
 	for _, plug := range t.plugins {
@@ -95,11 +114,14 @@ func (t *translator) computeListenerFilters(params plugins.Params, listener *v1.
 			listenerFilters = append(listenerFilters, listenerFilter)
 		}
 	}
+	return listenerFilters
+}
 
+func (t *translator) httpConnectionManager(params plugins.Params, listener *v1.Listener, listenerFilters []plugins.StagedListenerFilter, report reportFunc) {
 	// add the http connection manager if listener is HTTP and has >= 1 virtual hosts
 	httpListener, ok := listener.ListenerType.(*v1.Listener_HttpListener)
 	if !ok || len(httpListener.HttpListener.VirtualHosts) == 0 {
-		return sortListenerFilters(listenerFilters)
+		return
 	}
 
 	// add the http connection manager filter after all the InAuth Listener Filters
@@ -109,9 +131,6 @@ func (t *translator) computeListenerFilters(params plugins.Params, listener *v1.
 		ListenerFilter: httpConnMgr,
 		Stage:          plugins.PostInAuth,
 	})
-
-	// sort filters by stage
-	return sortListenerFilters(listenerFilters)
 }
 
 // create a duplicate of the listener filter chain for each ssl cert we want to serve
@@ -152,6 +171,7 @@ func computerTcpFilterChain(snap *v1.ApiSnapshot, listener *v1.Listener, listene
 			UseProxyProto: listener.UseProxyProto,
 		}, nil
 	}
+
 	sslCfgTranslator := utils.NewSslConfigTranslator(snap.Secrets)
 	downstreamConfig, err := sslCfgTranslator.ResolveDownstreamSslConfig(sslConfig)
 	if err != nil {

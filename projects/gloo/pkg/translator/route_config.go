@@ -21,6 +21,10 @@ import (
 	"github.com/solo-io/solo-kit/pkg/api/v1/resources/core"
 )
 
+var (
+	NoDestinationSpecifiedError = errors.New("must specify at least one weighted destination for multi destination routes")
+)
+
 type reportFunc func(error error, format string, args ...interface{})
 
 func (t *translator) computeRouteConfig(params plugins.Params, proxy *v1.Proxy, listener *v1.Listener, routeCfgName string, reportFn reportFunc) *envoyapi.RouteConfiguration {
@@ -140,7 +144,7 @@ func setMatch(in *v1.Route, out *envoyroute.Route) {
 func (t *translator) setAction(params plugins.RouteParams, report reportFunc, in *v1.Route, out *envoyroute.Route) {
 	switch action := in.Action.(type) {
 	case *v1.Route_RouteAction:
-		if err := validateRouteDestinations(params.Snapshot, action.RouteAction); err != nil {
+		if err := ValidateRouteDestinations(params.Snapshot, action.RouteAction); err != nil {
 			report(err, "invalid route")
 		}
 
@@ -221,7 +225,7 @@ func setRouteAction(params plugins.Params, in *v1.RouteAction, out *envoyroute.R
 		return setWeightedClusters(params, dest.Multi, out)
 	case *v1.RouteAction_UpstreamGroup:
 		upstreamGroupRef := dest.UpstreamGroup
-		upstreamGroup, err := params.Snapshot.Upstreamgroups.Find(upstreamGroupRef.Namespace, upstreamGroupRef.Name)
+		upstreamGroup, err := params.Snapshot.UpstreamGroups.Find(upstreamGroupRef.Namespace, upstreamGroupRef.Name)
 		if err != nil {
 			return err
 		}
@@ -235,7 +239,7 @@ func setRouteAction(params plugins.Params, in *v1.RouteAction, out *envoyroute.R
 
 func setWeightedClusters(params plugins.Params, multiDest *v1.MultiDestination, out *envoyroute.RouteAction) error {
 	if len(multiDest.Destinations) == 0 {
-		return errors.Errorf("must specify at least one weighted destination for multi destination routes")
+		return NoDestinationSpecifiedError
 	}
 
 	clusterSpecifier := &envoyroute.RouteAction_WeightedClusters{
@@ -432,7 +436,7 @@ func validateVirtualHostDomains(virtualHosts []*v1.VirtualHost) error {
 	return domainErrors
 }
 
-func validateRouteDestinations(snap *v1.ApiSnapshot, action *v1.RouteAction) error {
+func ValidateRouteDestinations(snap *v1.ApiSnapshot, action *v1.RouteAction) error {
 	upstreams := snap.Upstreams
 	// make sure the destination itself has the right structure
 	switch dest := action.Destination.(type) {
@@ -448,7 +452,7 @@ func validateRouteDestinations(snap *v1.ApiSnapshot, action *v1.RouteAction) err
 
 func validateUpstreamGroup(snap *v1.ApiSnapshot, ref *core.ResourceRef) error {
 
-	upstreamGroup, err := snap.Upstreamgroups.Find(ref.Namespace, ref.Name)
+	upstreamGroup, err := snap.UpstreamGroups.Find(ref.Namespace, ref.Name)
 	if err != nil {
 		return errors.Wrap(err, "invalid destination for upstream group")
 	}

@@ -88,7 +88,7 @@ func (c *translatorSimpleEmitter) Snapshots(ctx context.Context) (<-chan *Transl
 					case *gloo_solo_io.Upstream:
 						currentSnapshot.Upstreams = append(currentSnapshot.Upstreams, typed)
 					case *Ingress:
-						currentSnapshot.Insgresses = append(currentSnapshot.Insgresses, typed)
+						currentSnapshot.Ingresses = append(currentSnapshot.Ingresses, typed)
 					default:
 						select {
 						case errs <- fmt.Errorf("TranslatorSnapshotEmitter "+

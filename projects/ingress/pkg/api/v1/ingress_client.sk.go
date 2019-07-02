@@ -10,7 +10,7 @@ import (
 )
 
 type IngressWatcher interface {
-	// watch namespace-scoped Insgresses
+	// watch namespace-scoped Ingresses
 	Watch(namespace string, opts clients.WatchOpts) (<-chan IngressList, <-chan error, error)
 }
 
@@ -99,19 +99,19 @@ func (client *ingressClient) Watch(namespace string, opts clients.WatchOpts) (<-
 	if initErr != nil {
 		return nil, nil, initErr
 	}
-	insgressesChan := make(chan IngressList)
+	ingressesChan := make(chan IngressList)
 	go func() {
 		for {
 			select {
 			case resourceList := <-resourcesChan:
-				insgressesChan <- convertToIngress(resourceList)
+				ingressesChan <- convertToIngress(resourceList)
 			case <-opts.Ctx.Done():
-				close(insgressesChan)
+				close(ingressesChan)
 				return
 			}
 		}
 	}()
-	return insgressesChan, errs, nil
+	return ingressesChan, errs, nil
 }
 
 func convertToIngress(resources resources.ResourceList) IngressList {

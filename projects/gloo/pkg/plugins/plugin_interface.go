@@ -73,6 +73,11 @@ type StagedListenerFilter struct {
 	Stage          FilterStage
 }
 
+type ListenerFilterChainPlugin interface {
+	Plugin
+	ProcessListenerFilterChain(params Params, in *v1.Listener) ([]envoylistener.FilterChain, error)
+}
+
 type HttpFilterPlugin interface {
 	Plugin
 	HttpFilters(params Params, listener *v1.HttpListener) ([]StagedHttpFilter, error)

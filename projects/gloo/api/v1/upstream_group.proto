@@ -15,7 +15,7 @@ import "github.com/solo-io/gloo/projects/gloo/api/v1/proxy.proto";
 message UpstreamGroup {
 
     option (core.solo.io.resource).short_name = "ug";
-    option (core.solo.io.resource).plural_name = "upstreamgroups";
+    option (core.solo.io.resource).plural_name = "upstream_groups";
 
     // The destinations that are part of this upstream group.
     repeated WeightedDestination destinations = 1;

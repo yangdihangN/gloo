@@ -15,7 +15,7 @@ A simple wrapper for a Kubernetes Ingress Object.
 message Ingress{
 
     option (core.solo.io.resource).short_name = "ig";
-    option (core.solo.io.resource).plural_name = "insgresses";
+    option (core.solo.io.resource).plural_name = "ingresses";
     // a raw byte representation of the kubernetes ingress this resource wraps
     google.protobuf.Any kube_ingress_spec = 1;
     // a raw byte representation of the ingress status of the kubernetes ingress object

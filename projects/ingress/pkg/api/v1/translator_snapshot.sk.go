@@ -12,16 +12,16 @@ import (
 )
 
 type TranslatorSnapshot struct {
-	Secrets    gloo_solo_io.SecretList
-	Upstreams  gloo_solo_io.UpstreamList
-	Insgresses IngressList
+	Secrets   gloo_solo_io.SecretList
+	Upstreams gloo_solo_io.UpstreamList
+	Ingresses IngressList
 }
 
 func (s TranslatorSnapshot) Clone() TranslatorSnapshot {
 	return TranslatorSnapshot{
-		Secrets:    s.Secrets.Clone(),
-		Upstreams:  s.Upstreams.Clone(),
-		Insgresses: s.Insgresses.Clone(),
+		Secrets:   s.Secrets.Clone(),
+		Upstreams: s.Upstreams.Clone(),
+		Ingresses: s.Ingresses.Clone(),
 	}
 }
 
@@ -29,7 +29,7 @@ func (s TranslatorSnapshot) Hash() uint64 {
 	return hashutils.HashAll(
 		s.hashSecrets(),
 		s.hashUpstreams(),
-		s.hashInsgresses(),
+		s.hashIngresses(),
 	)
 }
 
@@ -41,24 +41,24 @@ func (s TranslatorSnapshot) hashUpstreams() uint64 {
 	return hashutils.HashAll(s.Upstreams.AsInterfaces()...)
 }
 
-func (s TranslatorSnapshot) hashInsgresses() uint64 {
-	return hashutils.HashAll(s.Insgresses.AsInterfaces()...)
+func (s TranslatorSnapshot) hashIngresses() uint64 {
+	return hashutils.HashAll(s.Ingresses.AsInterfaces()...)
 }
 
 func (s TranslatorSnapshot) HashFields() []zap.Field {
 	var fields []zap.Field
 	fields = append(fields, zap.Uint64("secrets", s.hashSecrets()))
 	fields = append(fields, zap.Uint64("upstreams", s.hashUpstreams()))
-	fields = append(fields, zap.Uint64("insgresses", s.hashInsgresses()))
+	fields = append(fields, zap.Uint64("ingresses", s.hashIngresses()))
 
 	return append(fields, zap.Uint64("snapshotHash", s.Hash()))
 }
 
 type TranslatorSnapshotStringer struct {
-	Version    uint64
-	Secrets    []string
-	Upstreams  []string
-	Insgresses []string
+	Version   uint64
+	Secrets   []string
+	Upstreams []string
+	Ingresses []string
 }
 
 func (ss TranslatorSnapshotStringer) String() string {
@@ -74,8 +74,8 @@ func (ss TranslatorSnapshotStringer) String() string {
 		s += fmt.Sprintf("    %v\n", name)
 	}
 
-	s += fmt.Sprintf("  Insgresses %v\n", len(ss.Insgresses))
-	for _, name := range ss.Insgresses {
+	s += fmt.Sprintf("  Ingresses %v\n", len(ss.Ingresses))
+	for _, name := range ss.Ingresses {
 		s += fmt.Sprintf("    %v\n", name)
 	}
 
@@ -84,9 +84,9 @@ func (ss TranslatorSnapshotStringer) String() string {
 
 func (s TranslatorSnapshot) Stringer() TranslatorSnapshotStringer {
 	return TranslatorSnapshotStringer{
-		Version:    s.Hash(),
-		Secrets:    s.Secrets.NamespacesDotNames(),
-		Upstreams:  s.Upstreams.NamespacesDotNames(),
-		Insgresses: s.Insgresses.NamespacesDotNames(),
+		Version:   s.Hash(),
+		Secrets:   s.Secrets.NamespacesDotNames(),
+		Upstreams: s.Upstreams.NamespacesDotNames(),
+		Ingresses: s.Ingresses.NamespacesDotNames(),
 	}
 }

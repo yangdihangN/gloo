@@ -161,7 +161,7 @@ func (c *translatorEmitter) Snapshots(watchNamespaces []string, opts clients.Wat
 		done.Add(1)
 		go func(namespace string) {
 			defer done.Done()
-			errutils.AggregateErrs(ctx, errs, ingressErrs, namespace+"-insgresses")
+			errutils.AggregateErrs(ctx, errs, ingressErrs, namespace+"-ingresses")
 		}(namespace)
 
 		/* Watch for changes and update snapshot */
@@ -210,7 +210,7 @@ func (c *translatorEmitter) Snapshots(watchNamespaces []string, opts clients.Wat
 		}
 		secretsByNamespace := make(map[string]gloo_solo_io.SecretList)
 		upstreamsByNamespace := make(map[string]gloo_solo_io.UpstreamList)
-		insgressesByNamespace := make(map[string]IngressList)
+		ingressesByNamespace := make(map[string]IngressList)
 
 		for {
 			record := func() { stats.Record(ctx, mTranslatorSnapshotIn.M(1)) }
@@ -256,12 +256,12 @@ func (c *translatorEmitter) Snapshots(watchNamespaces []string, opts clients.Wat
 				namespace := ingressNamespacedList.namespace
 
 				// merge lists by namespace
-				insgressesByNamespace[namespace] = ingressNamespacedList.list
+				ingressesByNamespace[namespace] = ingressNamespacedList.list
 				var ingressList IngressList
-				for _, insgresses := range insgressesByNamespace {
-					ingressList = append(ingressList, insgresses...)
+				for _, ingresses := range ingressesByNamespace {
+					ingressList = append(ingressList, ingresses...)
 				}
-				currentSnapshot.Insgresses = ingressList.Sort()
+				currentSnapshot.Ingresses = ingressList.Sort()
 			}
 		}
 	}()

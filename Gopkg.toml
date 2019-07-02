@@ -29,8 +29,7 @@
 
 [[constraint]]
   name = "github.com/solo-io/solo-kit"
-  branch = "support-resource-multiversion"
-#  version = "0.9.13"
+  version = "0.10.0"
 
 [[constraint]]
   name = "github.com/solo-io/go-utils"

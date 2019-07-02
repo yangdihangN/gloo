@@ -72,7 +72,6 @@ func filterGatewaysForNamespace(gateways v2alpha1.GatewayList, namespace string)
 	return filteredGateways
 }
 
-
 func validateGateways(gateways v2alpha1.GatewayList, resourceErrs reporter.ResourceErrors) {
 	bindAddresses := map[string]v2alpha1.GatewayList{}
 	// if two gateway (=listener) that belong to the same proxy share the same bind address,

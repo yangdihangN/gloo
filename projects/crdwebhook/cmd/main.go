@@ -8,7 +8,6 @@ import (
 	"github.com/solo-io/go-utils/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/conversion"
-
 )
 
 func main() {
@@ -19,7 +18,7 @@ func main() {
 	stop := make(chan struct{})
 	go func() {
 		select {
-		case <- sigStop:
+		case <-sigStop:
 			stop <- struct{}{}
 		}
 	}()

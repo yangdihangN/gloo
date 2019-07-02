@@ -37,7 +37,7 @@ func NewTranslatorSyncer(writeNamespace string, proxyClient gloov1.ProxyClient, 
 		gwClient:        gwClient,
 		vsClient:        vsClient,
 		proxyReconciler: gloov1.NewProxyReconciler(proxyClient),
-		translator: translator.NewTranslator([]translator.ListenerFactory{&translator.HttpTranslator{}, &translator.TcpTranslator{}}),
+		translator:      translator.NewTranslator([]translator.ListenerFactory{&translator.HttpTranslator{}, &translator.TcpTranslator{}}),
 	}
 }
 

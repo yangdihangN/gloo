@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/solo-io/gloo/pkg/version"
 	"github.com/solo-io/go-utils/log"
 	"github.com/solo-io/solo-kit/pkg/code-generator/cmd"
 	"github.com/solo-io/solo-kit/pkg/code-generator/docgen/options"
@@ -9,11 +10,11 @@ import (
 //go:generate go run generate.go
 
 func main() {
-	// err := version.CheckVersions()
-	// if err != nil {
-	// 	log.Fatalf("generate failed!: %v", err)
-	// }
-	// log.Printf("starting generate")
+	err := version.CheckVersions()
+	if err != nil {
+		log.Fatalf("generate failed!: %v", err)
+	}
+	log.Printf("starting generate")
 
 	generateOptions := cmd.GenerateOptions{
 		SkipGenMocks:  true,

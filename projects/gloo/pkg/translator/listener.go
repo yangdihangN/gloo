@@ -23,7 +23,6 @@ func (t *translator) computeListener(params plugins.Params, proxy *v1.Proxy, lis
 	}
 	validateListenerPorts(proxy, report)
 
-
 	var filterChains []envoylistener.FilterChain
 	switch listenerType := listener.GetListenerType().(type) {
 	case *v1.Listener_HttpListener:
@@ -45,11 +44,9 @@ func (t *translator) computeListener(params plugins.Params, proxy *v1.Proxy, lis
 			if err != nil {
 				report(err, "could not computer tcp filter chain for %v", tcpHost)
 			}
-			filterChains = append(filterChains,  filterChain)
+			filterChains = append(filterChains, filterChain)
 		}
 	}
-
-
 
 	out := &envoyapi.Listener{
 		Name: listener.Name,

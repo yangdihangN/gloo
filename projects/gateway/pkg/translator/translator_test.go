@@ -80,7 +80,6 @@ var _ = Describe("Translator", func() {
 			}
 		})
 
-
 		It("should translate proxy with default name", func() {
 
 			proxy, errs := translator.Translate(context.Background(), ns, snap)
@@ -141,7 +140,6 @@ var _ = Describe("Translator", func() {
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("bind-address :2 is not unique in a proxy. gateways: gloo-system.name,gloo-system.name2"))
 		})
-
 
 	})
 
@@ -205,7 +203,6 @@ var _ = Describe("Translator", func() {
 			}
 		})
 
-
 		It("should translate an empty gateway to have all vservices", func() {
 
 			proxy, _ := translator.Translate(context.Background(), ns, snap)
@@ -264,7 +261,6 @@ var _ = Describe("Translator", func() {
 			Expect(listener.VirtualHosts).To(HaveLen(1))
 			Expect(listener.VirtualHosts[0].Name).To(ContainSubstring("name1"))
 		})
-
 
 		Context("merge", func() {
 			BeforeEach(func() {
@@ -355,8 +351,6 @@ var _ = Describe("Translator", func() {
 				snap.VirtualServices[0].SslConfig.SniDomains = []string{"foo"}
 				snap.VirtualServices[1].SslConfig.SniDomains = []string{"foo"}
 
-
-
 				_, errs := translator.Translate(context.Background(), ns, snap)
 
 				Expect(errs.Validate()).NotTo(HaveOccurred())
@@ -388,7 +382,6 @@ var _ = Describe("Translator", func() {
 		It("can properly translate a tcp proxy", func() {
 
 		})
-
 
 	})
 

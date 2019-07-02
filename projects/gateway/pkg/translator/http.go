@@ -13,7 +13,7 @@ import (
 	"github.com/solo-io/solo-kit/pkg/api/v1/resources/core"
 )
 
-type HttpTranslator struct {}
+type HttpTranslator struct{}
 
 func (t *HttpTranslator) GenerateListeners(snap *v2alpha1.ApiSnapshot, filteredGateways []*v2alpha1.Gateway, resourceErrs reporter.ResourceErrors) []*gloov1.Listener {
 	var result []*gloov1.Listener

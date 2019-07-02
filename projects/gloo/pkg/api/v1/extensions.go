@@ -1,7 +1,7 @@
 package v1
 
 import (
-"github.com/solo-io/gloo/projects/gloo/pkg/api/v1/plugins"
+	"github.com/solo-io/gloo/projects/gloo/pkg/api/v1/plugins"
 )
 
 type ServiceSpecGetter interface {

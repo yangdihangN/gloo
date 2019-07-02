@@ -91,7 +91,7 @@ func addTlsInspector(out *envoyapi.Listener) {
 		}
 	}
 	out.ListenerFilters = append(out.ListenerFilters, listener.ListenerFilter{
-		Name: envoyutil.TlsInspector,
+		Name:       envoyutil.TlsInspector,
 		ConfigType: &listener.ListenerFilter_TypedConfig{TypedConfig: &types.Any{}},
 	})
 }

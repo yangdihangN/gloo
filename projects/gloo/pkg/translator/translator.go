@@ -94,8 +94,10 @@ ClusterLoop:
 
 		envoyResources := t.computeListenerResources(params, proxy, listener, report)
 		if envoyResources != nil {
-			routeConfigs = append(routeConfigs, envoyResources.routeConfig)
 			listeners = append(listeners, envoyResources.listener)
+			if envoyResources.routeConfig != nil {
+				routeConfigs = append(routeConfigs, envoyResources.routeConfig)
+			}
 		}
 	}
 

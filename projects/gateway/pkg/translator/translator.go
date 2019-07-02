@@ -38,14 +38,10 @@ func (t *translator) Translate(ctx context.Context, namespace string, snap *v2al
 		logger.Debugf("%v had no gateways", snap.Hash())
 		return nil, resourceErrs
 	}
-	if len(snap.VirtualServices) == 0 {
-		logger.Debugf("%v had no virtual services", snap.Hash())
-		return nil, resourceErrs
-	}
 	validateGateways(filteredGateways, resourceErrs)
 	var listeners []*gloov1.Listener
 	for _, factory := range t.factories {
-		listeners = append(listeners, factory.GenerateListeners(snap, filteredGateways, resourceErrs)...)
+		listeners = append(listeners, factory.GenerateListeners(ctx, snap, filteredGateways, resourceErrs)...)
 	}
 	if len(listeners) != len(filteredGateways) {
 		logger.Debug("length of listeners does not match the input gateways")
@@ -113,12 +109,12 @@ func gatewayName(gateway *v2alpha1.Gateway) string {
 }
 
 type ListenerFactory interface {
-	GenerateListeners(snap *v2alpha1.ApiSnapshot, filteredGateways []*v2alpha1.Gateway, resourceErrs reporter.ResourceErrors) []*gloov1.Listener
+	GenerateListeners(ctx context.Context, snap *v2alpha1.ApiSnapshot, filteredGateways []*v2alpha1.Gateway, resourceErrs reporter.ResourceErrors) []*gloov1.Listener
 }
 
 type TcpTranslator struct{}
 
-func (t *TcpTranslator) GenerateListeners(snap *v2alpha1.ApiSnapshot, filteredGateways []*v2alpha1.Gateway, resourceErrs reporter.ResourceErrors) []*gloov1.Listener {
+func (t *TcpTranslator) GenerateListeners(ctx context.Context, snap *v2alpha1.ApiSnapshot, filteredGateways []*v2alpha1.Gateway, resourceErrs reporter.ResourceErrors) []*gloov1.Listener {
 	var result []*gloov1.Listener
 	for _, gateway := range filteredGateways {
 		tcpGateway := gateway.GetTcpGateway()
@@ -129,6 +125,7 @@ func (t *TcpTranslator) GenerateListeners(snap *v2alpha1.ApiSnapshot, filteredGa
 		listener.ListenerType = &gloov1.Listener_TcpListener{
 			TcpListener: &gloov1.TcpListener{
 				ListenerPlugins: tcpGateway.Plugins,
+				TcpHosts:        tcpGateway.Destinations,
 			},
 		}
 		result = append(result, listener)

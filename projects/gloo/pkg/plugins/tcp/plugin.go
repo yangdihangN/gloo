@@ -136,7 +136,9 @@ func (p *Plugin) ProcessListenerFilterChain(params plugins.Params, in *v1.Listen
 }
 
 func tcpProxyFilter(params plugins.Params, host *v1.TcpHost) (*listener.Filter, error) {
-	cfg := &envoytcp.TcpProxy{}
+	cfg := &envoytcp.TcpProxy{
+		StatPrefix: "tcp",
+	}
 	if err := translatorutil.ValidateRouteDestinations(params.Snapshot, host.Destination); err != nil {
 		return nil, err
 	}

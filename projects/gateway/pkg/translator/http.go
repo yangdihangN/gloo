@@ -1,6 +1,7 @@
 package translator
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strings"
@@ -9,13 +10,18 @@ import (
 	"github.com/solo-io/gloo/projects/gateway/pkg/api/v2alpha1"
 	gloov1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
 	glooutils "github.com/solo-io/gloo/projects/gloo/pkg/utils"
+	"github.com/solo-io/go-utils/contextutils"
 	"github.com/solo-io/solo-kit/pkg/api/v1/reporter"
 	"github.com/solo-io/solo-kit/pkg/api/v1/resources/core"
 )
 
 type HttpTranslator struct{}
 
-func (t *HttpTranslator) GenerateListeners(snap *v2alpha1.ApiSnapshot, filteredGateways []*v2alpha1.Gateway, resourceErrs reporter.ResourceErrors) []*gloov1.Listener {
+func (t *HttpTranslator) GenerateListeners(ctx context.Context, snap *v2alpha1.ApiSnapshot, filteredGateways []*v2alpha1.Gateway, resourceErrs reporter.ResourceErrors) []*gloov1.Listener {
+	if len(snap.VirtualServices) == 0 {
+		contextutils.LoggerFrom(ctx).Debugf("%v had no virtual services", snap.Hash())
+		return nil
+	}
 	var result []*gloov1.Listener
 	for _, gateway := range filteredGateways {
 		if gateway.GetHttpGateway() == nil {

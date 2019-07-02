@@ -23,7 +23,7 @@ func (t *translator) computeListener(params plugins.Params, proxy *v1.Proxy, lis
 	}
 	validateListenerPorts(proxy, report)
 	var filterChains []envoylistener.FilterChain
-	switch listenerType := listener.GetListenerType().(type) {
+	switch listener.GetListenerType().(type) {
 	case *v1.Listener_HttpListener:
 		listenerFilters := t.computeListenerFilters(params, listener, report)
 		if len(listenerFilters) == 0 {
@@ -45,7 +45,6 @@ func (t *translator) computeListener(params plugins.Params, proxy *v1.Proxy, lis
 			}
 			filterChains = append(filterChains, result...)
 		}
-		filterChains = t.tcpFilterChains(params, listener, listenerType.TcpListener, report)
 	}
 
 	out := &envoyapi.Listener{
@@ -77,25 +76,6 @@ func (t *translator) computeListener(params plugins.Params, proxy *v1.Proxy, lis
 	}
 
 	return out
-}
-
-func (t *translator) tcpFilterChains(params plugins.Params, listener *v1.Listener, tcpListener *v1.TcpListener, report reportFunc) []envoylistener.FilterChain {
-	var filterChains []envoylistener.FilterChain
-	for _, tcpHost := range tcpListener.TcpHosts {
-		listenerFilters := t.computeListenerFilters(params, listener, report)
-		if len(listenerFilters) == 0 {
-			// nothing to do, return nil
-			return nil
-		}
-
-		filterChain, err := computerTcpFilterChain(params.Snapshot, listener, sortListenerFilters(listenerFilters), tcpHost)
-		if err != nil {
-			report(err, "could not compute tcp filter chain for %v", tcpHost)
-			continue
-		}
-		filterChains = append(filterChains, filterChain)
-	}
-	return filterChains
 }
 
 func (t *translator) computeListenerFilters(params plugins.Params, listener *v1.Listener, report reportFunc) []plugins.StagedListenerFilter {
@@ -159,25 +139,6 @@ func computeFilterChainsFromSslConfig(snap *v1.ApiSnapshot, listener *v1.Listene
 		secureFilterChains = append(secureFilterChains, filterChain)
 	}
 	return secureFilterChains
-}
-
-// create a duplicate of the listener filter chain for each ssl cert we want to serve
-// if there is no SSL config on the listener, the envoy listener will have one insecure filter chain
-func computerTcpFilterChain(snap *v1.ApiSnapshot, listener *v1.Listener, listenerFilters []envoylistener.Filter, host *v1.TcpHost) (envoylistener.FilterChain, error) {
-	sslConfig := host.GetSslConfig()
-	if sslConfig == nil {
-		return envoylistener.FilterChain{
-			Filters:       listenerFilters,
-			UseProxyProto: listener.UseProxyProto,
-		}, nil
-	}
-
-	sslCfgTranslator := utils.NewSslConfigTranslator(snap.Secrets)
-	downstreamConfig, err := sslCfgTranslator.ResolveDownstreamSslConfig(sslConfig)
-	if err != nil {
-		return envoylistener.FilterChain{}, errors.Wrapf(err, "invalid secrets for listener %v", listener.Name)
-	}
-	return newSslFilterChain(downstreamConfig, sslConfig.SniDomains, listener.UseProxyProto, listenerFilters), nil
 }
 
 func validateListenerPorts(proxy *v1.Proxy, report reportFunc) {

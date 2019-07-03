@@ -245,7 +245,6 @@ var _ = Describe("Kube2e: gateway", func() {
 				}, helper.SimpleHttpResponse, 1, 60*time.Second, 1*time.Second)
 			})
 
-
 		})
 
 		Context("native ssl", func() {
@@ -504,8 +503,6 @@ var _ = Describe("Kube2e: gateway", func() {
 		AfterEach(func() {
 			Expect(gatewayClient.Delete(testHelper.InstallNamespace, defaultGateway.Metadata.Name, clients.DeleteOpts{})).NotTo(HaveOccurred())
 		})
-
-
 
 		It("correctly routes to the service (tcp)", func() {
 

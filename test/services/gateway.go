@@ -4,6 +4,8 @@ import (
 	"net"
 	"time"
 
+	"github.com/solo-io/solo-kit/test/helpers"
+
 	"github.com/solo-io/solo-kit/pkg/api/external/kubernetes/service"
 	"github.com/solo-io/solo-kit/pkg/api/v1/clients/kube/cache"
 
@@ -65,6 +67,7 @@ func RunGateway(ctx context.Context, justgloo bool) TestClients {
 		WhatToRun: What{
 			DisableGateway: justgloo,
 		},
+		KubeClient: helpers.MustKubeClient(),
 	}
 	return RunGlooGatewayUdsFds(ctx, ro)
 }

@@ -9,14 +9,13 @@ import (
 	"github.com/solo-io/solo-kit/pkg/api/v1/resources/core"
 )
 
-
 func DefaultGateway(writeNamespace string) *v2alpha1.Gateway {
 	return &v2alpha1.Gateway{
 		Metadata: core.Metadata{
-			Name: "gateway",
+			Name:      "gateway",
 			Namespace: writeNamespace,
 		},
-		GatewayType:  &v2alpha1.Gateway_HttpGateway{
+		GatewayType: &v2alpha1.Gateway_HttpGateway{
 			HttpGateway: &v2alpha1.HttpGateway{},
 		},
 		BindAddress:   "::",
@@ -28,7 +27,7 @@ func DefaultGateway(writeNamespace string) *v2alpha1.Gateway {
 func DefaultTcpGateway(writeNamespace string) *v2alpha1.Gateway {
 	return &v2alpha1.Gateway{
 		Metadata: core.Metadata{
-			Name: "gateway-tcp",
+			Name:      "gateway-tcp",
 			Namespace: writeNamespace,
 		},
 		GatewayType: &v2alpha1.Gateway_TcpGateway{

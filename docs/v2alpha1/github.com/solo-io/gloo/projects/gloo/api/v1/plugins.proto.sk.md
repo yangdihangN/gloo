@@ -12,8 +12,6 @@ weight: 5
 
 
 - [ListenerPlugins](#listenerplugins)
-- [TcpListenerPlugins](#tcplistenerplugins)
-- [HttpListenerPlugins](#httplistenerplugins)
 - [VirtualHostPlugins](#virtualhostplugins)
 - [RoutePlugins](#routeplugins)
 - [DestinationSpec](#destinationspec)
@@ -38,55 +36,17 @@ Note to developers: new Listener Plugins must be added to this struct
 to be usable by Gloo.
 
 ```yaml
-
-```
-
-| Field | Type | Description | Default |
-| ----- | ---- | ----------- |----------- | 
-
-
-
-
----
-### TcpListenerPlugins
-
- 
-Plugin-specific configuration that lives on tcp listeners
-Each ListenerPlugin object contains configuration for a specific plugin
-Note to developers: new Listener Plugins must be added to this struct
-to be usable by Gloo.
-
-```yaml
+"grpcWeb": .grpc_web.plugins.gloo.solo.io.GrpcWeb
+"httpConnectionManagerSettings": .hcm.plugins.gloo.solo.io.HttpConnectionManagerSettings
 "tcpProxySettings": .tcp.plugins.gloo.solo.io.TcpProxySettings
 
 ```
 
 | Field | Type | Description | Default |
 | ----- | ---- | ----------- |----------- | 
-| `tcpProxySettings` | [.tcp.plugins.gloo.solo.io.TcpProxySettings](../plugins/tcp/tcp.proto.sk#tcpproxysettings) |  |  |
-
-
-
-
----
-### HttpListenerPlugins
-
- 
-Plugin-specific configuration that lives on listeners using http_connection_manager
-Each ListenerPlugin object contains configuration for a specific plugin
-Note to developers: new Listener Plugins must be added to this struct
-to be usable by Gloo.
-
-```yaml
-"grpcWeb": .grpc_web.plugins.gloo.solo.io.GrpcWeb
-"httpConnectionManagerSettings": .hcm.plugins.gloo.solo.io.HttpConnectionManagerSettings
-
-```
-
-| Field | Type | Description | Default |
-| ----- | ---- | ----------- |----------- | 
-| `grpcWeb` | [.grpc_web.plugins.gloo.solo.io.GrpcWeb](../plugins/grpc_web/grpc_web.proto.sk#grpcweb) |  |  |
+| `grpcWeb` | [.grpc_web.plugins.gloo.solo.io.GrpcWeb](../plugins/grpc_web/grpc_web.proto.sk#grpcweb) | Future sight for matching |  |
 | `httpConnectionManagerSettings` | [.hcm.plugins.gloo.solo.io.HttpConnectionManagerSettings](../plugins/hcm/hcm.proto.sk#httpconnectionmanagersettings) |  |  |
+| `tcpProxySettings` | [.tcp.plugins.gloo.solo.io.TcpProxySettings](../plugins/tcp/tcp.proto.sk#tcpproxysettings) |  |  |
 
 
 
@@ -183,6 +143,7 @@ Each upstream type is handled by a corresponding Gloo plugin.
 "circuitBreakers": .gloo.solo.io.CircuitBreakerConfig
 "loadBalancerConfig": .gloo.solo.io.LoadBalancerConfig
 "connectionConfig": .gloo.solo.io.ConnectionConfig
+"useHttp2": bool
 "kube": .kubernetes.plugins.gloo.solo.io.UpstreamSpec
 "static": .static.plugins.gloo.solo.io.UpstreamSpec
 "aws": .aws.plugins.gloo.solo.io.UpstreamSpec
@@ -197,6 +158,7 @@ Each upstream type is handled by a corresponding Gloo plugin.
 | `circuitBreakers` | [.gloo.solo.io.CircuitBreakerConfig](../circuit_breaker.proto.sk#circuitbreakerconfig) | Circuit breakers for this upstream. if not set, the defaults ones from the Gloo settings will be used. if those are not set, [envoy's defaults](https://www.envoyproxy.io/docs/envoy/latest/api-v2/api/v2/cluster/circuit_breaker.proto#envoy-api-msg-cluster-circuitbreakers) will be used. |  |
 | `loadBalancerConfig` | [.gloo.solo.io.LoadBalancerConfig](../load_balancer.proto.sk#loadbalancerconfig) |  |  |
 | `connectionConfig` | [.gloo.solo.io.ConnectionConfig](../connection.proto.sk#connectionconfig) |  |  |
+| `useHttp2` | `bool` | Use http2 when communicating with this upstream this field is evaluated `true` for upstreams with a grpc service spec |  |
 | `kube` | [.kubernetes.plugins.gloo.solo.io.UpstreamSpec](../plugins/kubernetes/kubernetes.proto.sk#upstreamspec) |  |  |
 | `static` | [.static.plugins.gloo.solo.io.UpstreamSpec](../plugins/static/static.proto.sk#upstreamspec) |  |  |
 | `aws` | [.aws.plugins.gloo.solo.io.UpstreamSpec](../plugins/aws/aws.proto.sk#upstreamspec) |  |  |

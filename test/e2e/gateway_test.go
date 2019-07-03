@@ -68,13 +68,10 @@ var _ = Describe("Gateway", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			for _, g := range gw {
-				httpGateway := g.GetHttpGateway()
-				if httpGateway != nil {
-					httpGateway.Plugins = &gloov1.HttpListenerPlugins{
-						GrpcWeb: &grpc_web.GrpcWeb{
-							Disable: true,
-						},
-					}
+				g.Plugins = &gloov1.ListenerPlugins{
+					GrpcWeb: &grpc_web.GrpcWeb{
+						Disable: true,
+					},
 				}
 				_, err := gatewayClient.Write(g, clients.WriteOpts{Ctx: ctx, OverwriteExisting: true})
 				Expect(err).NotTo(HaveOccurred())
@@ -102,7 +99,6 @@ var _ = Describe("Gateway", func() {
 									}
 								}
 							}
-
 						}
 					}
 					return numdisable, nil

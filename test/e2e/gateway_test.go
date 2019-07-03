@@ -68,11 +68,15 @@ var _ = Describe("Gateway", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			for _, g := range gw {
-				g.Plugins = &gloov1.ListenerPlugins{
-					GrpcWeb: &grpc_web.GrpcWeb{
-						Disable: true,
-					},
+				httpGateway := g.GetHttpGateway()
+				if httpGateway == nil {
+					httpGateway.Plugins = &gloov1.HttpListenerPlugins{
+						GrpcWeb: &grpc_web.GrpcWeb{
+							Disable: true,
+						},
+					}
 				}
+
 				_, err := gatewayClient.Write(g, clients.WriteOpts{Ctx: ctx, OverwriteExisting: true})
 				Expect(err).NotTo(HaveOccurred())
 			}
@@ -92,7 +96,7 @@ var _ = Describe("Gateway", func() {
 					}
 					for _, l := range proxy.Listeners {
 						if h := l.GetHttpListener(); h != nil {
-							if p := h.GetListenerPlugins(); p != nil {
+							if p := h.GetPlugins(); p != nil {
 								if grpcweb := p.GetGrpcWeb(); grpcweb != nil {
 									if grpcweb.Disable {
 										numdisable++

@@ -42,7 +42,7 @@ var _ = Describe("Plugin", func() {
 				IdleTimeout: pd(5 * time.Second),
 			}
 			tl := &v1.TcpListener{
-				ListenerPlugins: &v1.TcpListenerPlugins{
+				Plugins: &v1.TcpListenerPlugins{
 					TcpProxySettings: tcps,
 				},
 			}

@@ -203,8 +203,8 @@ func desiredListenerForHttp(gateway *v2alpha1.Gateway, virtualServicesForGateway
 	listener := standardListener(gateway)
 	listener.ListenerType = &gloov1.Listener_HttpListener{
 		HttpListener: &gloov1.HttpListener{
-			VirtualHosts:    virtualHosts,
-			ListenerPlugins: httpPlugins,
+			VirtualHosts: virtualHosts,
+			Plugins:      httpPlugins,
 		},
 	}
 	listener.SslConfigurations = sslConfigs

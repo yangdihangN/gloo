@@ -24,6 +24,7 @@ weight: 5
 - [RouteAction](#routeaction)
 - [Destination](#destination)
 - [ServiceDestination](#servicedestination)
+- [UpstreamGroup](#upstreamgroup) **Top-Level Resource**
 - [MultiDestination](#multidestination)
 - [WeightedDestination](#weighteddestination)
 - [RedirectAction](#redirectaction)
@@ -88,6 +89,7 @@ e.g. performing SSL termination, HTTP retries, and rate limiting.
 "tcpListener": .gloo.solo.io.TcpListener
 "sslConfigurations": []gloo.solo.io.SslConfig
 "useProxyProto": .google.protobuf.BoolValue
+"plugins": .gloo.solo.io.ListenerPlugins
 
 ```
 
@@ -100,6 +102,7 @@ e.g. performing SSL termination, HTTP retries, and rate limiting.
 | `tcpListener` | [.gloo.solo.io.TcpListener](../proxy.proto.sk#tcplistener) | The HTTP Listener is currently the only supported listener type. It contains configuration options for GLoo's HTTP-level features including request-based routing |  |
 | `sslConfigurations` | [[]gloo.solo.io.SslConfig](../ssl.proto.sk#sslconfig) | SSL Config is optional for the listener. If provided, the listener will serve TLS for connections on this port Multiple SslConfigs are supported for the purpose of SNI. Be aware that the SNI domain provided in the SSL Config must match a domain in virtual host TODO(ilackarms): ensure that ssl configs without a matching virtual host are errored |  |
 | `useProxyProto` | [.google.protobuf.BoolValue](https://developers.google.com/protocol-buffers/docs/reference/csharp/class/google/protobuf/well-known-types/bool-value) | Enable ProxyProtocol support for this listener |  |
+| `plugins` | [.gloo.solo.io.ListenerPlugins](../plugins.proto.sk#listenerplugins) | top level plugins |  |
 
 
 
@@ -111,14 +114,14 @@ e.g. performing SSL termination, HTTP retries, and rate limiting.
 
 ```yaml
 "tcpHosts": []gloo.solo.io.TcpHost
-"listenerPlugins": .gloo.solo.io.ListenerPlugins
+"plugins": .gloo.solo.io.TcpListenerPlugins
 
 ```
 
 | Field | Type | Description | Default |
 | ----- | ---- | ----------- |----------- | 
 | `tcpHosts` | [[]gloo.solo.io.TcpHost](../proxy.proto.sk#tcphost) | List of filter chains to match on for this listener |  |
-| `listenerPlugins` | [.gloo.solo.io.ListenerPlugins](../plugins.proto.sk#listenerplugins) | Plugins contains top-level plugin configuration to be applied to a listener Listener config is applied to traffic for the given listener. Some configuration here can be overridden in Virtual Host Plugin configuration or Route Plugin configuration |  |
+| `plugins` | [.gloo.solo.io.TcpListenerPlugins](../plugins.proto.sk#tcplistenerplugins) | Plugins contains top-level plugin configuration to be applied to a listener Listener config is applied to traffic for the given listener. Some configuration here can be overridden in Virtual Host Plugin configuration or Route Plugin configuration |  |
 
 
 
@@ -154,14 +157,14 @@ Some plugins can be configured to work both on the listener and virtual host lev
 
 ```yaml
 "virtualHosts": []gloo.solo.io.VirtualHost
-"listenerPlugins": .gloo.solo.io.ListenerPlugins
+"plugins": .gloo.solo.io.HttpListenerPlugins
 
 ```
 
 | Field | Type | Description | Default |
 | ----- | ---- | ----------- |----------- | 
 | `virtualHosts` | [[]gloo.solo.io.VirtualHost](../proxy.proto.sk#virtualhost) | the set of virtual hosts that will be accessible by clients connecting to this listener. at least one virtual host must be specified for this listener to be active (else connections will be refused) the set of domains for each virtual host must be unique, or the config will be considered invalid |  |
-| `listenerPlugins` | [.gloo.solo.io.ListenerPlugins](../plugins.proto.sk#listenerplugins) | Plugins contains top-level plugin configuration to be applied to a listener Listener config is applied to traffic for the given listener. Some configuration here can be overridden in Virtual Host Plugin configuration or Route Plugin configuration |  |
+| `plugins` | [.gloo.solo.io.HttpListenerPlugins](../plugins.proto.sk#httplistenerplugins) | Plugins contains top-level plugin configuration to be applied to a listener Listener config is applied to traffic for the given listener. Some configuration here can be overridden in Virtual Host Plugin configuration or Route Plugin configuration |  |
 
 
 
@@ -362,6 +365,27 @@ Identifies a port on a kubernetes service to route traffic to.
 | ----- | ---- | ----------- |----------- | 
 | `ref` | [.core.solo.io.ResourceRef](../../../../../../solo-kit/api/v1/ref.proto.sk#resourceref) | The target service |  |
 | `port` | `int` | The port attribute of the service |  |
+
+
+
+
+---
+### UpstreamGroup
+
+
+
+```yaml
+"destinations": []gloo.solo.io.WeightedDestination
+"status": .core.solo.io.Status
+"metadata": .core.solo.io.Metadata
+
+```
+
+| Field | Type | Description | Default |
+| ----- | ---- | ----------- |----------- | 
+| `destinations` | [[]gloo.solo.io.WeightedDestination](../proxy.proto.sk#weighteddestination) | The destinations that are part of this upstream group. |  |
+| `status` | [.core.solo.io.Status](../../../../../../solo-kit/api/v1/status.proto.sk#status) | Status indicates the validation status of this resource. Status is read-only by clients, and set by gloo during validation |  |
+| `metadata` | [.core.solo.io.Metadata](../../../../../../solo-kit/api/v1/metadata.proto.sk#metadata) | Metadata contains the object metadata for this resource |  |
 
 
 

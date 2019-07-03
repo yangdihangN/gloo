@@ -96,11 +96,11 @@ func gatewaysRefsToString(gateways v2alpha1.GatewayList) []string {
 
 func standardListener(gateway *v2alpha1.Gateway) *gloov1.Listener {
 	return &gloov1.Listener{
-		Name:            gatewayName(gateway),
-		BindAddress:     gateway.BindAddress,
-		BindPort:        gateway.BindPort,
-		ListenerPlugins: gateway.Plugins,
-		UseProxyProto:   gateway.UseProxyProto,
+		Name:          gatewayName(gateway),
+		BindAddress:   gateway.BindAddress,
+		BindPort:      gateway.BindPort,
+		Plugins:       gateway.Plugins,
+		UseProxyProto: gateway.UseProxyProto,
 	}
 }
 
@@ -124,8 +124,8 @@ func (t *TcpTranslator) GenerateListeners(ctx context.Context, snap *v2alpha1.Ap
 		listener := standardListener(gateway)
 		listener.ListenerType = &gloov1.Listener_TcpListener{
 			TcpListener: &gloov1.TcpListener{
-				ListenerPlugins: tcpGateway.Plugins,
-				TcpHosts:        tcpGateway.Destinations,
+				Plugins:  tcpGateway.Plugins,
+				TcpHosts: tcpGateway.Destinations,
 			},
 		}
 		result = append(result, listener)

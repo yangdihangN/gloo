@@ -60,10 +60,10 @@ func (p *Plugin) ProcessListener(params plugins.Params, in *v1.Listener, out *en
 }
 
 func addTcpProxySettings(tl *v1.TcpListener, out *envoyapi.Listener) error {
-	if tl.ListenerPlugins == nil {
+	if tl.Plugins == nil {
 		return nil
 	}
-	tcpSettings := tl.ListenerPlugins.TcpProxySettings
+	tcpSettings := tl.Plugins.TcpProxySettings
 	if tcpSettings == nil {
 		return nil
 	}

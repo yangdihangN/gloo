@@ -12,6 +12,8 @@ weight: 5
 
 
 - [ListenerPlugins](#listenerplugins)
+- [HttpListenerPlugins](#httplistenerplugins)
+- [TcpListenerPlugins](#tcplistenerplugins)
 - [VirtualHostPlugins](#virtualhostplugins)
 - [RoutePlugins](#routeplugins)
 - [DestinationSpec](#destinationspec)
@@ -36,16 +38,48 @@ Note to developers: new Listener Plugins must be added to this struct
 to be usable by Gloo.
 
 ```yaml
+
+```
+
+| Field | Type | Description | Default |
+| ----- | ---- | ----------- |----------- | 
+
+
+
+
+---
+### HttpListenerPlugins
+
+ 
+Plugin-specific configuration that lives on http listeners
+
+```yaml
 "grpcWeb": .grpc_web.plugins.gloo.solo.io.GrpcWeb
 "httpConnectionManagerSettings": .hcm.plugins.gloo.solo.io.HttpConnectionManagerSettings
+
+```
+
+| Field | Type | Description | Default |
+| ----- | ---- | ----------- |----------- | 
+| `grpcWeb` | [.grpc_web.plugins.gloo.solo.io.GrpcWeb](../plugins/grpc_web/grpc_web.proto.sk#grpcweb) |  |  |
+| `httpConnectionManagerSettings` | [.hcm.plugins.gloo.solo.io.HttpConnectionManagerSettings](../plugins/hcm/hcm.proto.sk#httpconnectionmanagersettings) |  |  |
+
+
+
+
+---
+### TcpListenerPlugins
+
+ 
+Plugin-specific configuration that lives on tcp listeners
+
+```yaml
 "tcpProxySettings": .tcp.plugins.gloo.solo.io.TcpProxySettings
 
 ```
 
 | Field | Type | Description | Default |
 | ----- | ---- | ----------- |----------- | 
-| `grpcWeb` | [.grpc_web.plugins.gloo.solo.io.GrpcWeb](../plugins/grpc_web/grpc_web.proto.sk#grpcweb) | Future sight for matching |  |
-| `httpConnectionManagerSettings` | [.hcm.plugins.gloo.solo.io.HttpConnectionManagerSettings](../plugins/hcm/hcm.proto.sk#httpconnectionmanagersettings) |  |  |
 | `tcpProxySettings` | [.tcp.plugins.gloo.solo.io.TcpProxySettings](../plugins/tcp/tcp.proto.sk#tcpproxysettings) |  |  |
 
 

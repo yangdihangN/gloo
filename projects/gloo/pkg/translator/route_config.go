@@ -3,8 +3,6 @@ package translator
 import (
 	"strings"
 
-	"github.com/gogo/protobuf/proto"
-
 	usconversion "github.com/solo-io/gloo/projects/gloo/pkg/upstreams"
 
 	envoyapi "github.com/envoyproxy/go-control-plane/envoy/api/v2"
@@ -66,10 +64,6 @@ func (t *translator) computeVirtualHosts(params plugins.Params, proxy *v1.Proxy,
 
 func (t *translator) computeVirtualHost(params plugins.VirtualHostParams, virtualHost *v1.VirtualHost, requireTls bool, report reportFunc) envoyroute.VirtualHost {
 
-	// Make copy to avoid modifying the snapshot
-	virtualHost = proto.Clone(virtualHost).(*v1.VirtualHost)
-	virtualHost.Name = utils.SanitizeForEnvoy(params.Ctx, virtualHost.Name, "virtual host")
-
 	var envoyRoutes []envoyroute.Route
 	for _, route := range virtualHost.Routes {
 		routeParams := plugins.RouteParams{
@@ -90,7 +84,7 @@ func (t *translator) computeVirtualHost(params plugins.VirtualHostParams, virtua
 	}
 
 	out := envoyroute.VirtualHost{
-		Name:       virtualHost.Name,
+		Name:       utils.SanitizeForEnvoy(params.Ctx, virtualHost.Name, "virtual host"),
 		Domains:    domains,
 		Routes:     envoyRoutes,
 		RequireTls: envoyRequireTls,

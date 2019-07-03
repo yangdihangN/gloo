@@ -1,22 +1,21 @@
-package convertv2alpha1
+package convertgateway
 
 import (
 	v1 "github.com/solo-io/gloo/projects/gateway/pkg/api/v1"
 	"github.com/solo-io/gloo/projects/gateway/pkg/api/v2alpha1"
 )
 
-type GatewayConverter interface {
+type V2alpha1Converter interface {
 	Convert(existing *v1.Gateway) *v2alpha1.Gateway
 }
 
-type gatewayConverter struct {
+type v2alpha1Converter struct{}
+
+func NewV2alpha1Converter() V2alpha1Converter {
+	return &v2alpha1Converter{}
 }
 
-func NewGatewayConverter() GatewayConverter {
-	return &gatewayConverter{}
-}
-
-func (c *gatewayConverter) Convert(existing *v1.Gateway) *v2alpha1.Gateway {
+func (c *v2alpha1Converter) Convert(existing *v1.Gateway) *v2alpha1.Gateway {
 	return &v2alpha1.Gateway{
 		Ssl:           existing.Ssl,
 		BindAddress:   existing.BindAddress,

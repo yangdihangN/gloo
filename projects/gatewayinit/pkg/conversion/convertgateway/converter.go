@@ -1,4 +1,4 @@
-package convertv2alpha1
+package convertgateway
 
 import (
 	"context"
@@ -26,32 +26,33 @@ var (
 	}
 )
 
-type converter struct {
-	ctx              context.Context
-	v1Client         v1.GatewayClient
-	v2alpha1Client   v2alpha1.GatewayClient
-	gatewayConverter GatewayConverter
-	namespace        string
+type ladder struct {
+	ctx               context.Context
+	namespace         string
+	v1Client          v1.GatewayClient
+	v2alpha1Client    v2alpha1.GatewayClient
+	v2alpha1Converter V2alpha1Converter
 }
 
-func NewConverter(
+func NewLadder(
 	ctx context.Context,
+	namespace string,
 	v1Client v1.GatewayClient,
 	v2alpha1Client v2alpha1.GatewayClient,
-	gatewayConverter GatewayConverter,
-	namespace string,
-) conversion.Converter {
+	gatewayConverter V2alpha1Converter,
+) conversion.Ladder {
 
-	return &converter{
-		ctx:              ctx,
-		v1Client:         v1Client,
-		v2alpha1Client:   v2alpha1Client,
-		gatewayConverter: gatewayConverter,
-		namespace:        namespace,
+	return &ladder{
+		ctx:               ctx,
+		namespace:         namespace,
+		v1Client:          v1Client,
+		v2alpha1Client:    v2alpha1Client,
+		v2alpha1Converter: gatewayConverter,
 	}
 }
 
-func (c *converter) Convert() {
+// With more rungs we could (read, convert, read & merge, convert, ...,  write)
+func (c *ladder) Climb() {
 	v1List, err := c.v1Client.List(c.namespace, clients.ListOpts{Ctx: c.ctx})
 	if err != nil {
 		wrapped := FailedToListGatewayResources(err, "v1", c.namespace)
@@ -60,7 +61,7 @@ func (c *converter) Convert() {
 
 	v2alpha1List := make([]*v2alpha1.Gateway, len(v1List), len(v1List))
 	for _, oldGateway := range v1List {
-		convertedGateway := c.gatewayConverter.Convert(oldGateway)
+		convertedGateway := c.v2alpha1Converter.Convert(oldGateway)
 		v2alpha1List = append(v2alpha1List, convertedGateway)
 
 		if err := c.v1Client.Delete(

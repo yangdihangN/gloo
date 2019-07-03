@@ -59,7 +59,7 @@ func GetValuesFromFileIncludingExtra(helmChart *chart.Chart, fileName string, ex
 		}
 	}
 
-	// Convert value file content to struct
+	// Climb value file content to struct
 	valueStruct := &generate.Config{}
 	if err := yaml.Unmarshal([]byte(rawAdditionalValues), valueStruct); err != nil {
 		return nil, errors.Errorf("invalid format for value file [%s] in Helm chart archive", fileName)

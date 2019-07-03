@@ -6,6 +6,7 @@ import (
 	"github.com/pkg/errors"
 	v1 "github.com/solo-io/gloo/projects/gateway/pkg/api/v1"
 	"github.com/solo-io/gloo/projects/gateway/pkg/api/v2alpha1"
+	"github.com/solo-io/gloo/projects/gatewayinit/pkg/conversion"
 	"github.com/solo-io/go-utils/contextutils"
 	"github.com/solo-io/solo-kit/pkg/api/v1/clients"
 	"go.uber.org/zap"
@@ -25,10 +26,6 @@ var (
 	}
 )
 
-type Converter interface {
-	Convert()
-}
-
 type converter struct {
 	ctx              context.Context
 	v1Client         v1.GatewayClient
@@ -43,7 +40,7 @@ func NewConverter(
 	v2alpha1Client v2alpha1.GatewayClient,
 	gatewayConverter GatewayConverter,
 	namespace string,
-) Converter {
+) conversion.Converter {
 
 	return &converter{
 		ctx:              ctx,

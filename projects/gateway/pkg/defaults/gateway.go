@@ -9,10 +9,15 @@ import (
 	"github.com/solo-io/solo-kit/pkg/api/v1/resources/core"
 )
 
-func defaultGateway() *v2alpha1.Gateway {
+
+func DefaultGateway(writeNamespace string) *v2alpha1.Gateway {
 	return &v2alpha1.Gateway{
 		Metadata: core.Metadata{
 			Name: "gateway",
+			Namespace: writeNamespace,
+		},
+		GatewayType:  &v2alpha1.Gateway_HttpGateway{
+			HttpGateway: &v2alpha1.HttpGateway{},
 		},
 		BindAddress:   "::",
 		BindPort:      defaults.HttpPort,
@@ -20,22 +25,19 @@ func defaultGateway() *v2alpha1.Gateway {
 	}
 }
 
-func DefaultGateway(writeNamespace string) *v2alpha1.Gateway {
-	gw := defaultGateway()
-	gw.Metadata.Namespace = writeNamespace
-	gw.GatewayType = &v2alpha1.Gateway_HttpGateway{
-		HttpGateway: &v2alpha1.HttpGateway{},
-	}
-	return gw
-}
-
 func DefaultTcpGateway(writeNamespace string) *v2alpha1.Gateway {
-	gw := defaultGateway()
-	gw.Metadata.Namespace = writeNamespace
-	gw.GatewayType = &v2alpha1.Gateway_TcpGateway{
-		TcpGateway: &v2alpha1.TcpGateway{},
+	return &v2alpha1.Gateway{
+		Metadata: core.Metadata{
+			Name: "gateway-tcp",
+			Namespace: writeNamespace,
+		},
+		GatewayType: &v2alpha1.Gateway_TcpGateway{
+			TcpGateway: &v2alpha1.TcpGateway{},
+		},
+		BindAddress:   "::",
+		BindPort:      defaults.TcoPort,
+		UseProxyProto: &types.BoolValue{Value: false},
 	}
-	return gw
 }
 
 func DefaultTcpSslGateway(writeNamespace string) *v2alpha1.Gateway {

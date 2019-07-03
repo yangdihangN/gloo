@@ -248,66 +248,6 @@ var _ = Describe("Kube2e: gateway", func() {
 
 		})
 
-		Context("tcp", func() {
-
-			BeforeEach(func() {
-
-			})
-
-			It("correctly routes to the service (http)", func() {
-				defaultGateway := defaults.DefaultGateway(testHelper.InstallNamespace)
-
-				// wait for default gateway to be created
-				Eventually(func() *gatewayv2alpha1.Gateway {
-					gw, _ := gatewayClient.Read(testHelper.InstallNamespace, defaultGateway.Metadata.Name, clients.ReadOpts{Ctx: ctx})
-					return gw
-				}, "15s", "0.5s").Should(Not(BeNil()))
-
-				// wait for the expected proxy configuration to be accepted
-				Eventually(func() error {
-					proxy, err := proxyClient.Read(testHelper.InstallNamespace, translator.GatewayProxyName, clients.ReadOpts{Ctx: ctx})
-					if err != nil {
-						return err
-					}
-
-					if status := proxy.Status; status.State != core.Status_Accepted {
-						return errors.Errorf("unexpected proxy state: %v. Reason: %v", status.State, status.Reason)
-					}
-
-					for _, l := range proxy.Listeners {
-						for _, vh := range l.GetHttpListener().VirtualHosts {
-							for _, r := range vh.Routes {
-								if action := r.GetRouteAction(); action != nil {
-									if single := action.GetSingle(); single != nil {
-										if svcDest := single.GetService(); svcDest != nil {
-											if svcDest.Ref.Name == helper.TestrunnerName &&
-												svcDest.Ref.Namespace == testHelper.InstallNamespace &&
-												svcDest.Port == uint32(helper.TestRunnerPort) {
-												return nil
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-
-					return errors.Errorf("proxy did not contain expected route")
-				}, "15s", "0.5s").Should(BeNil())
-
-				testHelper.CurlEventuallyShouldRespond(helper.CurlOpts{
-					Protocol:          "http",
-					Path:              "/",
-					Method:            "GET",
-					Host:              gatewayProxy,
-					Service:           gatewayProxy,
-					Port:              gatewayPort,
-					ConnectionTimeout: 1, // this is important, as sometimes curl hangs
-					WithoutStats:      true,
-				}, helper.SimpleHttpResponse, 1, 60*time.Second, 1*time.Second)
-			})
-		})
-
 		Context("native ssl", func() {
 
 			BeforeEach(func() {
@@ -525,6 +465,100 @@ var _ = Describe("Kube2e: gateway", func() {
 				Expect(spec).ToNot(BeNil())
 				Expect(spec.GetGrpc()).ToNot(BeNil())
 			}
+		})
+	})
+
+	FContext("tcp", func() {
+
+		var (
+			defaultGateway *gatewayv2alpha1.Gateway
+		)
+
+		BeforeEach(func() {
+			defaultGateway = defaults.DefaultTcpGateway(testHelper.InstallNamespace)
+			dest := &gloov1.Destination{
+				DestinationType: &gloov1.Destination_Service{
+					Service: &gloov1.ServiceDestination{
+						Ref: core.ResourceRef{
+							Namespace: testHelper.InstallNamespace,
+							Name:      helper.TestrunnerName,
+						},
+						Port: uint32(helper.TestRunnerPort),
+					},
+				},
+			}
+			tcpGateway := defaultGateway.GetTcpGateway()
+			Expect(tcpGateway).NotTo(BeNil())
+			tcpGateway.Destinations = append(tcpGateway.Destinations, &gloov1.TcpHost{
+				Name: "one",
+				Destination: &gloov1.RouteAction{
+					Destination: &gloov1.RouteAction_Single{
+						Single: dest,
+					},
+				},
+			})
+			_, err := gatewayClient.Write(defaultGateway, clients.WriteOpts{})
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		AfterEach(func() {
+			Expect(gatewayClient.Delete(testHelper.InstallNamespace, defaultGateway.Metadata.Name, clients.DeleteOpts{})).NotTo(HaveOccurred())
+		})
+
+
+
+		It("correctly routes to the service (tcp)", func() {
+
+			// wait for default gateway to be created
+			Eventually(func() *gatewayv2alpha1.Gateway {
+				gw, _ := gatewayClient.Read(testHelper.InstallNamespace, defaultGateway.Metadata.Name, clients.ReadOpts{Ctx: ctx})
+				return gw
+			}, "15s", "0.5s").Should(Not(BeNil()))
+
+			// wait for the expected proxy configuration to be accepted
+			Eventually(func() error {
+				proxy, err := proxyClient.Read(testHelper.InstallNamespace, translator.GatewayProxyName, clients.ReadOpts{Ctx: ctx})
+				if err != nil {
+					return err
+				}
+
+				if status := proxy.Status; status.State != core.Status_Accepted {
+					return errors.Errorf("unexpected proxy state: %v. Reason: %v", status.State, status.Reason)
+				}
+
+				for _, l := range proxy.Listeners {
+					tcpListener := l.GetTcpListener()
+					if tcpListener == nil {
+						continue
+					}
+					for _, tcph := range tcpListener.TcpHosts {
+						if action := tcph.GetDestination(); action != nil {
+							if single := action.GetSingle(); single != nil {
+								if svcDest := single.GetService(); svcDest != nil {
+									if svcDest.Ref.Name == helper.TestrunnerName &&
+										svcDest.Ref.Namespace == testHelper.InstallNamespace &&
+										svcDest.Port == uint32(helper.TestRunnerPort) {
+										return nil
+									}
+								}
+							}
+						}
+					}
+				}
+
+				return errors.Errorf("proxy did not contain expected route")
+			}, "15s", "0.5s").Should(BeNil())
+
+			testHelper.CurlEventuallyShouldRespond(helper.CurlOpts{
+				Protocol:          "http",
+				Path:              "/",
+				Method:            "GET",
+				Host:              gatewayProxy,
+				Service:           gatewayProxy,
+				Port:              gatewayPort,
+				ConnectionTimeout: 1, // this is important, as sometimes curl hangs
+				WithoutStats:      true,
+			}, helper.SimpleHttpResponse, 1, 60*time.Second, 1*time.Second)
 		})
 	})
 

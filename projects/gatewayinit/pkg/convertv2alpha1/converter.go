@@ -1,46 +1,60 @@
-package controller
+package convertv2alpha1
 
 import (
 	"context"
 
+	"github.com/pkg/errors"
 	v1 "github.com/solo-io/gloo/projects/gateway/pkg/api/v1"
 	"github.com/solo-io/gloo/projects/gateway/pkg/api/v2alpha1"
-	"github.com/solo-io/gloo/projects/gatewayinit/pkg/conversion"
 	"github.com/solo-io/go-utils/contextutils"
 	"github.com/solo-io/solo-kit/pkg/api/v1/clients"
 	"go.uber.org/zap"
 )
 
-type Controller interface {
-	DoConversion()
+var (
+	FailedToListGatewayResources = func(err error, version, namespace string) error {
+		return errors.Wrapf(err, "Failed to list %v gateway resources in %v", version, namespace)
+	}
+
+	FailedToDeleteGateway = func(err error, version, namespace, name string) error {
+		return errors.Wrapf(err, "Failed to delete %v gateway %v.%v", version, namespace)
+	}
+
+	FailedToWriteGateway = func(err error, version, namespace, name string) error {
+		return errors.Wrapf(err, "Failed to write %v gateway %v.%v", version, namespace)
+	}
+)
+
+type Converter interface {
+	Convert()
 }
 
-type controller struct {
-	ctx            context.Context
-	v1Client       v1.GatewayClient
-	v2alpha1Client v2alpha1.GatewayClient
-	converter      conversion.GatewayConverter
-	namespace      string
+type converter struct {
+	ctx              context.Context
+	v1Client         v1.GatewayClient
+	v2alpha1Client   v2alpha1.GatewayClient
+	gatewayConverter GatewayConverter
+	namespace        string
 }
 
-func NewController(
+func NewConverter(
 	ctx context.Context,
 	v1Client v1.GatewayClient,
 	v2alpha1Client v2alpha1.GatewayClient,
-	converter conversion.GatewayConverter,
+	gatewayConverter GatewayConverter,
 	namespace string,
-) Controller {
+) Converter {
 
-	return &controller{
-		ctx:            ctx,
-		v1Client:       v1Client,
-		v2alpha1Client: v2alpha1Client,
-		converter:      converter,
-		namespace:      namespace,
+	return &converter{
+		ctx:              ctx,
+		v1Client:         v1Client,
+		v2alpha1Client:   v2alpha1Client,
+		gatewayConverter: gatewayConverter,
+		namespace:        namespace,
 	}
 }
 
-func (c *controller) DoConversion() {
+func (c *converter) Convert() {
 	v1List, err := c.v1Client.List(c.namespace, clients.ListOpts{Ctx: c.ctx})
 	if err != nil {
 		wrapped := FailedToListGatewayResources(err, "v1", c.namespace)
@@ -49,7 +63,7 @@ func (c *controller) DoConversion() {
 
 	v2alpha1List := make([]*v2alpha1.Gateway, len(v1List), len(v1List))
 	for _, oldGateway := range v1List {
-		convertedGateway := c.converter.Convert(oldGateway)
+		convertedGateway := c.gatewayConverter.Convert(oldGateway)
 		v2alpha1List = append(v2alpha1List, convertedGateway)
 
 		if err := c.v1Client.Delete(

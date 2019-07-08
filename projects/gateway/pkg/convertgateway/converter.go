@@ -6,7 +6,6 @@ import (
 	"github.com/pkg/errors"
 	v1 "github.com/solo-io/gloo/projects/gateway/pkg/api/v1"
 	"github.com/solo-io/gloo/projects/gateway/pkg/api/v2alpha1"
-	"github.com/solo-io/gloo/projects/gatewayinit/pkg/conversion"
 	"github.com/solo-io/go-utils/contextutils"
 	"github.com/solo-io/solo-kit/pkg/api/v1/clients"
 	"go.uber.org/zap"
@@ -26,6 +25,11 @@ var (
 	}
 )
 
+// TODO use solo-kit's interface
+type Ladder interface {
+	Climb()
+}
+
 type ladder struct {
 	ctx               context.Context
 	namespace         string
@@ -40,7 +44,7 @@ func NewLadder(
 	v1Client v1.GatewayClient,
 	v2alpha1Client v2alpha1.GatewayClient,
 	gatewayConverter V2alpha1Converter,
-) conversion.Ladder {
+) Ladder {
 
 	return &ladder{
 		ctx:               ctx,

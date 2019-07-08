@@ -3,7 +3,7 @@ package cmd
 import (
 	"context"
 
-	"github.com/solo-io/gloo/projects/gatewayinit/pkg/conversion/convertgateway"
+	"github.com/solo-io/gloo/projects/gateway/pkg/convertgateway"
 	"github.com/solo-io/gloo/projects/gatewayinit/pkg/setup"
 	"github.com/solo-io/go-utils/contextutils"
 )

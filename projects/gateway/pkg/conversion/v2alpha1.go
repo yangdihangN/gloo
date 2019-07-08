@@ -31,7 +31,7 @@ func (c *v2alpha1Converter) Convert(src, dst resources.Resource) error {
 		return ExpectedV1SrcError(reflect.TypeOf(src).String())
 	}
 
-	dstGateway, ok := src.(*v2alpha1.Gateway)
+	dstGateway, ok := dst.(*v2alpha1.Gateway)
 	if !ok {
 		return ExpectedV2alpha1DstError(reflect.TypeOf(dst).String())
 	}

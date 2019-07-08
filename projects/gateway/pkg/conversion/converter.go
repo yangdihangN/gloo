@@ -10,6 +10,7 @@ import (
 	"github.com/solo-io/solo-kit/pkg/api/v1/clients"
 	"github.com/solo-io/solo-kit/pkg/api/v1/resources"
 	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 )
 
 var (
@@ -31,7 +32,7 @@ var (
 )
 
 type Ladder interface {
-	Climb()
+	Climb() error
 }
 
 // TODO use solo-kit's interface
@@ -65,52 +66,53 @@ func NewLadder(
 }
 
 // With more rungs we could (read, convert, read & merge, convert, ...,  write)
-func (c *ladder) Climb() {
+func (c *ladder) Climb() error {
 	v1List, err := c.v1Client.List(c.namespace, clients.ListOpts{Ctx: c.ctx})
 	if err != nil {
 		wrapped := FailedToListGatewayResourcesError(err, "v1", c.namespace)
 		contextutils.LoggerFrom(c.ctx).Errorw(wrapped.Error(), zap.Error(err), zap.String("namespace", c.namespace))
 	}
 
-	v2alpha1List := make([]*v2alpha1.Gateway, 0, len(v1List))
+	var g errgroup.Group
 	for _, oldGateway := range v1List {
-		convertedGateway := &v2alpha1.Gateway{}
+		g.Go(func() error {
+			convertedGateway := &v2alpha1.Gateway{}
+			err := c.v2alpha1Converter.Convert(oldGateway, convertedGateway)
+			if err != nil {
+				wrapped := FailedToConvertGatewayError(
+					err,
+					"v1",
+					oldGateway.GetMetadata().GetNamespace(),
+					oldGateway.GetMetadata().GetName())
+				contextutils.LoggerFrom(c.ctx).Errorw(wrapped.Error(), zap.Error(err), zap.Any("gateway", oldGateway))
+				return wrapped
+			}
 
-		err := c.v2alpha1Converter.Convert(oldGateway, convertedGateway)
-		if err != nil {
-			wrapped := FailedToConvertGatewayError(
-				err,
-				"v1",
+			if err := c.v1Client.Delete(
 				oldGateway.GetMetadata().GetNamespace(),
-				oldGateway.GetMetadata().GetName())
-			contextutils.LoggerFrom(c.ctx).Errorw(wrapped.Error(), zap.Error(err), zap.Any("gateway", oldGateway))
-		} else {
-			v2alpha1List = append(v2alpha1List, convertedGateway)
-		}
+				oldGateway.GetMetadata().GetName(),
+				clients.DeleteOpts{Ctx: c.ctx}); err != nil {
 
-		if err := c.v1Client.Delete(
-			convertedGateway.GetMetadata().GetNamespace(),
-			convertedGateway.GetMetadata().GetName(),
-			clients.DeleteOpts{Ctx: c.ctx}); err != nil {
+				wrapped := FailedToDeleteGatewayError(
+					err,
+					"v1",
+					oldGateway.GetMetadata().GetNamespace(),
+					oldGateway.GetMetadata().GetName())
+				contextutils.LoggerFrom(c.ctx).Errorw(wrapped.Error(), zap.Error(err), zap.Any("gateway", oldGateway))
+				return wrapped
+			}
 
-			wrapped := FailedToDeleteGatewayError(
-				err,
-				"v1",
-				convertedGateway.GetMetadata().GetNamespace(),
-				convertedGateway.GetMetadata().GetName())
-			contextutils.LoggerFrom(c.ctx).Errorw(wrapped.Error(), zap.Error(err), zap.Any("gateway", convertedGateway))
-		}
+			if _, err := c.v2alpha1Client.Write(convertedGateway, clients.WriteOpts{Ctx: c.ctx}); err != nil {
+				wrapped := FailedToWriteGatewayError(
+					err,
+					"v2alpha1",
+					convertedGateway.GetMetadata().GetNamespace(),
+					convertedGateway.GetMetadata().GetName())
+				contextutils.LoggerFrom(c.ctx).Errorw(wrapped.Error(), zap.Error(err), zap.Any("gateway", convertedGateway))
+				return wrapped
+			}
+			return nil
+		})
 	}
-
-	for _, newGateway := range v2alpha1List {
-		_, err := c.v2alpha1Client.Write(newGateway, clients.WriteOpts{Ctx: c.ctx})
-		if err != nil {
-			wrapped := FailedToWriteGatewayError(
-				err,
-				"v2alpha1",
-				newGateway.GetMetadata().GetNamespace(),
-				newGateway.GetMetadata().GetName())
-			contextutils.LoggerFrom(c.ctx).Errorw(wrapped.Error(), zap.Error(err), zap.Any("gateway", newGateway))
-		}
-	}
+	return g.Wait()
 }

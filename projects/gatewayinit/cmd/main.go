@@ -6,6 +6,7 @@ import (
 	"github.com/solo-io/gloo/projects/gateway/pkg/conversion"
 	"github.com/solo-io/gloo/projects/gatewayinit/pkg/setup"
 	"github.com/solo-io/go-utils/contextutils"
+	"go.uber.org/zap"
 )
 
 func main() {
@@ -18,5 +19,7 @@ func main() {
 		clientSet.V2alpha1Gateway,
 		conversion.NewV2alpha1Converter(),
 	)
-	gatewayLadder.Climb()
+	if err := gatewayLadder.Climb(); err != nil {
+		contextutils.LoggerFrom(ctx).Fatalw("Failed to upgrade existing gateway resources.", zap.Error(err))
+	}
 }

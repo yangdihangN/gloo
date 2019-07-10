@@ -9,6 +9,9 @@ import (
 	"github.com/solo-io/gloo/projects/gloo/pkg/plugins/consul"
 	"github.com/solo-io/gloo/projects/gloo/pkg/plugins/cors"
 	"github.com/solo-io/gloo/projects/gloo/pkg/plugins/faultinjection"
+
+	// add our plugin's import here:
+	"github.com/solo-io/gloo/projects/gloo/pkg/plugins/gce"
 	"github.com/solo-io/gloo/projects/gloo/pkg/plugins/grpc"
 	"github.com/solo-io/gloo/projects/gloo/pkg/plugins/hcm"
 	"github.com/solo-io/gloo/projects/gloo/pkg/plugins/kubernetes"
@@ -47,6 +50,8 @@ var globalRegistry = func(opts bootstrap.Opts, pluginExtensions ...plugins.Plugi
 		cors.NewPlugin(),
 		linkerd.NewPlugin(),
 		stats.NewPlugin(),
+		// and our plugin goes here
+		gce.NewPlugin(),
 	)
 	if opts.KubeClient != nil {
 		reg.plugins = append(reg.plugins, kubernetes.NewPlugin(opts.KubeClient))

@@ -28,6 +28,8 @@ import "github.com/solo-io/gloo/projects/gloo/api/v1/plugins/stats/stats.proto";
 import "github.com/solo-io/gloo/projects/gloo/api/v1/plugins/transformation/prefix_rewrite.proto";
 import "github.com/solo-io/gloo/projects/gloo/api/v1/plugins/transformation/transformation.proto";
 import "github.com/solo-io/gloo/projects/gloo/api/v1/plugins/faultinjection/fault.proto";
+// add the following line:
+import "github.com/solo-io/gloo/projects/gloo/api/v1/plugins/gce/gce.proto";
 
 import "google/protobuf/duration.proto";
 
@@ -111,5 +113,6 @@ message UpstreamSpec {
         aws.plugins.gloo.solo.io.UpstreamSpec aws = 2;
         azure.plugins.gloo.solo.io.UpstreamSpec azure = 3;
         consul.plugins.gloo.solo.io.UpstreamSpec consul = 5;
+        gce.plugins.gloo.solo.io.UpstreamSpec gce = 11;
     }
 }

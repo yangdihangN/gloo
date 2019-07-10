@@ -1732,7 +1732,7 @@
   version = "v0.2.1"
 
 [[projects]]
-  digest = "1:b7c2ac33d95453f9285cb06d1dd07e666341f597e8090c0c925af4e9f8a3a150"
+  digest = "1:0133b905eb1f5f0249f5a209df2c38b2f8f5be59e10261b96e9216535ccdbd89"
   name = "go.opencensus.io"
   packages = [
     ".",
@@ -1742,6 +1742,8 @@
     "metric/metricexport",
     "metric/metricproducer",
     "plugin/ocgrpc",
+    "plugin/ochttp",
+    "plugin/ochttp/propagation/b3",
     "resource",
     "stats",
     "stats/internal",
@@ -1932,6 +1934,24 @@
   ]
   pruneopts = "UT"
   revision = "3ee3066db522c6628d440a3a91c4abdd7f5ef22f"
+
+[[projects]]
+  digest = "1:83cb15ecd8ab1b0fa36480306d02d345848b6a581b64a889a06d87adf5c1d0d1"
+  name = "google.golang.org/api"
+  packages = [
+    "compute/v1",
+    "gensupport",
+    "googleapi",
+    "googleapi/internal/uritemplates",
+    "googleapi/transport",
+    "internal",
+    "option",
+    "transport/http",
+    "transport/http/internal/propagation",
+  ]
+  pruneopts = "UT"
+  revision = "02490b97dff7cfde1995bd77de808fd27053bc87"
+  version = "v0.7.0"
 
 [[projects]]
   digest = "1:d2a8db567a76203e3b41c1f632d86485ffd57f8e650a0d1b19d240671c2fddd7"
@@ -2804,6 +2824,9 @@
     "go.opencensus.io/tag",
     "go.opencensus.io/trace",
     "go.uber.org/zap",
+    "golang.org/x/oauth2/google",
+    "google.golang.org/api/compute/v1",
+    "google.golang.org/api/option",
     "google.golang.org/grpc",
     "google.golang.org/grpc/codes",
     "google.golang.org/grpc/reflection/grpc_reflection_v1alpha",

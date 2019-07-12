@@ -24,11 +24,8 @@ func NewEc2InstanceLister() *ec2InstanceLister {
 var _ awslister.Ec2InstanceLister = &ec2InstanceLister{}
 
 func (c *ec2InstanceLister) ListForCredentials(ctx context.Context, awsRegion string, secretRef core.ResourceRef, secrets v1.SecretList) ([]*ec2.Instance, error) {
-	sess, err := getEc2SessionForCredentials(awsRegion, secretRef, secrets)
-	if err != nil {
-		return nil, GetClientError(err)
-	}
-	svc := ec2.New(sess)
+	arns := []string{"temp"}
+	svc, err := getEc2Client(awsRegion, secretRef, secrets, arns)
 	// pass an empty selector to get all instances that the session has access to
 	result, err := svc.DescribeInstances(&ec2.DescribeInstancesInput{})
 	if err != nil {

@@ -12,11 +12,15 @@ type credentialSpec struct {
 	secretRef core.ResourceRef
 	// region is the AWS region where our credentialMap live
 	region string
+	// roleArns are a list of AWS Roles (specified by their Amazon Resource Number (ARN)) which should be assumed when
+	// querying for instances available to the upstream
+	roleArns []string
 }
 
 func credentialSpecFromUpstreamSpec(ec2Spec *glooec2.UpstreamSpec) credentialSpec {
 	return credentialSpec{
 		secretRef: ec2Spec.SecretRef,
 		region:    ec2Spec.Region,
+		roleArns:  ec2Spec.RoleArns,
 	}
 }

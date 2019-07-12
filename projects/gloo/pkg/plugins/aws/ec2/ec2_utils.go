@@ -3,6 +3,7 @@ package ec2
 import (
 	"fmt"
 
+	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/solo-io/solo-kit/pkg/api/v1/resources/core"
 
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -29,6 +30,20 @@ func getEc2SessionForCredentials(awsRegion string, secretRef core.ResourceRef, s
 		&aws.Config{
 			Region: aws.String(awsRegion),
 		})
+}
+
+func getEc2Client(awsRegion string, secretRef core.ResourceRef, secrets v1.SecretList, arns []string) (*ec2.EC2, error) {
+	sess, err := getEc2SessionForCredentials(awsRegion, secretRef, secrets)
+	if err != nil {
+		return nil, err
+	}
+	var configs []*aws.Config
+	for _, arn := range arns {
+		cred := stscreds.NewCredentials(sess, arn)
+		configs = append(configs, &aws.Config{Credentials: cred})
+	}
+	svc := ec2.New(sess, configs...)
+	return svc, nil
 }
 
 func getInstancesFromDescription(desc *ec2.DescribeInstancesOutput) []*ec2.Instance {

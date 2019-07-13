@@ -1,6 +1,9 @@
 package awscache
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/solo-io/gloo/projects/gloo/pkg/api/v1/plugins/aws/glooec2"
 	"github.com/solo-io/solo-kit/pkg/api/v1/resources/core"
 )
@@ -17,10 +20,23 @@ type credentialSpec struct {
 	roleArns []string
 }
 
-func credentialSpecFromUpstreamSpec(ec2Spec *glooec2.UpstreamSpec) credentialSpec {
-	return credentialSpec{
+// https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html#arn-syntax-ec2
+const arnSegmentDelimiter = ":"
+
+func (cs *credentialSpec) getKey() credentialKey {
+	// use a very conservative "hash" strategy to avoid having to depend on aws's arn specification
+	joinedArns := strings.Join(cs.roleArns, arnSegmentDelimiter)
+	return credentialKey(fmt.Sprintf("%v-%v-%v", cs.secretRef.String(), cs.region, joinedArns))
+}
+
+func credentialSpecFromUpstreamSpec(ec2Spec *glooec2.UpstreamSpec) *credentialSpec {
+	return &credentialSpec{
 		secretRef: ec2Spec.SecretRef,
 		region:    ec2Spec.Region,
 		roleArns:  ec2Spec.RoleArns,
 	}
 }
+
+// Since "==" is not defined for slices, slices (in particular, the roleArns slice) cannot be used as keys for go maps.
+// Instead, we will use a string form. We give it a name for clarity.
+type credentialKey string

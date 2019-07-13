@@ -10,7 +10,7 @@ import (
 
 func (c *Cache) FilterEndpointsForUpstream(upstream *glooec2.UpstreamSpecRef) ([]*ec2.Instance, error) {
 	credSpec := credentialSpecFromUpstreamSpec(upstream.Spec)
-	credRes, ok := c.credentialMap[credSpec]
+	credRes, ok := c.instanceGroups[credSpec.getKey()]
 	if !ok {
 		// This should never happen
 		return nil, ResourceMapInitializationError

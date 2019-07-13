@@ -20,10 +20,11 @@ import (
 // it is possible that there will be duplicate resource records, for example, if two credentials have access to the same
 // resource, then that resource will be present in both CredentialInstanceGroup entries. For simplicity, we will let that be.
 type Cache struct {
-	credentialMap map[credentialSpec]*CredentialInstanceGroup
-	secrets       v1.SecretList
-	mutex         sync.Mutex
-	ctx           context.Context
+	instanceGroups  map[credentialKey]*CredentialInstanceGroup
+	credentialSpecs map[credentialKey]*credentialSpec
+	secrets         v1.SecretList
+	mutex           sync.Mutex
+	ctx             context.Context
 }
 
 func NewCredentialInstanceGroup() *CredentialInstanceGroup {
@@ -65,7 +66,8 @@ func newCache(ctx context.Context, secrets v1.SecretList) *Cache {
 		ctx:     ctx,
 		secrets: secrets,
 	}
-	m.credentialMap = make(map[credentialSpec]*CredentialInstanceGroup)
+	m.instanceGroups = make(map[credentialKey]*CredentialInstanceGroup)
+	m.credentialSpecs = make(map[credentialKey]*credentialSpec)
 	return m
 }
 
@@ -75,15 +77,16 @@ func (c *Cache) build(upstreams map[core.ResourceRef]*glooec2.UpstreamSpecRef, e
 			return err
 		}
 	}
-	contextutils.LoggerFrom(c.ctx).Debugw("local store", zap.Any("count", len(c.credentialMap)))
+	contextutils.LoggerFrom(c.ctx).Debugw("local store",
+		zap.Any("instance group count", len(c.instanceGroups)))
 	// 2. query the AWS API for each credential set
 	errChan := make(chan error)
 	defer close(errChan)
 	eg := errgroup.Group{}
 	go func() {
 		// first copy from map to a slice in order to avoid a race condition
-		var creds []credentialSpec
-		for cred := range c.credentialMap {
+		var creds []*credentialSpec
+		for _, cred := range c.credentialSpecs {
 			creds = append(creds, cred)
 		}
 		for _, cred := range creds {
@@ -114,28 +117,31 @@ func (c *Cache) build(upstreams map[core.ResourceRef]*glooec2.UpstreamSpecRef, e
 func (c *Cache) addUpstream(upstream *glooec2.UpstreamSpecRef) error {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
-	key := credentialSpecFromUpstreamSpec(upstream.Spec)
+	credSpec := credentialSpecFromUpstreamSpec(upstream.Spec)
+	key := credSpec.getKey()
 
-	if v, ok := c.credentialMap[key]; ok {
+	if v, ok := c.instanceGroups[key]; ok {
 		v.upstreams[upstream.Ref] = upstream
 	} else {
 		cr := NewCredentialInstanceGroup()
 		cr.upstreams[upstream.Ref] = upstream
-		c.credentialMap[key] = cr
+		c.instanceGroups[key] = cr
+		c.credentialSpecs[key] = credSpec
 	}
 	return nil
 }
 
-func (c *Cache) addInstances(credentialSpec credentialSpec, instances []*ec2.Instance) error {
+func (c *Cache) addInstances(credentialSpec *credentialSpec, instances []*ec2.Instance) error {
 	filterMaps := generateFilterMaps(instances)
+	key := credentialSpec.getKey()
 	c.mutex.Lock()
-	cr := c.credentialMap[credentialSpec]
-	if cr == nil {
+	defer c.mutex.Unlock()
+	ci := c.instanceGroups[key]
+	if ci == nil {
 		// should not happen
 		return ResourceMapInitializationError
 	}
-	cr.instances = instances
-	cr.instanceFilterMaps = filterMaps
-	c.mutex.Unlock()
+	ci.instances = instances
+	ci.instanceFilterMaps = filterMaps
 	return nil
 }

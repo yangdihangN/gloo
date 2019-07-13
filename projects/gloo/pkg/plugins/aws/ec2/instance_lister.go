@@ -10,7 +10,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 	v1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
 	"github.com/solo-io/go-utils/contextutils"
-	"github.com/solo-io/solo-kit/pkg/api/v1/resources/core"
 	"go.uber.org/zap"
 )
 
@@ -23,9 +22,8 @@ func NewEc2InstanceLister() *ec2InstanceLister {
 
 var _ awslister.Ec2InstanceLister = &ec2InstanceLister{}
 
-func (c *ec2InstanceLister) ListForCredentials(ctx context.Context, awsRegion string, secretRef core.ResourceRef, secrets v1.SecretList) ([]*ec2.Instance, error) {
-	arns := []string{"temp"}
-	svc, err := getEc2Client(awsRegion, secretRef, secrets, arns)
+func (c *ec2InstanceLister) ListForCredentials(ctx context.Context, cred *awslister.CredentialSpec, secrets v1.SecretList) ([]*ec2.Instance, error) {
+	svc, err := getEc2Client(cred, secrets)
 	// pass an empty selector to get all instances that the session has access to
 	result, err := svc.DescribeInstances(&ec2.DescribeInstancesInput{})
 	if err != nil {

@@ -3,14 +3,16 @@ package awscache
 import (
 	"strings"
 
+	"github.com/solo-io/gloo/projects/gloo/pkg/plugins/aws/ec2/awslister"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/solo-io/gloo/projects/gloo/pkg/api/v1/plugins/aws/glooec2"
 )
 
 func (c *Cache) FilterEndpointsForUpstream(upstream *glooec2.UpstreamSpecRef) ([]*ec2.Instance, error) {
-	credSpec := credentialSpecFromUpstreamSpec(upstream.Spec)
-	credRes, ok := c.instanceGroups[credSpec.getKey()]
+	credSpec := awslister.CredentialSpecFromUpstreamSpec(upstream.Spec)
+	credRes, ok := c.instanceGroups[credSpec.GetKey()]
 	if !ok {
 		// This should never happen
 		return nil, ResourceMapInitializationError

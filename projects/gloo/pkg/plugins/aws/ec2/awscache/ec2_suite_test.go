@@ -14,5 +14,5 @@ func TestEc2(t *testing.T) {
 			testutils.PrintTrimmedStack()
 		})
 	testutils.RegisterCommonFailHandlers()
-	RunSpecs(t, "EC2 Suite")
+	RunSpecs(t, "AWS Cache Suite")
 }

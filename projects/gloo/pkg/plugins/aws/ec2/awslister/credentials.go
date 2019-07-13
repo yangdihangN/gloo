@@ -1,7 +1,8 @@
-package awscache
+package awslister
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/solo-io/gloo/projects/gloo/pkg/api/v1/plugins/aws/glooec2"
@@ -10,7 +11,7 @@ import (
 
 // a credential spec represents an AWS client's view into AWS credentialMap
 // we expect multiple upstreams to share the same view (so we batch the queries and apply filters locally)
-type credentialSpec struct {
+type CredentialSpec struct {
 	// secretRef identifies the AWS secret that should be used to authenticate the client
 	secretRef core.ResourceRef
 	// region is the AWS region where our credentialMap live
@@ -20,17 +21,38 @@ type credentialSpec struct {
 	roleArns []string
 }
 
+func NewCredentialSpec(secretRef core.ResourceRef, region string, roleArns []string) *CredentialSpec {
+	sort.Strings(roleArns)
+	return &CredentialSpec{
+		secretRef: secretRef,
+		region:    region,
+		roleArns:  roleArns,
+	}
+}
+
 // https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html#arn-syntax-ec2
 const arnSegmentDelimiter = ":"
 
-func (cs *credentialSpec) getKey() credentialKey {
+func (cs *CredentialSpec) GetKey() CredentialKey {
 	// use a very conservative "hash" strategy to avoid having to depend on aws's arn specification
 	joinedArns := strings.Join(cs.roleArns, arnSegmentDelimiter)
-	return credentialKey(fmt.Sprintf("%v-%v-%v", cs.secretRef.String(), cs.region, joinedArns))
+	return CredentialKey(fmt.Sprintf("%v-%v-%v", cs.secretRef.String(), cs.region, joinedArns))
 }
 
-func credentialSpecFromUpstreamSpec(ec2Spec *glooec2.UpstreamSpec) *credentialSpec {
-	return &credentialSpec{
+func (cs *CredentialSpec) Region() string {
+	return cs.region
+}
+
+func (cs *CredentialSpec) SecretRef() core.ResourceRef {
+	return cs.secretRef
+}
+
+func (cs *CredentialSpec) Arns() []string {
+	return cs.roleArns
+}
+
+func CredentialSpecFromUpstreamSpec(ec2Spec *glooec2.UpstreamSpec) *CredentialSpec {
+	return &CredentialSpec{
 		secretRef: ec2Spec.SecretRef,
 		region:    ec2Spec.Region,
 		roleArns:  ec2Spec.RoleArns,
@@ -39,4 +61,4 @@ func credentialSpecFromUpstreamSpec(ec2Spec *glooec2.UpstreamSpec) *credentialSp
 
 // Since "==" is not defined for slices, slices (in particular, the roleArns slice) cannot be used as keys for go maps.
 // Instead, we will use a string form. We give it a name for clarity.
-type credentialKey string
+type CredentialKey string

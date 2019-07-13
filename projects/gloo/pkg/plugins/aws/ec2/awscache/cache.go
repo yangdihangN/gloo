@@ -20,8 +20,8 @@ import (
 // it is possible that there will be duplicate resource records, for example, if two credentials have access to the same
 // resource, then that resource will be present in both CredentialInstanceGroup entries. For simplicity, we will let that be.
 type Cache struct {
-	instanceGroups  map[credentialKey]*CredentialInstanceGroup
-	credentialSpecs map[credentialKey]*credentialSpec
+	instanceGroups  map[awslister.CredentialKey]*CredentialInstanceGroup
+	credentialSpecs map[awslister.CredentialKey]*awslister.CredentialSpec
 	secrets         v1.SecretList
 	mutex           sync.Mutex
 	ctx             context.Context
@@ -66,8 +66,8 @@ func newCache(ctx context.Context, secrets v1.SecretList) *Cache {
 		ctx:     ctx,
 		secrets: secrets,
 	}
-	m.instanceGroups = make(map[credentialKey]*CredentialInstanceGroup)
-	m.credentialSpecs = make(map[credentialKey]*credentialSpec)
+	m.instanceGroups = make(map[awslister.CredentialKey]*CredentialInstanceGroup)
+	m.credentialSpecs = make(map[awslister.CredentialKey]*awslister.CredentialSpec)
 	return m
 }
 
@@ -85,13 +85,13 @@ func (c *Cache) build(upstreams map[core.ResourceRef]*glooec2.UpstreamSpecRef, e
 	eg := errgroup.Group{}
 	go func() {
 		// first copy from map to a slice in order to avoid a race condition
-		var creds []*credentialSpec
+		var creds []*awslister.CredentialSpec
 		for _, cred := range c.credentialSpecs {
 			creds = append(creds, cred)
 		}
 		for _, cred := range creds {
 			eg.Go(func() error {
-				instances, err := ec2InstanceLister.ListForCredentials(c.ctx, cred.region, cred.secretRef, c.secrets)
+				instances, err := ec2InstanceLister.ListForCredentials(c.ctx, cred, c.secrets)
 				if err != nil {
 					return err
 				}
@@ -117,8 +117,8 @@ func (c *Cache) build(upstreams map[core.ResourceRef]*glooec2.UpstreamSpecRef, e
 func (c *Cache) addUpstream(upstream *glooec2.UpstreamSpecRef) error {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
-	credSpec := credentialSpecFromUpstreamSpec(upstream.Spec)
-	key := credSpec.getKey()
+	credSpec := awslister.CredentialSpecFromUpstreamSpec(upstream.Spec)
+	key := credSpec.GetKey()
 
 	if v, ok := c.instanceGroups[key]; ok {
 		v.upstreams[upstream.Ref] = upstream
@@ -131,9 +131,9 @@ func (c *Cache) addUpstream(upstream *glooec2.UpstreamSpecRef) error {
 	return nil
 }
 
-func (c *Cache) addInstances(credentialSpec *credentialSpec, instances []*ec2.Instance) error {
+func (c *Cache) addInstances(credentialSpec *awslister.CredentialSpec, instances []*ec2.Instance) error {
 	filterMaps := generateFilterMaps(instances)
-	key := credentialSpec.getKey()
+	key := credentialSpec.GetKey()
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 	ci := c.instanceGroups[key]

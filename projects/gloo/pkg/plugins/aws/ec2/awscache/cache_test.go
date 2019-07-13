@@ -49,7 +49,7 @@ var _ = Describe("Batcher tests", func() {
 		err := cb.addUpstream(up1)
 		Expect(err).NotTo(HaveOccurred())
 
-		credSpec1 := credentialSpec{
+		credSpec1 := &credentialSpec{
 			secretRef: secretRef1,
 			region:    region1,
 		}
@@ -241,7 +241,7 @@ var _ = Describe("Batcher tests", func() {
 
 type filterTestInput struct {
 	// use these credentials when accessing
-	credentialSpec credentialSpec
+	credentialSpec *credentialSpec
 	// format: <key>
 	keyFilters []string
 	// format: <key>:<value>
@@ -296,8 +296,8 @@ func generateTestSecrets(seed string) (*v1.Secret, core.ResourceRef) {
 	return secret, secretRef
 }
 
-func generateCredSpec(region string, secretRef core.ResourceRef) credentialSpec {
-	return credentialSpec{
+func generateCredSpec(region string, secretRef core.ResourceRef) *credentialSpec {
+	return &credentialSpec{
 		secretRef: secretRef,
 		region:    region,
 	}
@@ -305,7 +305,7 @@ func generateCredSpec(region string, secretRef core.ResourceRef) credentialSpec 
 }
 
 // creates an upstream with the filters and credentials defined by the input
-func generateUpstreamWithCredentials(name string, credSpec credentialSpec, input filterTestInput) *glooec2.UpstreamSpecRef {
+func generateUpstreamWithCredentials(name string, credSpec *credentialSpec, input filterTestInput) *glooec2.UpstreamSpecRef {
 	upstreamRef := core.ResourceRef{
 		Name:      name,
 		Namespace: "default",

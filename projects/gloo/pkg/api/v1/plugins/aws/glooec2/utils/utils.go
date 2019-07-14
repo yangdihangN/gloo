@@ -15,13 +15,14 @@ type InvertedEc2Upstream struct {
 
 type InvertedEc2UpstreamRefMap map[core.ResourceRef]*InvertedEc2Upstream
 
+// InvertKnownEc2Upstream is a helper for working with EC2 Upstreams.
+// it ignores any upstreams that are not EC2 Upstreams
 func BuildInvertedUpstreamRefMap(upstreams v1.UpstreamList) InvertedEc2UpstreamRefMap {
 	upstreamSpecs := make(InvertedEc2UpstreamRefMap)
-	typeOk := true
 	for _, upstream := range upstreams {
-		inverted := InvertEc2Upstream(upstream, &typeOk)
+		inverted, ok := invertEc2Upstream(upstream)
 		// only care about ec2 upstreams
-		if !typeOk {
+		if !ok {
 			continue
 		}
 		ref := upstream.Metadata.Ref()
@@ -30,20 +31,14 @@ func BuildInvertedUpstreamRefMap(upstreams v1.UpstreamList) InvertedEc2UpstreamR
 	return upstreamSpecs
 }
 
-// InvertEc2Upstream is a helper for working with EC2 Upstreams.
-// if you know that you are working EC2 Upstreams you can pass nil and ignore the type cast response
-func InvertEc2Upstream(upstream *v1.Upstream, typeOk *bool) *InvertedEc2Upstream {
-	var ec2Spec *glooec2.UpstreamSpec
+// this function is is intentionally
+func invertEc2Upstream(upstream *v1.Upstream) (*InvertedEc2Upstream, bool) {
 	spec, ok := upstream.UpstreamSpec.UpstreamType.(*v1.UpstreamSpec_AwsEc2)
-	// only care about ec2 upstreams
-	if ok {
-		ec2Spec = spec.AwsEc2
-	}
-	if typeOk != nil {
-		*typeOk = ok
+	if !ok {
+		return nil, false
 	}
 	return &InvertedEc2Upstream{
-		Spec:     ec2Spec,
+		Spec:     spec.AwsEc2,
 		Upstream: upstream,
-	}
+	}, true
 }

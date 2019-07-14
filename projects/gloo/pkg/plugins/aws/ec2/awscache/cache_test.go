@@ -54,7 +54,7 @@ var _ = Describe("Batcher tests", func() {
 			Status:   core.Status{},
 			Metadata: core.Metadata{},
 		}
-		up1 := utils.InvertEc2Upstream(upstream, nil)
+		up1 := invertKnownEc2Upstream(upstream)
 		err := cb.addUpstream(up1)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -380,7 +380,7 @@ func generateUpstreamWithCredentials(name string, credSpec *awslister.Credential
 			Namespace: "default",
 		},
 	}
-	inverted := utils.InvertEc2Upstream(upstream, nil)
+	inverted := invertKnownEc2Upstream(upstream)
 	return inverted
 }
 
@@ -455,4 +455,11 @@ func getAnUpstream() *v1.Upstream {
 			Namespace: "default",
 		},
 	}
+}
+
+func invertKnownEc2Upstream(upstream *v1.Upstream) *utils.InvertedEc2Upstream {
+	iMap := utils.BuildInvertedUpstreamRefMap(v1.UpstreamList{upstream})
+	inverted, ok := iMap[upstream.Metadata.Ref()]
+	Expect(ok).To(BeTrue())
+	return inverted
 }

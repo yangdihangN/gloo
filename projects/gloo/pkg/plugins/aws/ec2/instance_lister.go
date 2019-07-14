@@ -24,6 +24,9 @@ var _ awslister.Ec2InstanceLister = &ec2InstanceLister{}
 
 func (c *ec2InstanceLister) ListForCredentials(ctx context.Context, cred *awslister.CredentialSpec, secrets v1.SecretList) ([]*ec2.Instance, error) {
 	svc, err := getEc2Client(cred, secrets)
+	if err != nil {
+		return nil, GetClientError(err)
+	}
 	// pass an empty selector to get all instances that the session has access to
 	result, err := svc.DescribeInstances(&ec2.DescribeInstancesInput{})
 	if err != nil {

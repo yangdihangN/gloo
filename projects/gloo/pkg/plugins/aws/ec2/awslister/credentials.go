@@ -42,6 +42,14 @@ func (cs *CredentialSpec) Arns() []string {
 	return cs.roleArns
 }
 
+func (cs *CredentialSpec) Clone() *CredentialSpec {
+	return &CredentialSpec{
+		secretRef: cs.secretRef,
+		region:    cs.region,
+		roleArns:  cs.roleArns,
+	}
+}
+
 func NewCredentialSpecFromEc2UpstreamSpec(spec *glooec2.UpstreamSpec) *CredentialSpec {
 	var roleArns []string
 	for _, arn := range spec.RoleArns {

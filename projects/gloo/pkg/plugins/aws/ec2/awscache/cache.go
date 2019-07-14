@@ -90,12 +90,14 @@ func (c *Cache) build(upstreams utils.InvertedEc2UpstreamRefMap, ec2InstanceList
 			creds = append(creds, cred)
 		}
 		for _, cred := range creds {
+			// make a copy to avoid race condition
+			credCopy := cred.Clone()
 			eg.Go(func() error {
-				instances, err := ec2InstanceLister.ListForCredentials(c.ctx, cred, c.secrets)
+				instances, err := ec2InstanceLister.ListForCredentials(c.ctx, credCopy, c.secrets)
 				if err != nil {
 					return err
 				}
-				if err := c.addInstances(cred, instances); err != nil {
+				if err := c.addInstances(credCopy, instances); err != nil {
 					return err
 				}
 				return nil

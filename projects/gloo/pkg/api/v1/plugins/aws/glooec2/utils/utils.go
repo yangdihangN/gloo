@@ -9,8 +9,8 @@ import (
 )
 
 type InvertedEc2Upstream struct {
-	Spec     *glooec2.UpstreamSpec
-	Upstream *v1.Upstream
+	AwsEc2Spec *glooec2.UpstreamSpec
+	Base       *v1.Upstream
 }
 
 type InvertedEc2UpstreamRefMap map[core.ResourceRef]*InvertedEc2Upstream
@@ -38,7 +38,7 @@ func invertEc2Upstream(upstream *v1.Upstream) (*InvertedEc2Upstream, bool) {
 		return nil, false
 	}
 	return &InvertedEc2Upstream{
-		Spec:     spec.AwsEc2,
-		Upstream: upstream,
+		AwsEc2Spec: spec.AwsEc2,
+		Base:       upstream,
 	}, true
 }

@@ -254,7 +254,7 @@ var _ = Describe("constructor tests", func() {
 		responses := getMockListerResponses(iUpstream)
 		mockLister := newMockEc2InstanceLister(responses)
 		resp := make(mockListerResponses)
-		cspec1 := awslister.NewCredentialSpecFromEc2UpstreamSpec(iUpstream.Spec)
+		cspec1 := awslister.NewCredentialSpecFromEc2UpstreamSpec(iUpstream.AwsEc2Spec)
 		instances := []*ec2.Instance{instance}
 		resp[cspec1.GetKey()] = instances
 		secretMeta1 := core.Metadata{Name: "secret1", Namespace: "namespace"}
@@ -406,7 +406,7 @@ func (m *mockEc2InstanceLister) ListForCredentials(ctx context.Context, cred *aw
 
 func getMockListerResponses(iUpstream *utils.InvertedEc2Upstream) mockListerResponses {
 	resp := make(mockListerResponses)
-	cspec1 := awslister.NewCredentialSpec(iUpstream.Spec.SecretRef, iUpstream.Spec.Region, nil)
+	cspec1 := awslister.NewCredentialSpec(iUpstream.AwsEc2Spec.SecretRef, iUpstream.AwsEc2Spec.Region, nil)
 	resp[cspec1.GetKey()] = []*ec2.Instance{
 		getAnInstance(),
 	}

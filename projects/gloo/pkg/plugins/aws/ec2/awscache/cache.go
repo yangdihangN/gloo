@@ -117,14 +117,14 @@ func (c *Cache) build(upstreams utils.InvertedEc2UpstreamRefMap, ec2InstanceList
 func (c *Cache) addUpstream(upstream *utils.InvertedEc2Upstream) error {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
-	credSpec := awslister.NewCredentialSpecFromEc2UpstreamSpec(upstream.Spec)
+	credSpec := awslister.NewCredentialSpecFromEc2UpstreamSpec(upstream.AwsEc2Spec)
 	key := credSpec.GetKey()
 
 	if v, ok := c.instanceGroups[key]; ok {
-		v.upstreams[upstream.Upstream.Metadata.Ref()] = upstream
+		v.upstreams[upstream.Base.Metadata.Ref()] = upstream
 	} else {
 		cr := NewCredentialInstanceGroup()
-		cr.upstreams[upstream.Upstream.Metadata.Ref()] = upstream
+		cr.upstreams[upstream.Base.Metadata.Ref()] = upstream
 		c.instanceGroups[key] = cr
 		c.credentialSpecs[key] = credSpec
 	}

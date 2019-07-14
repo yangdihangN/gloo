@@ -135,18 +135,18 @@ func (c *edsWatcher) convertInstancesToEndpoints(upstream *utils.InvertedEc2Upst
 	var list v1.EndpointList
 	for _, instance := range ec2InstancesForUpstream {
 		ipAddr := instance.PrivateIpAddress
-		if upstream.Spec.PublicIp {
+		if upstream.AwsEc2Spec.PublicIp {
 			ipAddr = instance.PublicIpAddress
 		}
-		port := upstream.Spec.GetPort()
+		port := upstream.AwsEc2Spec.GetPort()
 		if port == 0 {
 			port = defaultPort
 		}
-		ref := upstream.Upstream.Metadata.Ref()
+		ref := upstream.Base.Metadata.Ref()
 		endpoint := &v1.Endpoint{
 			Upstreams: []*core.ResourceRef{&ref},
 			Address:   aws.StringValue(ipAddr),
-			Port:      upstream.Spec.GetPort(),
+			Port:      upstream.AwsEc2Spec.GetPort(),
 			Metadata: core.Metadata{
 				Name:      generateName(ref, aws.StringValue(ipAddr)),
 				Namespace: c.writeNamespace,

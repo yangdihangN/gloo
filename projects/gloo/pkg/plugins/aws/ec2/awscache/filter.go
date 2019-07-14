@@ -13,7 +13,7 @@ import (
 )
 
 func (c *Cache) FilterEndpointsForUpstream(upstream *utils.InvertedEc2Upstream) ([]*ec2.Instance, error) {
-	credSpec := awslister.NewCredentialSpecFromEc2UpstreamSpec(upstream.Spec)
+	credSpec := awslister.NewCredentialSpecFromEc2UpstreamSpec(upstream.AwsEc2Spec)
 	credRes, ok := c.instanceGroups[credSpec.GetKey()]
 	if !ok {
 		// This should never happen
@@ -25,7 +25,7 @@ func (c *Cache) FilterEndpointsForUpstream(upstream *utils.InvertedEc2Upstream) 
 		candidateInstance := credRes.instances[i]
 		matchesAll := true
 	ScanFilters: // label so that we can break out of the for loop rather than the switch
-		for _, filter := range upstream.Spec.Filters {
+		for _, filter := range upstream.AwsEc2Spec.Filters {
 			switch filterSpec := filter.Spec.(type) {
 			case *glooec2.TagFilter_Key:
 				if _, ok := fm[awsKeyCase(filterSpec.Key)]; !ok {

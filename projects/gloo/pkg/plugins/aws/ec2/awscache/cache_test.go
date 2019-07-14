@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/solo-io/gloo/projects/gloo/pkg/api/v1/plugins/aws/glooec2/utils"
+
 	"github.com/solo-io/gloo/projects/gloo/pkg/plugins/aws/ec2/awslister"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -33,22 +35,26 @@ var _ = Describe("Batcher tests", func() {
 		secrets := v1.SecretList{secret1}
 		cb := newCache(context.TODO(), secrets)
 		region1 := "us-east-1"
-		upRef1 := core.ResourceRef{"up1", "default"}
-		upSpec1 := &glooec2.UpstreamSpec{
-			Region:    region1,
-			SecretRef: secretRef1,
-			Filters: []*glooec2.TagFilter{{
-				Spec: &glooec2.TagFilter_Key{
-					Key: "k1",
+		upstream := &v1.Upstream{
+			UpstreamSpec: &v1.UpstreamSpec{
+				UpstreamType: &v1.UpstreamSpec_AwsEc2{
+					AwsEc2: &glooec2.UpstreamSpec{
+						Region:    region1,
+						SecretRef: secretRef1,
+						Filters: []*glooec2.TagFilter{{
+							Spec: &glooec2.TagFilter_Key{
+								Key: "k1",
+							},
+						}},
+						PublicIp: false,
+						Port:     8080,
+					},
 				},
-			}},
-			PublicIp: false,
-			Port:     8080,
+			},
+			Status:   core.Status{},
+			Metadata: core.Metadata{},
 		}
-		up1 := &glooec2.UpstreamSpecRef{
-			Spec: upSpec1,
-			Ref:  upRef1,
-		}
+		up1 := utils.InvertEc2Upstream(upstream, nil)
 		err := cb.addUpstream(up1)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -89,7 +95,7 @@ var _ = Describe("Batcher tests", func() {
 	)
 	// In this table test, we use a fixed set of instances and secrets
 	// Each table entry describes what filters should be applied to the upstream and what instances should be returned
-	DescribeTable("batcher should assemble and disassemble batched results", func(input filterTestInput) {
+	DescribeTable("cache should assemble and disassemble credential-grouped results", func(input filterTestInput) {
 		secrets := v1.SecretList{secret1, secret2}
 		cb := newCache(context.TODO(), secrets)
 
@@ -236,35 +242,22 @@ var _ = Describe("Batcher tests", func() {
 			keyValueFilters: []string{"k5b:v5b"},
 			expected:        nil,
 		}))
+})
 
-	It("synopsis, basic check", func() {
-		upRef1 := testUpstream1.Metadata.Ref()
-		upSpec1 := testUpstream1.UpstreamSpec.UpstreamType.(*v1.UpstreamSpec_AwsEc2).AwsEc2
-		up1 := &glooec2.UpstreamSpecRef{
-			Spec: upSpec1,
-			Ref:  upRef1,
-		}
+var _ = Describe("constructor tests", func() {
+	It("basic construction from New", func() {
+		upstream := getAnUpstream()
+		instance := getAnInstance()
+		upstreams := utils.BuildInvertedUpstreamRefMap(v1.UpstreamList{upstream})
+		iUpstream := upstreams[upstream.Metadata.Ref()]
 
-		upstreams := make(map[core.ResourceRef]*glooec2.UpstreamSpecRef)
-		upstreams[upRef1] = up1
-		responses := getMockListerResponses()
+		responses := getMockListerResponses(iUpstream)
 		mockLister := newMockEc2InstanceLister(responses)
 		resp := make(mockListerResponses)
-		us1 := testUpstream1.UpstreamSpec.UpstreamType.(*v1.UpstreamSpec_AwsEc2).AwsEc2
-		sRef1 := testCredential1
-		cspec1 := awslister.NewCredentialSpec(sRef1, us1.Region, nil)
-		instances := []*ec2.Instance{{
-			PrivateIpAddress: aws.String(testPrivateIp1),
-			PublicIpAddress:  aws.String(testPublicIp1),
-			Tags: []*ec2.Tag{{
-				Key:   aws.String("k1"),
-				Value: aws.String("any old value"),
-			}},
-			VpcId: aws.String("id1"),
-		}}
+		cspec1 := awslister.NewCredentialSpecFromEc2UpstreamSpec(iUpstream.Spec)
+		instances := []*ec2.Instance{instance}
 		resp[cspec1.GetKey()] = instances
 		secretMeta1 := core.Metadata{Name: "secret1", Namespace: "namespace"}
-		//secretRef1 := secretMeta1.Ref()
 		secret1 := &v1.Secret{
 			Kind: &v1.Secret_Aws{
 				Aws: &v1.AwsSecret{
@@ -275,9 +268,9 @@ var _ = Describe("Batcher tests", func() {
 			Metadata: secretMeta1,
 		}
 		secrets := v1.SecretList{secret1}
-		cb, err := cacheFromNew(upstreams, mockLister, secrets)
+		cb, err := New(context.TODO(), secrets, upstreams, mockLister)
 		Expect(err).NotTo(HaveOccurred())
-		filteredInstances1, err := cb.FilterEndpointsForUpstream(up1)
+		filteredInstances1, err := cb.FilterEndpointsForUpstream(iUpstream)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(filteredInstances1).To(Equal(instances))
 
@@ -347,11 +340,7 @@ func generateCredSpec(region string, secretRef core.ResourceRef) *awslister.Cred
 }
 
 // creates an upstream with the filters and credentials defined by the input
-func generateUpstreamWithCredentials(name string, credSpec *awslister.CredentialSpec, input filterTestInput) *glooec2.UpstreamSpecRef {
-	upstreamRef := core.ResourceRef{
-		Name:      name,
-		Namespace: "default",
-	}
+func generateUpstreamWithCredentials(name string, credSpec *awslister.CredentialSpec, input filterTestInput) *utils.InvertedEc2Upstream {
 	upstreamSpec := &glooec2.UpstreamSpec{
 		Region:    credSpec.Region(),
 		SecretRef: credSpec.SecretRef(),
@@ -379,10 +368,20 @@ func generateUpstreamWithCredentials(name string, credSpec *awslister.Credential
 		}
 		upstreamSpec.Filters = append(upstreamSpec.Filters, f)
 	}
-	return &glooec2.UpstreamSpecRef{
-		Spec: upstreamSpec,
-		Ref:  upstreamRef,
+	upstream := &v1.Upstream{
+		UpstreamSpec: &v1.UpstreamSpec{
+			UpstreamType: &v1.UpstreamSpec_AwsEc2{
+				AwsEc2: upstreamSpec,
+			},
+		},
+		Status: core.Status{},
+		Metadata: core.Metadata{
+			Name:      name,
+			Namespace: "default",
+		},
 	}
+	inverted := utils.InvertEc2Upstream(upstream, nil)
+	return inverted
 }
 
 type mockListerResponses map[awslister.CredentialKey][]*ec2.Instance
@@ -405,12 +404,22 @@ func (m *mockEc2InstanceLister) ListForCredentials(ctx context.Context, cred *aw
 	return v, nil
 }
 
-func getMockListerResponses() mockListerResponses {
+func getMockListerResponses(iUpstream *utils.InvertedEc2Upstream) mockListerResponses {
 	resp := make(mockListerResponses)
-	us1 := testUpstream1.UpstreamSpec.UpstreamType.(*v1.UpstreamSpec_AwsEc2).AwsEc2
-	sRef1 := testCredential1
-	cspec1 := awslister.NewCredentialSpec(sRef1, us1.Region, nil)
-	resp[cspec1.GetKey()] = []*ec2.Instance{{
+	cspec1 := awslister.NewCredentialSpec(iUpstream.Spec.SecretRef, iUpstream.Spec.Region, nil)
+	resp[cspec1.GetKey()] = []*ec2.Instance{
+		getAnInstance(),
+	}
+	return resp
+}
+
+func getAnInstance() *ec2.Instance {
+	var (
+		testPrivateIp1 = "111-111-111-111"
+		testPublicIp1  = "222.222.222.222"
+	)
+
+	return &ec2.Instance{
 		PrivateIpAddress: aws.String(testPrivateIp1),
 		PublicIpAddress:  aws.String(testPublicIp1),
 		Tags: []*ec2.Tag{{
@@ -418,20 +427,20 @@ func getMockListerResponses() mockListerResponses {
 			Value: aws.String("any old value"),
 		}},
 		VpcId: aws.String("id1"),
-	}}
-	return resp
+	}
 }
-
-var (
-	testPort1      uint32 = 8080
-	testPrivateIp1        = "111-111-111-111"
-	testPublicIp1         = "222.222.222.222"
-	testUpstream1         = v1.Upstream{
+func getAnUpstream() *v1.Upstream {
+	var testPort1 uint32 = 8080
+	secretRef := core.ResourceRef{
+		Name:      "secret1",
+		Namespace: "namespace",
+	}
+	return &v1.Upstream{
 		UpstreamSpec: &v1.UpstreamSpec{
 			UpstreamType: &v1.UpstreamSpec_AwsEc2{
 				AwsEc2: &glooec2.UpstreamSpec{
 					Region:    "us-east-1",
-					SecretRef: testCredential1,
+					SecretRef: secretRef,
 					Filters: []*glooec2.TagFilter{{
 						Spec: &glooec2.TagFilter_Key{
 							Key: "k1",
@@ -446,40 +455,4 @@ var (
 			Namespace: "default",
 		},
 	}
-	testUpstream2 = v1.Upstream{
-		UpstreamSpec: &v1.UpstreamSpec{
-			UpstreamType: &v1.UpstreamSpec_AwsEc2{
-				AwsEc2: &glooec2.UpstreamSpec{
-					Region:    "us-east-1",
-					SecretRef: testCredential2,
-					Filters: []*glooec2.TagFilter{{
-						Spec: &glooec2.TagFilter_KvPair_{
-							KvPair: &glooec2.TagFilter_KvPair{
-								Key:   "k2",
-								Value: "v2",
-							},
-						},
-					}},
-					PublicIp: true,
-					Port:     testPort1,
-				},
-			}},
-		Metadata: core.Metadata{
-			Name:      "u2",
-			Namespace: "default",
-		},
-	}
-	testCredential1 = core.ResourceRef{
-		Name:      "secret1",
-		Namespace: "namespace",
-	}
-	testCredential2 = core.ResourceRef{
-		Name:      "secret2",
-		Namespace: "namespace",
-	}
-)
-
-func cacheFromNew(upstreams map[core.ResourceRef]*glooec2.UpstreamSpecRef, mockLister awslister.Ec2InstanceLister, secrets v1.SecretList) (*Cache, error) {
-
-	return New(context.TODO(), secrets, upstreams, mockLister)
 }

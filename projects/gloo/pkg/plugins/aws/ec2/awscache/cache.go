@@ -5,6 +5,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/solo-io/gloo/projects/gloo/pkg/api/v1/plugins/aws/glooec2/utils"
+
 	"github.com/solo-io/gloo/projects/gloo/pkg/plugins/aws/ec2/awslister"
 	"github.com/solo-io/go-utils/contextutils"
 	"go.uber.org/zap"
@@ -12,8 +14,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/service/ec2"
 	v1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
-	"github.com/solo-io/gloo/projects/gloo/pkg/api/v1/plugins/aws/glooec2"
-	"github.com/solo-io/solo-kit/pkg/api/v1/resources/core"
 )
 
 // a credential batch stores the credentialMap available to a given credential spec
@@ -29,14 +29,14 @@ type Cache struct {
 
 func NewCredentialInstanceGroup() *CredentialInstanceGroup {
 	return &CredentialInstanceGroup{
-		upstreams: make(map[core.ResourceRef]*glooec2.UpstreamSpecRef),
+		upstreams: make(utils.InvertedEc2UpstreamRefMap),
 	}
 }
 
 // CredentialInstanceGroup represents the instances available to a given credentialSpec
 type CredentialInstanceGroup struct {
 	// all upstreams having the same credential spec (secret and aws region) will be listed here
-	upstreams map[core.ResourceRef]*glooec2.UpstreamSpecRef
+	upstreams utils.InvertedEc2UpstreamRefMap
 
 	// instances contains all of the EC2 instances available for the given credential spec
 	instances []*ec2.Instance
@@ -52,7 +52,7 @@ type CredentialInstanceGroup struct {
 // filter maps are generated from tag lists, the keys are the tag keys, the values are the tag values
 type filterMap map[string]string
 
-func New(ctx context.Context, secrets v1.SecretList, upstreams map[core.ResourceRef]*glooec2.UpstreamSpecRef, ec2InstanceLister awslister.Ec2InstanceLister) (*Cache, error) {
+func New(ctx context.Context, secrets v1.SecretList, upstreams utils.InvertedEc2UpstreamRefMap, ec2InstanceLister awslister.Ec2InstanceLister) (*Cache, error) {
 	m := newCache(ctx, secrets)
 	if err := m.build(upstreams, ec2InstanceLister); err != nil {
 		return nil, err
@@ -71,7 +71,7 @@ func newCache(ctx context.Context, secrets v1.SecretList) *Cache {
 	return m
 }
 
-func (c *Cache) build(upstreams map[core.ResourceRef]*glooec2.UpstreamSpecRef, ec2InstanceLister awslister.Ec2InstanceLister) error {
+func (c *Cache) build(upstreams utils.InvertedEc2UpstreamRefMap, ec2InstanceLister awslister.Ec2InstanceLister) error {
 	for _, upstream := range upstreams {
 		if err := c.addUpstream(upstream); err != nil {
 			return err
@@ -114,17 +114,17 @@ func (c *Cache) build(upstreams map[core.ResourceRef]*glooec2.UpstreamSpecRef, e
 	}
 }
 
-func (c *Cache) addUpstream(upstream *glooec2.UpstreamSpecRef) error {
+func (c *Cache) addUpstream(upstream *utils.InvertedEc2Upstream) error {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
-	credSpec := awslister.CredentialSpecFromUpstreamSpec(upstream.Spec)
+	credSpec := awslister.NewCredentialSpecFromEc2UpstreamSpec(upstream.Spec)
 	key := credSpec.GetKey()
 
 	if v, ok := c.instanceGroups[key]; ok {
-		v.upstreams[upstream.Ref] = upstream
+		v.upstreams[upstream.Upstream.Metadata.Ref()] = upstream
 	} else {
 		cr := NewCredentialInstanceGroup()
-		cr.upstreams[upstream.Ref] = upstream
+		cr.upstreams[upstream.Upstream.Metadata.Ref()] = upstream
 		c.instanceGroups[key] = cr
 		c.credentialSpecs[key] = credSpec
 	}

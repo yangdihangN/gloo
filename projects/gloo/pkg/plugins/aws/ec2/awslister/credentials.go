@@ -51,12 +51,8 @@ func (cs *CredentialSpec) Arns() []string {
 	return cs.roleArns
 }
 
-func CredentialSpecFromUpstreamSpec(ec2Spec *glooec2.UpstreamSpec) *CredentialSpec {
-	return &CredentialSpec{
-		secretRef: ec2Spec.SecretRef,
-		region:    ec2Spec.Region,
-		roleArns:  ec2Spec.RoleArns,
-	}
+func NewCredentialSpecFromEc2UpstreamSpec(spec *glooec2.UpstreamSpec) *CredentialSpec {
+	return NewCredentialSpec(spec.SecretRef, spec.Region, spec.RoleArns)
 }
 
 // Since "==" is not defined for slices, slices (in particular, the roleArns slice) cannot be used as keys for go maps.

@@ -3,6 +3,8 @@ package awscache
 import (
 	"strings"
 
+	"github.com/solo-io/gloo/projects/gloo/pkg/api/v1/plugins/aws/glooec2/utils"
+
 	"github.com/solo-io/gloo/projects/gloo/pkg/plugins/aws/ec2/awslister"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -10,8 +12,8 @@ import (
 	"github.com/solo-io/gloo/projects/gloo/pkg/api/v1/plugins/aws/glooec2"
 )
 
-func (c *Cache) FilterEndpointsForUpstream(upstream *glooec2.UpstreamSpecRef) ([]*ec2.Instance, error) {
-	credSpec := awslister.CredentialSpecFromUpstreamSpec(upstream.Spec)
+func (c *Cache) FilterEndpointsForUpstream(upstream *utils.InvertedEc2Upstream) ([]*ec2.Instance, error) {
+	credSpec := awslister.NewCredentialSpecFromEc2UpstreamSpec(upstream.Spec)
 	credRes, ok := c.instanceGroups[credSpec.GetKey()]
 	if !ok {
 		// This should never happen

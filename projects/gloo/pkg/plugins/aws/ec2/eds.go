@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/solo-io/gloo/projects/gloo/pkg/api/v1/plugins/aws/glooec2/utils"
+
 	"github.com/solo-io/go-utils/kubeutils"
 
 	"github.com/solo-io/gloo/projects/gloo/pkg/plugins/aws/ec2/awslister"
@@ -20,7 +22,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	v1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
-	"github.com/solo-io/gloo/projects/gloo/pkg/api/v1/plugins/aws/glooec2"
 	"github.com/solo-io/solo-kit/pkg/api/v1/clients"
 	"github.com/solo-io/solo-kit/pkg/api/v1/resources/core"
 )
@@ -33,7 +34,7 @@ func (p *plugin) WatchEndpoints(writeNamespace string, upstreams v1.UpstreamList
 }
 
 type edsWatcher struct {
-	upstreams         map[core.ResourceRef]*glooec2.UpstreamSpecRef
+	upstreams         utils.InvertedEc2UpstreamRefMap
 	watchContext      context.Context
 	secretClient      v1.SecretClient
 	refreshRate       time.Duration
@@ -42,21 +43,8 @@ type edsWatcher struct {
 }
 
 func newEndpointsWatcher(watchCtx context.Context, writeNamespace string, upstreams v1.UpstreamList, secretClient v1.SecretClient, parentRefreshRate time.Duration) *edsWatcher {
-	upstreamSpecs := make(map[core.ResourceRef]*glooec2.UpstreamSpecRef)
-	for _, us := range upstreams {
-		ec2Upstream, ok := us.UpstreamSpec.UpstreamType.(*v1.UpstreamSpec_AwsEc2)
-		// only care about ec2 upstreams
-		if !ok {
-			continue
-		}
-		ref := us.Metadata.Ref()
-		upstreamSpecs[ref] = &glooec2.UpstreamSpecRef{
-			Spec: ec2Upstream.AwsEc2,
-			Ref:  ref,
-		}
-	}
 	return &edsWatcher{
-		upstreams:         upstreamSpecs,
+		upstreams:         utils.BuildInvertedUpstreamRefMap(upstreams),
 		watchContext:      watchCtx,
 		secretClient:      secretClient,
 		refreshRate:       getRefreshRate(parentRefreshRate),
@@ -96,13 +84,13 @@ func (c *edsWatcher) poll() (<-chan v1.EndpointList, <-chan error, error) {
 		}
 		// apply filters to the instance batches
 		var allEndpoints v1.EndpointList
-		for _, upstreamSpecRef := range c.upstreams {
-			instancesForUpstream, err := store.FilterEndpointsForUpstream(upstreamSpecRef)
+		for _, upstream := range c.upstreams {
+			instancesForUpstream, err := store.FilterEndpointsForUpstream(upstream)
 			if err != nil {
 				errs <- err
 				return
 			}
-			endpointsForUpstream := c.convertInstancesToEndpoints(upstreamSpecRef, instancesForUpstream)
+			endpointsForUpstream := c.convertInstancesToEndpoints(upstream, instancesForUpstream)
 			allEndpoints = append(allEndpoints, endpointsForUpstream...)
 		}
 
@@ -143,7 +131,7 @@ func (c *edsWatcher) buildCache(secrets v1.SecretList) (*awscache.Cache, error) 
 
 const defaultPort = 80
 
-func (c *edsWatcher) convertInstancesToEndpoints(upstream *glooec2.UpstreamSpecRef, ec2InstancesForUpstream []*ec2.Instance) v1.EndpointList {
+func (c *edsWatcher) convertInstancesToEndpoints(upstream *utils.InvertedEc2Upstream, ec2InstancesForUpstream []*ec2.Instance) v1.EndpointList {
 	var list v1.EndpointList
 	for _, instance := range ec2InstancesForUpstream {
 		ipAddr := instance.PrivateIpAddress
@@ -154,12 +142,13 @@ func (c *edsWatcher) convertInstancesToEndpoints(upstream *glooec2.UpstreamSpecR
 		if port == 0 {
 			port = defaultPort
 		}
+		ref := upstream.Upstream.Metadata.Ref()
 		endpoint := &v1.Endpoint{
-			Upstreams: []*core.ResourceRef{&upstream.Ref},
+			Upstreams: []*core.ResourceRef{&ref},
 			Address:   aws.StringValue(ipAddr),
 			Port:      upstream.Spec.GetPort(),
 			Metadata: core.Metadata{
-				Name:      generateName(upstream.Ref, aws.StringValue(ipAddr)),
+				Name:      generateName(ref, aws.StringValue(ipAddr)),
 				Namespace: c.writeNamespace,
 			},
 		}

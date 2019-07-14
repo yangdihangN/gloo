@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/solo-io/gloo/projects/gloo/pkg/api/v1/plugins/aws/glooec2/utils"
+
 	"github.com/solo-io/gloo/projects/gloo/pkg/plugins/aws/ec2/awslister"
 
 	"k8s.io/client-go/rest"
@@ -114,20 +116,8 @@ func testEndpointsWatcher(
 	parentRefreshRate time.Duration,
 	responses mockListerResponses,
 ) *edsWatcher {
-	upstreamSpecs := make(map[core.ResourceRef]*glooec2.UpstreamSpecRef)
-	for _, us := range upstreams {
-		ec2Upstream, ok := us.UpstreamSpec.UpstreamType.(*v1.UpstreamSpec_AwsEc2)
-		if !ok {
-			continue
-		}
-		ref := us.Metadata.Ref()
-		upstreamSpecs[ref] = &glooec2.UpstreamSpecRef{
-			Spec: ec2Upstream.AwsEc2,
-			Ref:  ref,
-		}
-	}
 	return &edsWatcher{
-		upstreams:         upstreamSpecs,
+		upstreams:         utils.BuildInvertedUpstreamRefMap(upstreams),
 		watchContext:      watchCtx,
 		secretClient:      secretClient,
 		refreshRate:       getRefreshRate(parentRefreshRate),

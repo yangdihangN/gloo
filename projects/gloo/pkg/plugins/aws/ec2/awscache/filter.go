@@ -3,8 +3,6 @@ package awscache
 import (
 	"strings"
 
-	"github.com/solo-io/gloo/projects/gloo/pkg/api/v1/plugins/aws/glooec2/utils"
-
 	"github.com/solo-io/gloo/projects/gloo/pkg/plugins/aws/ec2/awslister"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -12,8 +10,8 @@ import (
 	"github.com/solo-io/gloo/projects/gloo/pkg/api/v1/plugins/aws/glooec2"
 )
 
-func (c *Cache) FilterEndpointsForUpstream(upstream *utils.InvertedEc2Upstream) ([]*ec2.Instance, error) {
-	credSpec := awslister.NewCredentialSpecFromEc2UpstreamSpec(upstream.AwsEc2Spec)
+func (c *Cache) FilterEndpointsForUpstream(upstreamSpec *glooec2.UpstreamSpec) ([]*ec2.Instance, error) {
+	credSpec := awslister.NewCredentialSpecFromEc2UpstreamSpec(upstreamSpec)
 	credRes, ok := c.instanceGroups[credSpec.GetKey()]
 	if !ok {
 		// This should never happen
@@ -25,7 +23,7 @@ func (c *Cache) FilterEndpointsForUpstream(upstream *utils.InvertedEc2Upstream) 
 		candidateInstance := credRes.instances[i]
 		matchesAll := true
 	ScanFilters: // label so that we can break out of the for loop rather than the switch
-		for _, filter := range upstream.AwsEc2Spec.Filters {
+		for _, filter := range upstreamSpec.Filters {
 			switch filterSpec := filter.Spec.(type) {
 			case *glooec2.TagFilter_Key:
 				if _, ok := fm[awsKeyCase(filterSpec.Key)]; !ok {

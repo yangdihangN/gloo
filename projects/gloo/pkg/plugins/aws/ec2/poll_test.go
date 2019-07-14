@@ -162,7 +162,12 @@ func getSecretClient(ctx context.Context) v1.SecretClient {
 func getMockListerResponses() mockListerResponses {
 	resp := make(mockListerResponses)
 	region1 := "us-east-1"
-	cred1 := awslister.NewCredentialSpec(testSecretRef1, region1, nil)
+	ec2Upstream1 := &glooec2.UpstreamSpec{
+		Region:    region1,
+		SecretRef: testSecretRef1,
+		RoleArns:  nil,
+	}
+	cred1 := awslister.NewCredentialSpecFromEc2UpstreamSpec(ec2Upstream1)
 	resp[cred1.GetKey()] = []*ec2.Instance{{
 		PrivateIpAddress: aws.String(testPrivateIp1),
 		PublicIpAddress:  aws.String(testPublicIp1),
@@ -172,7 +177,12 @@ func getMockListerResponses() mockListerResponses {
 		}},
 		VpcId: aws.String("id1"),
 	}}
-	cred2 := awslister.NewCredentialSpec(testSecretRef2, region1, nil)
+	ec2Upstream2 := &glooec2.UpstreamSpec{
+		Region:    region1,
+		SecretRef: testSecretRef2,
+		RoleArns:  nil,
+	}
+	cred2 := awslister.NewCredentialSpecFromEc2UpstreamSpec(ec2Upstream2)
 	resp[cred2.GetKey()] = []*ec2.Instance{{
 		PrivateIpAddress: aws.String(testPrivateIp1),
 		PublicIpAddress:  aws.String(testPublicIp1),

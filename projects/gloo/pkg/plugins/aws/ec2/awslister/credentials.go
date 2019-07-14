@@ -21,15 +21,6 @@ type CredentialSpec struct {
 	roleArns []string
 }
 
-func NewCredentialSpec(secretRef core.ResourceRef, region string, roleArns []string) *CredentialSpec {
-	sort.Strings(roleArns)
-	return &CredentialSpec{
-		secretRef: secretRef,
-		region:    region,
-		roleArns:  roleArns,
-	}
-}
-
 // https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html#arn-syntax-ec2
 const arnSegmentDelimiter = ":"
 
@@ -52,7 +43,16 @@ func (cs *CredentialSpec) Arns() []string {
 }
 
 func NewCredentialSpecFromEc2UpstreamSpec(spec *glooec2.UpstreamSpec) *CredentialSpec {
-	return NewCredentialSpec(spec.SecretRef, spec.Region, spec.RoleArns)
+	var roleArns []string
+	for _, arn := range spec.RoleArns {
+		roleArns = append(roleArns, arn)
+	}
+	sort.Strings(roleArns)
+	return &CredentialSpec{
+		secretRef: spec.SecretRef,
+		region:    spec.Region,
+		roleArns:  roleArns,
+	}
 }
 
 // Since "==" is not defined for slices, slices (in particular, the roleArns slice) cannot be used as keys for go maps.

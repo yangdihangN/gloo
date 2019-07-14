@@ -85,7 +85,7 @@ func (c *edsWatcher) poll() (<-chan v1.EndpointList, <-chan error, error) {
 		// apply filters to the instance batches
 		var allEndpoints v1.EndpointList
 		for _, upstream := range c.upstreams {
-			instancesForUpstream, err := store.FilterEndpointsForUpstream(upstream)
+			instancesForUpstream, err := store.FilterEndpointsForUpstream(upstream.AwsEc2Spec)
 			if err != nil {
 				errs <- err
 				return

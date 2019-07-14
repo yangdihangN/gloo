@@ -58,7 +58,7 @@ var _ = Describe("Batcher tests", func() {
 		err := cb.addUpstream(up1)
 		Expect(err).NotTo(HaveOccurred())
 
-		credSpec1 := awslister.NewCredentialSpec(secretRef1, region1, nil)
+		credSpec1 := awslister.NewCredentialSpecFromEc2UpstreamSpec(up1.AwsEc2Spec)
 		instances := []*ec2.Instance{{
 			Tags: []*ec2.Tag{{
 				Key:   aws.String("k1"),
@@ -66,16 +66,18 @@ var _ = Describe("Batcher tests", func() {
 			}},
 		}}
 		Expect(cb.addInstances(credSpec1, instances)).NotTo(HaveOccurred())
-		filteredInstances1, err := cb.FilterEndpointsForUpstream(up1)
+		filteredInstances1, err := cb.FilterEndpointsForUpstream(up1.AwsEc2Spec)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(filteredInstances1).To(Equal(instances))
 
 	})
 
-	// Represent 3 credential specification cases:
+	// Represent 5 credential specification cases:
 	// A: secret has full access to credentialMap in it region
 	// B: secret has limited access to credentialMap in it region
-	// C: same as A, different region
+	// C: same as B, different region
+	// D: same as A, different role arns
+	// E: same as A, different no role arns
 	var (
 		region1             = "us-east-1"
 		region2             = "us-east-2"
@@ -84,40 +86,46 @@ var _ = Describe("Batcher tests", func() {
 		instance3           = generateTestInstance("3") // region1
 		instance4           = generateTestInstance("4") // region2
 		instance5           = generateTestInstance("5") // region2
+		instance6           = generateTestInstance("6") // region1, different role access
 		secret1, secretRef1 = generateTestSecrets("1")
 		secret2, secretRef2 = generateTestSecrets("2")
-		credSpecA           = generateCredSpec(region1, secretRef1)
-		credSpecB           = generateCredSpec(region1, secretRef2)
-		credSpecC           = generateCredSpec(region2, secretRef2)
+		arns                = []string{"role-a", "role-b"}
+		otherArns           = []string{"zero-access-role"}
+		noArns              = []string{}
+		upA, credSpecA      = generateUpstreamWithCredentials("A", region1, secretRef1, arns, filterTestInput{})
+		upB, credSpecB      = generateUpstreamWithCredentials("B", region1, secretRef2, arns, filterTestInput{})
+		upC, credSpecC      = generateUpstreamWithCredentials("C", region2, secretRef2, arns, filterTestInput{})
+		upD, credSpecD      = generateUpstreamWithCredentials("D", region1, secretRef1, otherArns, filterTestInput{})
+		upE, credSpecE      = generateUpstreamWithCredentials("E", region1, secretRef1, noArns, filterTestInput{})
 		credInstancesA      = []*ec2.Instance{instance1, instance2, instance3}
 		credInstancesB      = []*ec2.Instance{instance1, instance2}
 		credInstancesC      = []*ec2.Instance{instance4, instance5}
+		credInstancesD      = []*ec2.Instance{instance6}
+		credInstancesE      = []*ec2.Instance{}
 	)
 	// In this table test, we use a fixed set of instances and secrets
 	// Each table entry describes what filters should be applied to the upstream and what instances should be returned
 	DescribeTable("cache should assemble and disassemble credential-grouped results", func(input filterTestInput) {
+
+		// build the upstream for the current test case
+		upTest, _ := generateUpstreamWithCredentials("Test", input.credentialSpec.Region(), input.credentialSpec.SecretRef(), input.credentialSpec.Arns(), input)
+
+		ius := utils.BuildInvertedUpstreamRefMap(v1.UpstreamList{upA, upB, upC, upD, upE, upTest})
+		responses := getMockListerResponses(ius)
+		mockLister := newMockEc2InstanceLister(responses)
 		secrets := v1.SecretList{secret1, secret2}
-		cb := newCache(context.TODO(), secrets)
+		cb, err := New(context.TODO(), secrets, ius, mockLister)
+		Expect(err).NotTo(HaveOccurred())
 
-		// build the dummy upstreams
-		upA := generateUpstreamWithCredentials("A", credSpecA, filterTestInput{})
-		upB := generateUpstreamWithCredentials("B", credSpecB, filterTestInput{})
-		upC := generateUpstreamWithCredentials("C", credSpecC, filterTestInput{})
-		// build the upstream that we care about
-		upTest := generateUpstreamWithCredentials("Test", input.credentialSpec, input)
-		// prime the map with the upstreams
-		Expect(cb.addUpstream(upA)).NotTo(HaveOccurred())
-		Expect(cb.addUpstream(upB)).NotTo(HaveOccurred())
-		Expect(cb.addUpstream(upC)).NotTo(HaveOccurred())
-		Expect(cb.addUpstream(upTest)).NotTo(HaveOccurred())
-
-		// "query" the api for each upstream
+		// configure the cache mapping according to the test design
 		Expect(cb.addInstances(credSpecA, credInstancesA)).NotTo(HaveOccurred())
 		Expect(cb.addInstances(credSpecB, credInstancesB)).NotTo(HaveOccurred())
 		Expect(cb.addInstances(credSpecC, credInstancesC)).NotTo(HaveOccurred())
+		Expect(cb.addInstances(credSpecD, credInstancesD)).NotTo(HaveOccurred())
+		Expect(cb.addInstances(credSpecE, credInstancesE)).NotTo(HaveOccurred())
 
 		// core test: apply the filter, assert expectations
-		filteredInstances, err := cb.FilterEndpointsForUpstream(upTest)
+		filteredInstances, err := cb.FilterEndpointsForUpstream(ius[upTest.Metadata.Ref()].AwsEc2Spec)
 		Expect(err).NotTo(HaveOccurred())
 		//Expect(len(filteredInstances)).To(Equal(len(input.expected)))
 		var filteredIds []string
@@ -241,6 +249,18 @@ var _ = Describe("Batcher tests", func() {
 			keyFilters:      nil,
 			keyValueFilters: []string{"k5b:v5b"},
 			expected:        nil,
+		}),
+		Entry("upstream with other instance access sees other instances", filterTestInput{
+			credentialSpec:  credSpecD,
+			keyFilters:      nil,
+			keyValueFilters: nil,
+			expected:        []*ec2.Instance{instance6},
+		}),
+		Entry("upstream with no access sees no instances", filterTestInput{
+			credentialSpec:  credSpecE,
+			keyFilters:      nil,
+			keyValueFilters: nil,
+			expected:        nil,
 		}))
 })
 
@@ -251,7 +271,7 @@ var _ = Describe("constructor tests", func() {
 		upstreams := utils.BuildInvertedUpstreamRefMap(v1.UpstreamList{upstream})
 		iUpstream := upstreams[upstream.Metadata.Ref()]
 
-		responses := getMockListerResponses(iUpstream)
+		responses := getMockListerResponses(upstreams)
 		mockLister := newMockEc2InstanceLister(responses)
 		resp := make(mockListerResponses)
 		cspec1 := awslister.NewCredentialSpecFromEc2UpstreamSpec(iUpstream.AwsEc2Spec)
@@ -270,7 +290,7 @@ var _ = Describe("constructor tests", func() {
 		secrets := v1.SecretList{secret1}
 		cb, err := New(context.TODO(), secrets, upstreams, mockLister)
 		Expect(err).NotTo(HaveOccurred())
-		filteredInstances1, err := cb.FilterEndpointsForUpstream(iUpstream)
+		filteredInstances1, err := cb.FilterEndpointsForUpstream(iUpstream.AwsEc2Spec)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(filteredInstances1).To(Equal(instances))
 
@@ -334,17 +354,14 @@ func generateTestSecrets(seed string) (*v1.Secret, core.ResourceRef) {
 	return secret, secretRef
 }
 
-func generateCredSpec(region string, secretRef core.ResourceRef) *awslister.CredentialSpec {
-	return awslister.NewCredentialSpec(secretRef, region, nil)
-
-}
-
 // creates an upstream with the filters and credentials defined by the input
-func generateUpstreamWithCredentials(name string, credSpec *awslister.CredentialSpec, input filterTestInput) *utils.InvertedEc2Upstream {
+func generateUpstreamWithCredentials(name string, region string, secretRef core.ResourceRef, arns []string, input filterTestInput) (*v1.Upstream, *awslister.CredentialSpec) {
 	upstreamSpec := &glooec2.UpstreamSpec{
-		Region:    credSpec.Region(),
-		SecretRef: credSpec.SecretRef(),
+		Region:    region,
+		SecretRef: secretRef,
+		RoleArns:  arns,
 	}
+	cred := awslister.NewCredentialSpecFromEc2UpstreamSpec(upstreamSpec)
 	for _, key := range input.keyFilters {
 		f := &glooec2.TagFilter{
 			Spec: &glooec2.TagFilter_Key{
@@ -380,8 +397,7 @@ func generateUpstreamWithCredentials(name string, credSpec *awslister.Credential
 			Namespace: "default",
 		},
 	}
-	inverted := invertKnownEc2Upstream(upstream)
-	return inverted
+	return upstream, cred
 }
 
 type mockListerResponses map[awslister.CredentialKey][]*ec2.Instance
@@ -404,11 +420,13 @@ func (m *mockEc2InstanceLister) ListForCredentials(ctx context.Context, cred *aw
 	return v, nil
 }
 
-func getMockListerResponses(iUpstream *utils.InvertedEc2Upstream) mockListerResponses {
+func getMockListerResponses(iUpstreams utils.InvertedEc2UpstreamRefMap) mockListerResponses {
 	resp := make(mockListerResponses)
-	cspec1 := awslister.NewCredentialSpec(iUpstream.AwsEc2Spec.SecretRef, iUpstream.AwsEc2Spec.Region, nil)
-	resp[cspec1.GetKey()] = []*ec2.Instance{
-		getAnInstance(),
+	for _, upstream := range iUpstreams {
+		cred := awslister.NewCredentialSpecFromEc2UpstreamSpec(upstream.AwsEc2Spec)
+		resp[cred.GetKey()] = []*ec2.Instance{
+			getAnInstance(),
+		}
 	}
 	return resp
 }

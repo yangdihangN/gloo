@@ -48,7 +48,7 @@ var globalRegistry = func(opts bootstrap.Opts, pluginExtensions ...plugins.Plugi
 		cors.NewPlugin(),
 		linkerd.NewPlugin(),
 		stats.NewPlugin(),
-		ec2.NewPlugin(opts.Secrets),
+		ec2.NewPlugin(opts.Secrets, opts.Upstreams),
 	)
 	if opts.KubeClient != nil {
 		reg.plugins = append(reg.plugins, kubernetes.NewPlugin(opts.KubeClient))

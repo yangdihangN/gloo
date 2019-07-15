@@ -23,7 +23,7 @@ func NewEc2InstanceLister() *ec2InstanceLister {
 var _ awslister.Ec2InstanceLister = &ec2InstanceLister{}
 
 func (c *ec2InstanceLister) ListForCredentials(ctx context.Context, cred *awslister.CredentialSpec, secrets v1.SecretList) ([]*ec2.Instance, error) {
-	svc, err := getEc2Client(cred, secrets)
+	svc, err := GetEc2Client(cred, secrets)
 	if err != nil {
 		return nil, GetClientError(err)
 	}
@@ -33,7 +33,7 @@ func (c *ec2InstanceLister) ListForCredentials(ctx context.Context, cred *awslis
 		return nil, DescribeInstancesError(err)
 	}
 	contextutils.LoggerFrom(ctx).Debugw("ec2Upstream result", zap.Any("value", result))
-	return getInstancesFromDescription(result), nil
+	return GetInstancesFromDescription(result), nil
 }
 
 var (

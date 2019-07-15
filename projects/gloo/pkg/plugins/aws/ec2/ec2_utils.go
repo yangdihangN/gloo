@@ -17,14 +17,6 @@ import (
 	aws2 "github.com/solo-io/gloo/projects/gloo/pkg/utils/aws"
 )
 
-func GetEc2Session(ec2Upstream *glooec2.UpstreamSpec, secrets v1.SecretList) (*session.Session, error) {
-	return aws2.GetAwsSession(
-		ec2Upstream.SecretRef,
-		secrets,
-		&aws.Config{
-			Region: aws.String(ec2Upstream.Region),
-		})
-}
 func getEc2SessionForCredentials(awsRegion string, secretRef core.ResourceRef, secrets v1.SecretList) (*session.Session, error) {
 	return aws2.GetAwsSession(
 		secretRef,
@@ -34,7 +26,7 @@ func getEc2SessionForCredentials(awsRegion string, secretRef core.ResourceRef, s
 		})
 }
 
-func getEc2Client(cred *awslister.CredentialSpec, secrets v1.SecretList) (*ec2.EC2, error) {
+func GetEc2Client(cred *awslister.CredentialSpec, secrets v1.SecretList) (*ec2.EC2, error) {
 	sess, err := getEc2SessionForCredentials(cred.Region(), cred.SecretRef(), secrets)
 	if err != nil {
 		return nil, err
@@ -48,7 +40,7 @@ func getEc2Client(cred *awslister.CredentialSpec, secrets v1.SecretList) (*ec2.E
 	return svc, nil
 }
 
-func getInstancesFromDescription(desc *ec2.DescribeInstancesOutput) []*ec2.Instance {
+func GetInstancesFromDescription(desc *ec2.DescribeInstancesOutput) []*ec2.Instance {
 	var instances []*ec2.Instance
 	for _, reservation := range desc.Reservations {
 		for _, instance := range reservation.Instances {

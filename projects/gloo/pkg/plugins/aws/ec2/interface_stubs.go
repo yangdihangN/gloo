@@ -24,9 +24,9 @@ func (p *plugin) DiscoverUpstreams(watchNamespaces []string, writeNamespace stri
 		// copy to localize the value for the goroutine
 		namespaceCopy := namespace
 		eg.Go(func() error {
-			upstreamsList, errChan, err := p.upstreamClient.Watch(namespace, clients.WatchOpts{Ctx: egCtx})
+			upstreamsList, errChan, err := p.upstreamClient.Watch(namespaceCopy, clients.WatchOpts{Ctx: egCtx})
 			if err != nil {
-				return errors.Wrapf(err, "unable to start watch in namespace %v", namespace)
+				return errors.Wrapf(err, "unable to start watch in namespace %v", namespaceCopy)
 			}
 			for {
 				select {

@@ -15,7 +15,7 @@ type InvertedEc2Upstream struct {
 
 type InvertedEc2UpstreamRefMap map[core.ResourceRef]*InvertedEc2Upstream
 
-// InvertKnownEc2Upstream is a helper for working with EC2 Upstreams.
+// BuildInvertedUpstreamRefMap is a helper for working with EC2 Upstreams.
 // it ignores any upstreams that are not EC2 Upstreams
 func BuildInvertedUpstreamRefMap(upstreams v1.UpstreamList) InvertedEc2UpstreamRefMap {
 	upstreamSpecs := make(InvertedEc2UpstreamRefMap)
@@ -31,7 +31,6 @@ func BuildInvertedUpstreamRefMap(upstreams v1.UpstreamList) InvertedEc2UpstreamR
 	return upstreamSpecs
 }
 
-// this function is is intentionally
 func invertEc2Upstream(upstream *v1.Upstream) (*InvertedEc2Upstream, bool) {
 	spec, ok := upstream.UpstreamSpec.UpstreamType.(*v1.UpstreamSpec_AwsEc2)
 	if !ok {

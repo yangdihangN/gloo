@@ -131,13 +131,8 @@ var _ = Describe("AWS EC2 Plugin utils test", func() {
 		region := "us-east-1"
 		secretRef := secret.Metadata.Ref()
 		var filters []*glooec2.TagFilter
-		mockUpstream := &gloov1.Upstream{
+		withRole := &gloov1.Upstream{
 			UpstreamSpec: &gloov1.UpstreamSpec{
-				SslConfig:          nil,
-				CircuitBreakers:    nil,
-				LoadBalancerConfig: nil,
-				ConnectionConfig:   nil,
-				UseHttp2:           false,
 				UpstreamType: &gloov1.UpstreamSpec_AwsEc2{
 					AwsEc2: &glooec2.UpstreamSpec{
 						Region:    region,
@@ -149,16 +144,37 @@ var _ = Describe("AWS EC2 Plugin utils test", func() {
 					},
 				},
 			},
-			Status:   core.Status{},
-			Metadata: core.Metadata{},
+			Metadata: core.Metadata{Name: "with-role", Namespace: "default"},
 		}
-		upMap := ec2utils.BuildInvertedUpstreamRefMap(gloov1.UpstreamList{mockUpstream})
-		iUp := upMap[mockUpstream.Metadata.Ref()]
-		svc, err := ec2.GetEc2Client(awslister.NewCredentialSpecFromEc2UpstreamSpec(iUp.AwsEc2Spec), gloov1.SecretList{secret})
+		withOutRole := &gloov1.Upstream{
+			UpstreamSpec: &gloov1.UpstreamSpec{
+				UpstreamType: &gloov1.UpstreamSpec_AwsEc2{
+					AwsEc2: &glooec2.UpstreamSpec{
+						Region:    region,
+						SecretRef: secretRef,
+						Filters:   filters,
+						PublicIp:  false,
+						Port:      80,
+					},
+				},
+			},
+			Metadata: core.Metadata{Name: "without-role", Namespace: "default"},
+		}
+		iUpMap := ec2utils.BuildInvertedUpstreamRefMap(gloov1.UpstreamList{withRole, withOutRole})
+
+		By("should error when no role provided")
+		iUpWithOutRole := iUpMap[withOutRole.Metadata.Ref()]
+		svcWithout, err := ec2.GetEc2Client(awslister.NewCredentialSpecFromEc2UpstreamSpec(iUpWithOutRole.AwsEc2Spec), gloov1.SecretList{secret})
+		Expect(err).NotTo(HaveOccurred())
+		_, err = svcWithout.DescribeInstances(&ec2api.DescribeInstancesInput{})
+		Expect(err).To(HaveOccurred())
+
+		By("should succeed when role provided")
+		iUpWithRole := iUpMap[withRole.Metadata.Ref()]
+		svc, err := ec2.GetEc2Client(awslister.NewCredentialSpecFromEc2UpstreamSpec(iUpWithRole.AwsEc2Spec), gloov1.SecretList{secret})
 		Expect(err).NotTo(HaveOccurred())
 		result, err := svc.DescribeInstances(&ec2api.DescribeInstancesInput{})
 		Expect(err).NotTo(HaveOccurred())
-		fmt.Println(result)
 		instances := ec2.GetInstancesFromDescription(result)
 		// quick and dirty way to verify that we got some results
 		// TODO(mitchdraft) validate output more thoroughly

@@ -21,18 +21,21 @@ func (p *plugin) DiscoverUpstreams(watchNamespaces []string, writeNamespace stri
 
 	eg, egCtx := errgroup.WithContext(opts.Ctx)
 	for _, namespace := range watchNamespaces {
-		// copy to localize the value for the goroutine
-		namespaceCopy := namespace
+		// shadow to localize the value for the goroutine
+		namespace := namespace
 		eg.Go(func() error {
-			upstreamsList, errChan, err := p.upstreamClient.Watch(namespaceCopy, clients.WatchOpts{Ctx: egCtx})
+			upstreamsList, errChan, err := p.upstreamClient.Watch(namespace, clients.WatchOpts{Ctx: egCtx})
 			if err != nil {
-				return errors.Wrapf(err, "unable to start watch in namespace %v", namespaceCopy)
+				return errors.Wrapf(err, "unable to start watch in namespace %v", namespace)
 			}
 			for {
 				select {
 				// any time an EC2 upstream changes we need to send all EC2 upstreams on the watch channel
 				case list := <-upstreamsList:
-					allUpstreams <- p.updateDiscoveries(watchNamespaceCount, list, namespaceCopy)
+					upstreams, initialCensusComplete := p.updateDiscoveries(watchNamespaceCount, list, namespace)
+					if initialCensusComplete {
+						allUpstreams <- upstreams
+					}
 				case err := <-errChan:
 					if err != nil {
 						return err
@@ -44,7 +47,7 @@ func (p *plugin) DiscoverUpstreams(watchNamespaces []string, writeNamespace stri
 	return allUpstreams, allErrChan, nil
 }
 
-func (p *plugin) updateDiscoveries(watchedNamespaceCount int, updatedList v1.UpstreamList, namespace string) v1.UpstreamList {
+func (p *plugin) updateDiscoveries(watchedNamespaceCount int, updatedList v1.UpstreamList, namespace string) (v1.UpstreamList, bool) {
 	pluginUpstreams := filterEc2Upstreams(updatedList)
 	p.discoveryMutex.Lock()
 	defer p.discoveryMutex.Unlock()
@@ -55,8 +58,11 @@ func (p *plugin) updateDiscoveries(watchedNamespaceCount int, updatedList v1.Ups
 	// TODO(mitchdraft) write the upstream's type to its labels during call to discover.setLabels
 	// + document the fact that that label (perhaps "gloo-upstream-type") is managed by gloo
 	p.watchedUpstreams[namespace] = pluginUpstreams
-	return p.serializeUpstreams()
-
+	// we only want to emit an upstream list when we have gotten at least one report of the upstreams in each namespace
+	// otherwise a startup loop would try to delete the endpoints belonging to upstreams in namespaces that have not yet
+	// been read
+	namespaceCensusComplete := len(p.watchedUpstreams) == watchedNamespaceCount
+	return p.serializeUpstreams(), namespaceCensusComplete
 }
 
 // this function should only be called when the lock is held

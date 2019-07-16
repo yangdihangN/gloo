@@ -41,6 +41,8 @@ var _ = BeforeSuite(func() {
 	})
 	Expect(err).NotTo(HaveOccurred())
 
+	testHelper.Verbose = true
+
 	options := clusterlock.Options{
 		IdPrefix: os.ExpandEnv("gateway-${BUILD_ID}-"),
 	}
@@ -54,15 +56,19 @@ var _ = BeforeSuite(func() {
 })
 
 var _ = AfterSuite(func() {
-	defer locker.ReleaseLock()
+	if locker != nil {
+		defer locker.ReleaseLock()
+	}
 
-	err := testHelper.UninstallGloo()
-	Expect(err).NotTo(HaveOccurred())
+	if testHelper != nil {
+		err := testHelper.UninstallGlooAll()
+		Expect(err).NotTo(HaveOccurred())
 
-	// TODO go-utils should expose `glooctl uninstall --delete-namespace`
-	_ = testutils.Kubectl("delete", "namespace", testHelper.InstallNamespace)
+		// TODO go-utils should expose `glooctl uninstall --delete-namespace`
+		_ = testutils.Kubectl("delete", "namespace", testHelper.InstallNamespace)
 
-	Eventually(func() error {
-		return testutils.Kubectl("get", "namespace", testHelper.InstallNamespace)
-	}, "60s", "1s").Should(HaveOccurred())
+		Eventually(func() error {
+			return testutils.Kubectl("get", "namespace", testHelper.InstallNamespace)
+		}, "60s", "1s").Should(HaveOccurred())
+	}
 })

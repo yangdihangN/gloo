@@ -44,6 +44,8 @@ func (r *Settings) Hash() uint64 {
 		r.Linkerd,
 		r.CircuitBreakers,
 		r.Knative,
+		r.Discovery,
+		r.Consul,
 		r.Extensions,
 		r.ConfigSource,
 		r.SecretSource,

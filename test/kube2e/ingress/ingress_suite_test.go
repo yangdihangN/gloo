@@ -41,6 +41,8 @@ var _ = BeforeSuite(func() {
 	})
 	Expect(err).NotTo(HaveOccurred())
 
+	testHelper.Verbose = true
+
 	options := clusterlock.Options{
 		IdPrefix: os.ExpandEnv("ingress-${BUILD_ID}-"),
 	}
@@ -55,7 +57,7 @@ var _ = BeforeSuite(func() {
 
 var _ = AfterSuite(func() {
 	defer locker.ReleaseLock()
-	err := testHelper.UninstallGloo()
+	err := testHelper.UninstallGlooAll()
 	Expect(err).NotTo(HaveOccurred())
 
 	// TODO go-utils should expose `glooctl uninstall --delete-namespace`

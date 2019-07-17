@@ -22,6 +22,7 @@ var _ = Describe("Gateway Conversion", func() {
 		})
 
 		It("works", func() {
+			meta := core.Metadata{Namespace: "ns", Name: "n"}
 			bindAddress := "test-bindaddress"
 			bindPort := uint32(100)
 			useProxyProto := &types.BoolValue{Value: true}
@@ -35,6 +36,7 @@ var _ = Describe("Gateway Conversion", func() {
 			}
 
 			input := &v1.Gateway{
+				Metadata:        meta,
 				Ssl:             true,
 				BindAddress:     bindAddress,
 				BindPort:        bindPort,
@@ -43,6 +45,7 @@ var _ = Describe("Gateway Conversion", func() {
 				Plugins:         plugins,
 			}
 			expected := &v2alpha1.Gateway{
+				Metadata:      meta,
 				Ssl:           true,
 				BindAddress:   bindAddress,
 				BindPort:      bindPort,

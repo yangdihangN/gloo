@@ -59,7 +59,6 @@ func NewLadder(
 	}
 }
 
-// With more rungs we could (read, convert, read & merge, convert, ...,  write)
 func (c *ladder) Climb() error {
 	v1List, err := c.v1Client.List(c.namespace, clients.ListOpts{Ctx: c.ctx})
 	if err != nil {

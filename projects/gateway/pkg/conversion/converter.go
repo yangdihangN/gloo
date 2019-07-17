@@ -8,7 +8,6 @@ import (
 	"github.com/solo-io/gloo/projects/gateway/pkg/api/v2alpha1"
 	"github.com/solo-io/go-utils/contextutils"
 	"github.com/solo-io/solo-kit/pkg/api/v1/clients"
-	"github.com/solo-io/solo-kit/pkg/api/v1/resources"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 )
@@ -35,17 +34,12 @@ type Ladder interface {
 	Climb() error
 }
 
-// TODO use solo-kit's interface
-type Converter interface {
-	Convert(src, dst resources.Resource) error
-}
-
 type ladder struct {
-	ctx               context.Context
-	namespace         string
-	v1Client          v1.GatewayClient
-	v2alpha1Client    v2alpha1.GatewayClient
-	v2alpha1Converter Converter
+	ctx              context.Context
+	namespace        string
+	v1Client         v1.GatewayClient
+	v2alpha1Client   v2alpha1.GatewayClient
+	gatewayConverter GatewayConverter
 }
 
 func NewLadder(
@@ -53,15 +47,15 @@ func NewLadder(
 	namespace string,
 	v1Client v1.GatewayClient,
 	v2alpha1Client v2alpha1.GatewayClient,
-	gatewayConverter Converter,
+	gatewayConverter GatewayConverter,
 ) Ladder {
 
 	return &ladder{
-		ctx:               ctx,
-		namespace:         namespace,
-		v1Client:          v1Client,
-		v2alpha1Client:    v2alpha1Client,
-		v2alpha1Converter: gatewayConverter,
+		ctx:              ctx,
+		namespace:        namespace,
+		v1Client:         v1Client,
+		v2alpha1Client:   v2alpha1Client,
+		gatewayConverter: gatewayConverter,
 	}
 }
 
@@ -76,28 +70,27 @@ func (c *ladder) Climb() error {
 	var g errgroup.Group
 	for _, oldGateway := range v1List {
 		g.Go(func() error {
-			convertedGateway := &v2alpha1.Gateway{}
-			err := c.v2alpha1Converter.Convert(oldGateway, convertedGateway)
+			convertedGateway := c.gatewayConverter.FromV1ToV2alpha1(oldGateway)
 			if err != nil {
 				wrapped := FailedToConvertGatewayError(
 					err,
 					"v1",
-					oldGateway.GetMetadata().GetNamespace(),
-					oldGateway.GetMetadata().GetName())
+					oldGateway.GetMetadata().Namespace,
+					oldGateway.GetMetadata().Name)
 				contextutils.LoggerFrom(c.ctx).Errorw(wrapped.Error(), zap.Error(err), zap.Any("gateway", oldGateway))
 				return wrapped
 			}
 
 			if err := c.v1Client.Delete(
-				oldGateway.GetMetadata().GetNamespace(),
-				oldGateway.GetMetadata().GetName(),
+				oldGateway.GetMetadata().Namespace,
+				oldGateway.GetMetadata().Name,
 				clients.DeleteOpts{Ctx: c.ctx}); err != nil {
 
 				wrapped := FailedToDeleteGatewayError(
 					err,
 					"v1",
-					oldGateway.GetMetadata().GetNamespace(),
-					oldGateway.GetMetadata().GetName())
+					oldGateway.GetMetadata().Namespace,
+					oldGateway.GetMetadata().Name)
 				contextutils.LoggerFrom(c.ctx).Errorw(wrapped.Error(), zap.Error(err), zap.Any("gateway", oldGateway))
 				return wrapped
 			}
@@ -106,8 +99,8 @@ func (c *ladder) Climb() error {
 				wrapped := FailedToWriteGatewayError(
 					err,
 					"v2alpha1",
-					convertedGateway.GetMetadata().GetNamespace(),
-					convertedGateway.GetMetadata().GetName())
+					convertedGateway.GetMetadata().Namespace,
+					convertedGateway.GetMetadata().Name)
 				contextutils.LoggerFrom(c.ctx).Errorw(wrapped.Error(), zap.Error(err), zap.Any("gateway", convertedGateway))
 				return wrapped
 			}

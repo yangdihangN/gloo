@@ -17,7 +17,7 @@ func main() {
 		"gloo-system",
 		clientSet.V1Gateway,
 		clientSet.V2alpha1Gateway,
-		conversion.NewV2alpha1Converter(),
+		conversion.NewGatewayConverter(),
 	)
 	if err := gatewayLadder.Climb(); err != nil {
 		contextutils.LoggerFrom(ctx).Fatalw("Failed to upgrade existing gateway resources.", zap.Error(err))

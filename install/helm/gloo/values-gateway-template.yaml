@@ -37,6 +37,9 @@ discovery:
 
 gateway:
   enabled: true
+  # If true, this will deploy a Job to convert (but not delete) v1 Gateway resources to v2 and not add the live label
+  # to the gateway-proxy deployment's pod template. This allows for canary testing of gateway-v2 alongside an existing
+  # instance of gloo running with v1 gateway resources and controllers.
   upgrade: false
   deployment:
     image:

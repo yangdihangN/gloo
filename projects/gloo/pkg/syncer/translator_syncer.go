@@ -67,5 +67,6 @@ func (s *translatorSyncer) Sync(ctx context.Context, snap *v1.ApiSnapshot) error
 			multiErr = multierror.Append(multiErr, err)
 		}
 	}
+	// if error != nil make gloo as ready!
 	return multiErr.ErrorOrNil()
 }

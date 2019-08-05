@@ -38,12 +38,13 @@ func GetYaml(pb proto.Message) []byte {
 func main() {
 	role := flag.String("r", "gloo-system~gateway-proxy-v2", "role to register with")
 	port := flag.String("p", "9977", "gloo port")
+	host := flag.String("h", "localhost", "gloo host")
 	//out := flag.String("o", "gostructs", "output fmt gostructs|yaml")
 	flag.Parse()
 	dr.Node.Metadata = &types.Struct{
 		Fields: map[string]*types.Value{"role": {Kind: &types.Value_StringValue{StringValue: *role}}}}
 
-	conn, err := grpc.Dial("localhost:"+*port, grpc.WithInsecure())
+	conn, err := grpc.Dial(*host+":"+*port, grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("dial err: %v", err)
 	}

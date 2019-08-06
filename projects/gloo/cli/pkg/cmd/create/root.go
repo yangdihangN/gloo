@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/solo-io/gloo/pkg/cliutil"
 	"github.com/solo-io/gloo/projects/gloo/cli/pkg/constants"
 
 	"github.com/solo-io/gloo/projects/gloo/cli/pkg/cmd/create/secret"
@@ -12,11 +13,9 @@ import (
 	"github.com/solo-io/gloo/projects/gloo/cli/pkg/common"
 	"github.com/solo-io/gloo/projects/gloo/cli/pkg/flagutils"
 	"github.com/solo-io/go-utils/cliutils"
-	"github.com/solo-io/go-utils/errors"
 	"github.com/spf13/cobra"
 )
 
-const EmptyCreateError = "please provide a file flag or subcommand"
 
 func RootCmd(opts *options.Options, optionsFunc ...cliutils.OptionsFunc) *cobra.Command {
 	cmd := &cobra.Command{
@@ -27,7 +26,7 @@ func RootCmd(opts *options.Options, optionsFunc ...cliutils.OptionsFunc) *cobra.
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var reader io.ReadCloser
 			if opts.Top.File == "" {
-				return errors.Errorf(EmptyCreateError)
+				return cliutil.NoFileOrSubcommandError
 			}
 			if opts.Top.File == "-" {
 				reader = os.Stdin

@@ -1,4 +1,4 @@
-package del
+package debug
 
 import (
 	"github.com/solo-io/gloo/pkg/cliutil"
@@ -9,21 +9,28 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const (
+	gateway = "gateway"
+	ingress = "ingress"
+	knative = "knative"
+)
+var (
+	validArgs = []string{gateway, ingress, knative}
+)
+
 func RootCmd(opts *options.Options, optionsFunc ...cliutils.OptionsFunc) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     constants.DELETE_COMMAND.Use,
-		Aliases: constants.DELETE_COMMAND.Aliases,
-		Short:   constants.DELETE_COMMAND.Short,
+		Use:     constants.DEBUG_COMMAND.Use,
+		Aliases: constants.DEBUG_COMMAND.Aliases,
+		Short:   constants.DEBUG_COMMAND.Short,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return cliutil.NoSubcommandError
 		},
 	}
 	pflags := cmd.PersistentFlags()
 	flagutils.AddMetadataFlags(pflags, &opts.Metadata)
-	cmd.AddCommand(Upstream(opts))
-	cmd.AddCommand(UpstreamGroup(opts))
-	cmd.AddCommand(VirtualService(opts))
-	cmd.AddCommand(Proxy(opts))
+
+	cmd.AddCommand(Archive(opts))
 	cliutils.ApplyOptions(cmd, optionsFunc)
 	return cmd
 }

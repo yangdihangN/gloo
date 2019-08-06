@@ -80,4 +80,10 @@ var (
 		Aliases: []string{"ed"},
 		Short:   "Edit a Gloo resource",
 	}
+
+	DEBUG_COMMAND = cobra.Command{
+		Use:     "debug",
+		Aliases: []string{"db"},
+		Short:   "gloo debugging tools",
+	}
 )

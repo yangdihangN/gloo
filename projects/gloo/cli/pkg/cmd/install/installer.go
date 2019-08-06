@@ -120,6 +120,8 @@ type DefaultGlooStagedInstaller struct {
 	dryRun            bool
 }
 
+
+
 func NewGlooStagedInstaller(opts *options.Options, spec GlooInstallSpec, client GlooKubeInstallClient) (GlooStagedInstaller, error) {
 	if path.Ext(spec.HelmArchiveUri) != ".tgz" && !strings.HasSuffix(spec.HelmArchiveUri, ".tar.gz") {
 		return nil, errors.Errorf("unsupported file extension for Helm chart URI: [%s]. Extension must either be .tgz or .tar.gz", spec.HelmArchiveUri)

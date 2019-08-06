@@ -12,6 +12,7 @@ type Options struct {
 	Top       Top
 	Install   Install
 	Uninstall Uninstall
+	Debug     Debug
 	Proxy     Proxy
 	Upgrade   Upgrade
 	Create    Create
@@ -101,7 +102,7 @@ type InputRoute struct {
 	Matcher     RouteMatchers
 	Destination Destination
 	// TODO: multi destination
-	//Destinations []Destination
+	// Destinations []Destination
 	UpstreamGroup core.ResourceRef
 	Plugins       RoutePlugins
 }
@@ -263,4 +264,10 @@ type InputRestServiceSpec struct {
 type InputGrpcServiceSpec struct {
 	// inline from a file
 	Descriptors []byte
+}
+
+type Debug struct {
+	Namespace         string
+	HelmChartOverride string
+	ArchiveLocation   string
 }

@@ -3,7 +3,9 @@ package debug
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path"
+	"path/filepath"
 	"strings"
 
 	installutil "github.com/solo-io/gloo/pkg/cliutil/install"
@@ -20,6 +22,10 @@ import (
 	"k8s.io/helm/pkg/manifest"
 	"k8s.io/helm/pkg/renderutil"
 	"k8s.io/helm/pkg/tiller"
+)
+
+const (
+	archiveFileName = "gloo-debug-archive.tar.gz"
 )
 
 func Archive(opts *options.Options, optionsFunc ...cliutils.OptionsFunc) *cobra.Command {
@@ -43,7 +49,7 @@ func Archive(opts *options.Options, optionsFunc ...cliutils.OptionsFunc) *cobra.
 	}
 
 	pflags := cmd.PersistentFlags()
-	flagutils.AddInstallFlags(pflags, &opts.Install)
+	flagutils.AddDebugFlags(pflags, &opts.Debug)
 	cliutils.ApplyOptions(cmd, optionsFunc)
 	return cmd
 }
@@ -84,7 +90,7 @@ func archive(opts *options.Options, args []string) error {
 	// These are the .Release.* variables used during rendering
 	renderOpts := renderutil.Options{
 		ReleaseOptions: chartutil.ReleaseOptions{
-			Namespace: opts.Install.Namespace,
+			Namespace: opts.Debug.Namespace,
 			Name:      spec.ProductName,
 		},
 	}
@@ -106,14 +112,30 @@ func archive(opts *options.Options, args []string) error {
 		return err
 	}
 
-	tmp, err := ioutil.TempFile("", "*.tar.gz")
-	if err != nil {
-		return err
+	var (
+		outputFileName string
+	)
+
+	if opts.Debug.ArchiveLocation == "" {
+		tmp, err := ioutil.TempFile("", "*.tar.gz")
+		if err != nil {
+			return err
+		}
+		outputFileName = tmp.Name()
+
+		fmt.Printf("No output location was specified, so the archive is being stored to a temporary file here: %s", tmp.Name())
+	} else {
+		file, err := os.OpenFile(filepath.Join(opts.Debug.ArchiveLocation, archiveFileName), os.O_CREATE|os.O_RDWR, 0777)
+		if err != nil {
+			return err
+		}
+		outputFileName = file.Name()
+
+		fmt.Printf("Gloo debug archive has been saved to the following location: %s", file.Name())
 	}
 
-	fmt.Println(tmp.Name())
 
-	if err := aggregator.StreamFromManifest(sortedManifests, "gloo-system", tmp.Name()); err != nil {
+	if err := aggregator.StreamFromManifest(sortedManifests, opts.Debug.Namespace, outputFileName); err != nil {
 		return err
 	}
 	return nil

@@ -1,6 +1,7 @@
 package ec2
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/solo-io/go-utils/errors"
@@ -138,3 +139,31 @@ var (
 		return errors.Wrapf(err, "unable to create a session with credentials taken from secret ref")
 	}
 )
+
+func InstancesForUpstream(upstream *v1.Upstream, secrets v1.SecretList) ([]*ec2.Instance, error) {
+	ec2Spec := upstream.UpstreamSpec.GetAwsEc2()
+	if ec2Spec == nil {
+		return nil, nil
+	}
+	cred := NewCredentialSpecFromEc2UpstreamSpec(ec2Spec)
+	client, err := GetEc2Client(cred, secrets)
+	if err != nil {
+		return nil, GetClientError(err)
+	}
+	e := NewEc2InstanceLister()
+	return e.ListWithClient(context.Background(), client)
+}
+
+func SummarizeInstances(instances []*ec2.Instance) string {
+	summary := fmt.Sprintf("matched %v instances:\n", len(instances))
+	for _, inst := range instances {
+		nameContent := ""
+		for _, tag := range inst.Tags {
+			if *tag.Key == "Name" {
+				nameContent = fmt.Sprintf(" (%v)", *tag.Value)
+			}
+		}
+		summary += fmt.Sprintf("%v%v", aws.StringValue(inst.InstanceId), nameContent)
+	}
+	return summary
+}

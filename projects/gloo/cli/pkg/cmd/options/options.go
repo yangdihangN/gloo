@@ -15,6 +15,7 @@ type Options struct {
 	Proxy     Proxy
 	Upgrade   Upgrade
 	Create    Create
+	Check     Check
 	Delete    Delete
 	Get       Get
 	Add       Add
@@ -81,6 +82,13 @@ type Create struct {
 	InputUpstreamGroup InputUpstreamGroup
 	InputSecret        Secret
 	DryRun             bool // print resource as a kubernetes style yaml and exit without writing to storage
+}
+
+type Check struct {
+	// should be set if user wants to review resources in all namespaces
+	AllNamespaces bool
+	// should be set if user wants to review resources in a particular set of namespaces
+	NamespaceList []string
 }
 
 type RouteMatchers struct {

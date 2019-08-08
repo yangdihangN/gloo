@@ -1,6 +1,8 @@
 package check
 
 import (
+	"fmt"
+
 	"github.com/solo-io/gloo/projects/gloo/cli/pkg/cmd/options"
 	"github.com/solo-io/gloo/projects/gloo/cli/pkg/flagutils"
 	"github.com/solo-io/go-utils/cliutils"
@@ -19,29 +21,31 @@ func RootCmd(opts *options.Options, optionsFunc ...cliutils.OptionsFunc) *cobra.
 	pflags := cmd.PersistentFlags()
 	flagutils.AddMetadataFlags(pflags, &opts.Metadata)
 	flagutils.AddFileFlag(cmd.LocalFlags(), &opts.Top.File)
+	flagutils.AddCheckFlags(pflags, &opts.Check)
 	cliutils.ApplyOptions(cmd, optionsFunc)
 	cmd.AddCommand(
-		upstream(opts),
+		upstreamCmd(opts),
 	)
 	return cmd
 }
 
-func upstream(opts *options.Options) *cobra.Command {
+func upstreamCmd(opts *options.Options) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "upstream",
 		Aliases: []string{"up"},
 		Short:   "Check upstreams for any configuration errors.",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return checkUpstreams(opts)
+			resp, err := checkUpstreams(opts, args)
+			if err != nil {
+				return err
+			}
+			fmt.Println(resp.String())
+			return nil
 		},
 	}
 	return cmd
 }
 
-func checkUpstreams(opts *options.Options) error {
-	// TODO
-	return nil
-}
 func check(opts *options.Options) error {
 	if opts.Top.File != "" {
 		return checkFile(opts.Top.File)

@@ -1,0 +1,4 @@
+changelog:
+  - type: NEW_FEATURE
+    description: "Introduce diagnostic command: `glooctl check`."
+    issueLink: https://github.com/solo-io/gloo/pull/997

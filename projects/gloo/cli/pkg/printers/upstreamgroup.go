@@ -10,7 +10,8 @@ import (
 	"github.com/solo-io/go-utils/cliutils"
 )
 
-func PrintUpstreamGroups(upstreamGroups v1.UpstreamGroupList, outputType OutputType) error {
+func PrintUpstreamGroups(upstreamGroups v1.UpstreamGroupList, outputType OutputType, dryRun bool) error {
+	outputType = OutputTypeForMode(outputType, dryRun)
 	if outputType == KUBE_YAML {
 		return PrintKubeCrdList(upstreamGroups.AsInputResources(), v1.UpstreamGroupCrd)
 	}

@@ -14,7 +14,8 @@ import (
 	"github.com/solo-io/solo-kit/pkg/api/v1/resources/core"
 )
 
-func PrintVirtualServices(virtualServices v1.VirtualServiceList, outputType OutputType) error {
+func PrintVirtualServices(virtualServices v1.VirtualServiceList, outputType OutputType, dryRun bool) error {
+	outputType = OutputTypeForMode(outputType, dryRun)
 	if outputType == KUBE_YAML {
 		return PrintKubeCrdList(virtualServices.AsInputResources(), v1.VirtualServiceCrd)
 	}

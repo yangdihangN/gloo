@@ -42,7 +42,7 @@ func RootCmd(opts *options.Options, optionsFunc ...cliutils.OptionsFunc) *cobra.
 			if err != nil {
 				return err
 			}
-			return common.CreateAndPrintObject(yml, opts.Top.Output)
+			return common.CreateAndPrintObject(yml, opts.Top.Output, opts.Create.DryRun)
 		},
 	}
 	flagutils.AddFileFlag(cmd.LocalFlags(), &opts.Top.File)

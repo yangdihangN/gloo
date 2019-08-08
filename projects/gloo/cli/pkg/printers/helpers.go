@@ -28,3 +28,11 @@ func PrintKubeCrdList(in resources.InputResourceList, resourceCrd crd.Crd) error
 	}
 	return nil
 }
+
+// the table output is not valid for dry run
+func OutputTypeForMode(defaultOutput OutputType, dryRun bool) OutputType {
+	if dryRun && defaultOutput == TABLE {
+		return KUBE_YAML
+	}
+	return defaultOutput
+}

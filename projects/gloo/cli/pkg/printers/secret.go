@@ -16,7 +16,8 @@ import (
 	"k8s.io/client-go/kubernetes/fake"
 )
 
-func PrintSecrets(secrets v1.SecretList, outputType OutputType) error {
+func PrintSecrets(secrets v1.SecretList, outputType OutputType, dryRun bool) error {
+	outputType = OutputTypeForMode(outputType, dryRun)
 	if outputType == KUBE_YAML || outputType == YAML {
 		return printKubeSecretList(context.TODO(), secrets.AsResources())
 	}

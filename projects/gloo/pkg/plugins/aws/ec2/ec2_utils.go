@@ -3,6 +3,7 @@ package ec2
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/solo-io/go-utils/errors"
 
@@ -156,6 +157,7 @@ func InstancesForUpstream(upstream *v1.Upstream, secrets v1.SecretList) ([]*ec2.
 
 func SummarizeInstances(instances []*ec2.Instance) string {
 	summary := fmt.Sprintf("matched %v instances:\n", len(instances))
+	var rows []string
 	for _, inst := range instances {
 		nameContent := ""
 		for _, tag := range inst.Tags {
@@ -163,7 +165,8 @@ func SummarizeInstances(instances []*ec2.Instance) string {
 				nameContent = fmt.Sprintf(" (%v)", *tag.Value)
 			}
 		}
-		summary += fmt.Sprintf("%v%v", aws.StringValue(inst.InstanceId), nameContent)
+		rows = append(rows, fmt.Sprintf("%v%v", aws.StringValue(inst.InstanceId), nameContent))
 	}
+	summary += strings.Join(rows, "\n")
 	return summary
 }

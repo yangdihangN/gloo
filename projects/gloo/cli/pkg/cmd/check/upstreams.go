@@ -1,6 +1,7 @@
 package check
 
 import (
+	"context"
 	"fmt"
 
 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -26,7 +27,7 @@ func checkUpstreams(opts *options.Options, args []string) (*Response, error) {
 	}
 	resp := NewResponse("upstreams")
 	for _, upstream := range upstreams {
-		upstreamResp, err := checkUpstream(upstream, secrets)
+		upstreamResp, err := checkUpstream(opts.Top.Ctx, upstream, secrets)
 		if err != nil {
 			return nil, err
 		}
@@ -35,10 +36,10 @@ func checkUpstreams(opts *options.Options, args []string) (*Response, error) {
 	return resp, nil
 }
 
-func checkUpstream(upstream *v1.Upstream, secrets v1.SecretList) (*Response, error) {
+func checkUpstream(ctx context.Context, upstream *v1.Upstream, secrets v1.SecretList) (*Response, error) {
 	response := NewResponseFromMetadata(upstream.Metadata)
 	response.AddResponse(statusCheck(upstream.Status))
-	typeSpecificResponse, err := upstreamTypeSpecificChecks(upstream, secrets)
+	typeSpecificResponse, err := upstreamTypeSpecificChecks(ctx, upstream, secrets)
 	if err != nil {
 		return nil, err
 	}
@@ -54,15 +55,15 @@ func statusCheck(status core.Status) *Response {
 	return resp
 }
 
-func upstreamTypeSpecificChecks(upstream *v1.Upstream, secrets v1.SecretList) (*Response, error) {
+func upstreamTypeSpecificChecks(ctx context.Context, upstream *v1.Upstream, secrets v1.SecretList) (*Response, error) {
 	switch upstream.UpstreamSpec.UpstreamType.(type) {
 	case *v1.UpstreamSpec_AwsEc2:
 		resp := NewResponse("EC2")
-		instances, err := ec2.InstancesForUpstream(upstream, secrets)
+		matchedInstances, unmatchedInstances, err := ec2.InstancesForUpstream(ctx, upstream, secrets)
 		if err != nil {
 			return nil, err
 		}
-		resp.Details = fmt.Sprintf("instances:\n%v", ec2.SummarizeInstances(instances))
+		resp.Details = fmt.Sprintf("instances:\n%v", ec2.SummarizeInstances(matchedInstances, unmatchedInstances))
 		return resp, nil
 	default:
 		return NewResponse("no type-specific info"), nil

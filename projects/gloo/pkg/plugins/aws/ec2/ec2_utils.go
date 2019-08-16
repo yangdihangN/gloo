@@ -141,32 +141,65 @@ var (
 	}
 )
 
-func InstancesForUpstream(upstream *v1.Upstream, secrets v1.SecretList) ([]*ec2.Instance, error) {
+func InstancesForUpstream(ctx context.Context, upstream *v1.Upstream, secrets v1.SecretList) ([]*ec2.Instance, []*ec2.Instance, error) {
 	ec2Spec := upstream.UpstreamSpec.GetAwsEc2()
 	if ec2Spec == nil {
-		return nil, nil
+		return nil, nil, nil
 	}
 	cred := NewCredentialSpecFromEc2UpstreamSpec(ec2Spec)
 	client, err := GetEc2Client(cred, secrets)
 	if err != nil {
-		return nil, GetClientError(err)
+		return nil, nil, GetClientError(err)
 	}
 	e := NewEc2InstanceLister()
-	return e.ListWithClient(context.Background(), client)
+	all, err := e.ListWithClient(context.Background(), client)
+	if err != nil {
+		return nil, nil, err
+	}
+	credGroups, err := getCredGroupsFromUpstreams(v1.UpstreamList{upstream})
+	if err != nil {
+		return nil, nil, err
+	}
+	if err := getInstancesForCredentialGroups(ctx, e, secrets, credGroups); err != nil {
+		return nil, nil, err
+	}
+	credGroup := credGroups[cred.GetKey()]
+	matchedInstances := filterInstancesForUpstream(ctx, upstream, credGroup)
+	matchedMap := make(map[string]bool)
+	for _, inst := range matchedInstances {
+		matchedMap[aws.StringValue(inst.InstanceId)] = true
+	}
+	var unmatchedInstances []*ec2.Instance
+	for _, inst := range all {
+		if _, ok := matchedMap[aws.StringValue(inst.InstanceId)]; !ok {
+			unmatchedInstances = append(unmatchedInstances, inst)
+		}
+	}
+
+	return matchedInstances, unmatchedInstances, nil
 }
 
-func SummarizeInstances(instances []*ec2.Instance) string {
-	summary := fmt.Sprintf("matched %v instances:\n", len(instances))
+func SummarizeInstances(matched, unmatched []*ec2.Instance) string {
+	summary := fmt.Sprintf("filters matched %v of %v instances for credentials:\n", len(matched), len(unmatched))
 	var rows []string
-	for _, inst := range instances {
-		nameContent := ""
-		for _, tag := range inst.Tags {
-			if *tag.Key == "Name" {
-				nameContent = fmt.Sprintf(" (%v)", *tag.Value)
-			}
+
+	printInstances := func(title string, list []*ec2.Instance) {
+		if len(list) == 0 {
+			return
 		}
-		rows = append(rows, fmt.Sprintf("%v%v", aws.StringValue(inst.InstanceId), nameContent))
+		rows = append(rows, title)
+		for _, inst := range list {
+			nameContent := ""
+			for _, tag := range inst.Tags {
+				if *tag.Key == "Name" {
+					nameContent = fmt.Sprintf(" (%v)", *tag.Value)
+				}
+			}
+			rows = append(rows, fmt.Sprintf("%v%v", aws.StringValue(inst.InstanceId), nameContent))
+		}
 	}
+	printInstances("instances matching credentials and filters:", matched)
+	printInstances("instances matching credentials only:", unmatched)
 	summary += strings.Join(rows, "\n")
 	return summary
 }

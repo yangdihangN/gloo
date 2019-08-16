@@ -24,7 +24,8 @@ type Config struct {
 }
 
 type Global struct {
-	Image *Image `json:"image,omitempty"`
+	Image      *Image      `json:"image,omitempty"`
+	Extensions interface{} `json:"extensions,omitempty"`
 }
 
 type Namespace struct {
@@ -32,7 +33,8 @@ type Namespace struct {
 }
 
 type Rbac struct {
-	Create bool `json:"create" desc:"create rbac rules for the gloo-system service account"`
+	Create     bool `json:"create" desc:"create rbac rules for the gloo-system service account"`
+	Namespaced bool `json:"Namespaced" desc:"use Roles instead of ClusterRoles"`
 }
 
 type Crds struct {
@@ -104,6 +106,7 @@ type Gloo struct {
 type GlooDeployment struct {
 	Image   *Image `json:"image,omitempty"`
 	XdsPort int    `json:"xdsPort,omitempty" desc:"port where gloo serves xDS API to Envoy"`
+	Stats   bool   `json:"stats" desc:"enable prometheus stats"`
 	*DeploymentSpec
 }
 
@@ -114,6 +117,7 @@ type Discovery struct {
 
 type DiscoveryDeployment struct {
 	Image *Image `json:"image,omitempty"`
+	Stats bool   `json:"stats" desc:"enable prometheus stats"`
 	*DeploymentSpec
 }
 
@@ -126,6 +130,7 @@ type Gateway struct {
 
 type GatewayDeployment struct {
 	Image *Image `json:"image,omitempty"`
+	Stats bool   `json:"stats" desc:"enable prometheus stats"`
 	*DeploymentSpec
 }
 
@@ -135,11 +140,12 @@ type GatewayConversionJob struct {
 }
 
 type GatewayProxy struct {
-	Kind        *GatewayProxyKind        `json:"kind,omitempty"`
-	PodTemplate *GatewayProxyPodTemplate `json:"podTemplate,omitempty"`
-	ConfigMap   *GatewayProxyConfigMap   `json:"configMap,omitempty"`
-	Service     *GatewayProxyService     `json:"service,omitempty"`
-	Tracing     *Tracing                 `json:"tracing,omitempty"`
+	Kind                  *GatewayProxyKind        `json:"kind,omitempty"`
+	PodTemplate           *GatewayProxyPodTemplate `json:"podTemplate,omitempty"`
+	ConfigMap             *GatewayProxyConfigMap   `json:"configMap,omitempty"`
+	Service               *GatewayProxyService     `json:"service,omitempty"`
+	Tracing               *Tracing                 `json:"tracing,omitempty"`
+	ExtraContainersHelper string                   `json:"extraContainersHelper,omitempty"`
 }
 
 type GatewayProxyKind struct {
@@ -184,8 +190,9 @@ type GatewayProxyConfigMap struct {
 }
 
 type Ingress struct {
-	Enabled    *bool              `json:"enabled"`
-	Deployment *IngressDeployment `json:"deployment,omitempty"`
+	Enabled             *bool              `json:"enabled"`
+	Deployment          *IngressDeployment `json:"deployment,omitempty"`
+	RequireIngressClass *bool              `json:"requireIngressClass,omitempty" desc:"only serve traffic for Ingress objects with the annotation 'kubernetes.io/ingress.class: gloo''"`
 }
 
 type IngressDeployment struct {

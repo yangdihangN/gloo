@@ -8,10 +8,11 @@ k8s:
   clusterName: cluster.local
 
 settings:
+  create: true
   integrations:
     knative:
       enabled: true
-      version: "0.7.0"
+      version: "0.8.0"
       proxy:
         image:
           repository: gloo-envoy-wrapper
@@ -24,7 +25,7 @@ gateway:
   enabled: false
 
 discovery:
-  fdsMode: whitelist
+  fdsMode: WHITELIST
 
 ingress:
   # ingress proxy is disabled, but we still need the controller for knative

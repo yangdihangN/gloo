@@ -4,12 +4,13 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/solo-io/gloo/projects/gloo/cli/pkg/printers"
+
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/solo-io/gloo/pkg/cliutil"
 	"github.com/solo-io/gloo/projects/gloo/cli/pkg/argsutils"
 	"github.com/solo-io/gloo/projects/gloo/cli/pkg/cmd/options"
 	"github.com/solo-io/gloo/projects/gloo/cli/pkg/helpers"
-	"github.com/solo-io/gloo/projects/gloo/cli/pkg/printers"
 	gloov1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
 	"github.com/solo-io/solo-kit/pkg/api/v1/clients"
 	"github.com/solo-io/solo-kit/pkg/api/v1/resources/core"
@@ -33,7 +34,7 @@ func awsCmd(opts *options.Options) *cobra.Command {
 			}
 			if opts.Top.Interactive {
 				// and gather any missing args that are available through interactive mode
-				if err := AwsSecretArgsInteractive(&opts.Metadata, input); err != nil {
+				if err := AwsSecretArgsInteractive(input); err != nil {
 					return err
 				}
 			}
@@ -57,7 +58,7 @@ const (
 	awsPromptSecretKey = "Enter AWS Secret Key (leave empty to read credentials from ~/.aws/credentials): "
 )
 
-func AwsSecretArgsInteractive(meta *core.Metadata, input *options.AwsSecret) error {
+func AwsSecretArgsInteractive(input *options.AwsSecret) error {
 	if err := cliutil.GetStringInput(awsPromptAccessKey, &input.AccessKey); err != nil {
 		return err
 	}
@@ -98,7 +99,7 @@ func createAwsSecret(ctx context.Context, meta core.Metadata, input options.AwsS
 
 	}
 
-	printers.PrintSecrets(gloov1.SecretList{secret}, outputType)
+	_ = printers.PrintSecrets(gloov1.SecretList{secret}, outputType)
 
 	return nil
 }

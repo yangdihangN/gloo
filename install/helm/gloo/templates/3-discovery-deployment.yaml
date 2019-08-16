@@ -1,6 +1,6 @@
 {{- $image := .Values.discovery.deployment.image }}
 {{- if .Values.global  }}
-{{- $image = mergeOverwrite .Values.global.image .Values.discovery.deployment.image }}
+{{- $image = merge .Values.discovery.deployment.image .Values.global.image }}
 {{- end }}
 apiVersion: apps/v1
 kind: Deployment
@@ -26,6 +26,7 @@ spec:
         prometheus.io/scrape: "true"
       {{- end}}
     spec:
+      serviceAccountName: discovery
       containers:
       - image: {{template "gloo.image" $image}}
         imagePullPolicy: {{ $image.pullPolicy }}

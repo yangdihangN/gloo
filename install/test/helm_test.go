@@ -2,7 +2,8 @@ package test
 
 import (
 	"fmt"
-	"os"
+
+	"k8s.io/utils/pointer"
 
 	. "github.com/onsi/ginkgo"
 	"github.com/solo-io/gloo/projects/gateway/pkg/translator"
@@ -15,32 +16,33 @@ import (
 	. "github.com/solo-io/go-utils/manifesttestutils"
 )
 
+func GetPodNamespaceStats() v1.EnvVar {
+	return v1.EnvVar{
+		Name:  "START_STATS_SERVER",
+		Value: "true",
+	}
+}
+
 var _ = Describe("Helm Test", func() {
 
 	Describe("gateway proxy extra annotations and crds", func() {
 		var (
-			labels        map[string]string
-			selector      map[string]string
-			getPullPolicy func() v1.PullPolicy
+			labels           map[string]string
+			selector         map[string]string
+			testManifest     TestManifest
+			statsAnnotations map[string]string
 		)
 
+		prepareMakefile := func(helmFlags string) {
+			testManifest = renderManifest(helmFlags)
+		}
 		BeforeEach(func() {
-			version = os.Getenv("TAGGED_VERSION")
-			if version == "" {
-				version = "dev"
-				getPullPolicy = func() v1.PullPolicy { return v1.PullAlways }
-			} else {
-				version = version[1:]
-				getPullPolicy = func() v1.PullPolicy { return v1.PullIfNotPresent }
+			statsAnnotations = map[string]string{
+				"prometheus.io/path":   "/metrics",
+				"prometheus.io/port":   "9091",
+				"prometheus.io/scrape": "true",
 			}
 		})
-
-		prepareMakefile := func(helmFlags string) {
-			makefileSerializer.Lock()
-			defer makefileSerializer.Unlock()
-			MustMake(".", "-C", "../..", "install/gloo-gateway.yaml", "HELMFLAGS="+helmFlags)
-			testManifest = NewTestManifest("../gloo-gateway.yaml")
-		}
 
 		Context("gateway", func() {
 			BeforeEach(func() {
@@ -133,7 +135,7 @@ var _ = Describe("Helm Test", func() {
 							},
 						},
 					}}
-					deploy.Spec.Template.Spec.Containers[0].ImagePullPolicy = getPullPolicy()
+					deploy.Spec.Template.Spec.Containers[0].ImagePullPolicy = pullPolicy
 					deploy.Spec.Template.Spec.Containers[0].Ports = []v1.ContainerPort{
 						{Name: "http", ContainerPort: 8080, Protocol: "TCP"},
 						{Name: "https", ContainerPort: 8443, Protocol: "TCP"},
@@ -154,7 +156,7 @@ var _ = Describe("Helm Test", func() {
 						ReadOnlyRootFilesystem:   &truez,
 						AllowPrivilegeEscalation: &falsez,
 					}
-
+					deploy.Spec.Template.Spec.ServiceAccountName = "gateway-proxy"
 					gatewayProxyDeployment = deploy
 				})
 
@@ -221,6 +223,36 @@ var _ = Describe("Helm Test", func() {
 
 					testManifest.ExpectDeploymentAppsV1(gatewayProxyDeployment)
 				})
+
+				It("can add extra sidecar containers to the gateway-proxy deployment", func() {
+					gatewayProxyDeployment.Spec.Template.Spec.Containers = append(
+						gatewayProxyDeployment.Spec.Template.Spec.Containers,
+						v1.Container{
+							Name:  "nginx",
+							Image: "nginx:1.7.9",
+							Ports: []v1.ContainerPort{{ContainerPort: 80}},
+						})
+
+					gatewayProxyDeployment.Spec.Template.Spec.Containers[0].VolumeMounts = append(
+						gatewayProxyDeployment.Spec.Template.Spec.Containers[0].VolumeMounts,
+						v1.VolumeMount{
+							Name:      "shared-data",
+							MountPath: "/usr/share/shared-data",
+						})
+
+					gatewayProxyDeployment.Spec.Template.Spec.Volumes = append(
+						gatewayProxyDeployment.Spec.Template.Spec.Volumes,
+						v1.Volume{
+							Name: "shared-data",
+							VolumeSource: v1.VolumeSource{
+								EmptyDir: &v1.EmptyDirVolumeSource{},
+							},
+						})
+
+					helmFlags := "--namespace " + namespace + " --set namespace.create=true --set gatewayProxies.gatewayProxyV2.extraContainersHelper=gloo.testcontainer"
+					prepareMakefile(helmFlags)
+					testManifest.ExpectDeploymentAppsV1(gatewayProxyDeployment)
+				})
 			})
 		})
 		Context("control plane deployments", func() {
@@ -242,7 +274,7 @@ var _ = Describe("Helm Test", func() {
 					ReadOnlyRootFilesystem:   &truez,
 					AllowPrivilegeEscalation: &falsez,
 				}
-				deploy.Spec.Template.Spec.Containers[0].ImagePullPolicy = getPullPolicy()
+				deploy.Spec.Template.Spec.Containers[0].ImagePullPolicy = pullPolicy
 			}
 			Context("gloo deployment", func() {
 				var (
@@ -256,13 +288,14 @@ var _ = Describe("Helm Test", func() {
 					selector = map[string]string{
 						"gloo": "gloo",
 					}
-					container := GetQuayContainerSpec("gloo", version, GetPodNamespaceEnvVar())
+					container := GetQuayContainerSpec("gloo", version, GetPodNamespaceEnvVar(), GetPodNamespaceStats())
 
 					rb := ResourceBuilder{
-						Namespace:  namespace,
-						Name:       "gloo",
-						Labels:     labels,
-						Containers: []ContainerSpec{container},
+						Namespace:   namespace,
+						Name:        "gloo",
+						Labels:      labels,
+						Annotations: statsAnnotations,
+						Containers:  []ContainerSpec{container},
 					}
 					deploy := rb.GetDeploymentAppsv1()
 					updateDeployment(deploy)
@@ -276,10 +309,11 @@ var _ = Describe("Helm Test", func() {
 							v1.ResourceCPU:    resource.MustParse("500m"),
 						},
 					}
+					deploy.Spec.Template.Spec.ServiceAccountName = "gloo"
 					glooDeployment = deploy
 				})
 
-				It("has a creates a deployment", func() {
+				It("should create a deployment", func() {
 					helmFlags := "--namespace " + namespace + " --set namespace.create=true"
 					prepareMakefile(helmFlags)
 					testManifest.ExpectDeploymentAppsV1(glooDeployment)
@@ -304,19 +338,21 @@ var _ = Describe("Helm Test", func() {
 				})
 
 				It("can overwrite the container image information", func() {
-					container := GetContainerSpec("gcr.io/solo-public", "gloo", version, GetPodNamespaceEnvVar())
+					container := GetContainerSpec("gcr.io/solo-public", "gloo", version, GetPodNamespaceEnvVar(), GetPodNamespaceStats())
 					container.PullPolicy = "Always"
 					rb := ResourceBuilder{
-						Namespace:  namespace,
-						Name:       "gloo",
-						Labels:     labels,
-						Containers: []ContainerSpec{container},
+						Namespace:   namespace,
+						Name:        "gloo",
+						Labels:      labels,
+						Annotations: statsAnnotations,
+						Containers:  []ContainerSpec{container},
 					}
 					deploy := rb.GetDeploymentAppsv1()
 					updateDeployment(deploy)
 					deploy.Spec.Template.Spec.Containers[0].Ports = []v1.ContainerPort{
 						{Name: "grpc", ContainerPort: 9977, Protocol: "TCP"},
 					}
+					deploy.Spec.Template.Spec.ServiceAccountName = "gloo"
 
 					glooDeployment = deploy
 					helmFlags := "--namespace " + namespace + " --set namespace.create=true --set gloo.deployment.image.pullPolicy=Always --set gloo.deployment.image.registry=gcr.io/solo-public"
@@ -337,16 +373,18 @@ var _ = Describe("Helm Test", func() {
 					selector = map[string]string{
 						"gloo": "gateway",
 					}
-					container := GetQuayContainerSpec("gateway", version, GetPodNamespaceEnvVar())
+					container := GetQuayContainerSpec("gateway", version, GetPodNamespaceEnvVar(), GetPodNamespaceStats())
 
 					rb := ResourceBuilder{
-						Namespace:  namespace,
-						Name:       "gateway-v2",
-						Labels:     labels,
-						Containers: []ContainerSpec{container},
+						Namespace:   namespace,
+						Name:        "gateway-v2",
+						Labels:      labels,
+						Annotations: statsAnnotations,
+						Containers:  []ContainerSpec{container},
 					}
 					deploy := rb.GetDeploymentAppsv1()
 					updateDeployment(deploy)
+					deploy.Spec.Template.Spec.ServiceAccountName = "gateway"
 					gatewayDeployment = deploy
 				})
 
@@ -383,13 +421,14 @@ var _ = Describe("Helm Test", func() {
 				})
 
 				It("can overwrite the container image information", func() {
-					container := GetContainerSpec("gcr.io/solo-public", "gateway", version, GetPodNamespaceEnvVar())
+					container := GetContainerSpec("gcr.io/solo-public", "gateway", version, GetPodNamespaceEnvVar(), GetPodNamespaceStats())
 					container.PullPolicy = "Always"
 					rb := ResourceBuilder{
-						Namespace:  namespace,
-						Name:       "gateway",
-						Labels:     labels,
-						Containers: []ContainerSpec{container},
+						Namespace:   namespace,
+						Name:        "gateway",
+						Labels:      labels,
+						Annotations: statsAnnotations,
+						Containers:  []ContainerSpec{container},
 					}
 					deploy := rb.GetDeploymentAppsv1()
 					updateDeployment(deploy)
@@ -413,16 +452,18 @@ var _ = Describe("Helm Test", func() {
 					selector = map[string]string{
 						"gloo": "discovery",
 					}
-					container := GetQuayContainerSpec("discovery", version, GetPodNamespaceEnvVar())
+					container := GetQuayContainerSpec("discovery", version, GetPodNamespaceEnvVar(), GetPodNamespaceStats())
 
 					rb := ResourceBuilder{
-						Namespace:  namespace,
-						Name:       "discovery",
-						Labels:     labels,
-						Containers: []ContainerSpec{container},
+						Namespace:   namespace,
+						Name:        "discovery",
+						Labels:      labels,
+						Annotations: statsAnnotations,
+						Containers:  []ContainerSpec{container},
 					}
 					deploy := rb.GetDeploymentAppsv1()
 					updateDeployment(deploy)
+					deploy.Spec.Template.Spec.ServiceAccountName = "discovery"
 					discoveryDeployment = deploy
 				})
 
@@ -459,18 +500,20 @@ var _ = Describe("Helm Test", func() {
 				})
 
 				It("can overwrite the container image information", func() {
-					container := GetContainerSpec("gcr.io/solo-public", "discovery", version, GetPodNamespaceEnvVar())
+					container := GetContainerSpec("gcr.io/solo-public", "discovery", version, GetPodNamespaceEnvVar(), GetPodNamespaceStats())
 					container.PullPolicy = "Always"
 					rb := ResourceBuilder{
-						Namespace:  namespace,
-						Name:       "discovery",
-						Labels:     labels,
-						Containers: []ContainerSpec{container},
+						Namespace:   namespace,
+						Name:        "discovery",
+						Labels:      labels,
+						Annotations: statsAnnotations,
+						Containers:  []ContainerSpec{container},
 					}
 					deploy := rb.GetDeploymentAppsv1()
 					updateDeployment(deploy)
 
 					discoveryDeployment = deploy
+					deploy.Spec.Template.Spec.ServiceAccountName = "discovery"
 					helmFlags := "--namespace " + namespace + " --set namespace.create=true --set discovery.deployment.image.pullPolicy=Always --set discovery.deployment.image.registry=gcr.io/solo-public"
 					prepareMakefile(helmFlags)
 
@@ -540,6 +583,145 @@ var _ = Describe("Helm Test", func() {
 				proxy := cmRb.GetConfigMap()
 				testManifest.ExpectConfigMapWithYamlData(proxy)
 			})
+		})
+
+		Describe("merge ingress and gateway", func() {
+
+			// helper for passing a values file
+			prepareMakefileFromValuesFile := func(valuesFile string) {
+				helmFlags := "--namespace " + namespace +
+					" -f " + valuesFile
+				prepareMakefile(helmFlags)
+			}
+
+			It("merges the config correctly, allow override of ingress without altering gloo", func() {
+				var glooDeploymentPostMerge = &appsv1.Deployment{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Deployment",
+						APIVersion: "apps/v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "gloo",
+						Namespace: "gloo-system",
+						Labels: map[string]string{
+							"app": "gloo", "gloo": "gloo"},
+					},
+					Spec: appsv1.DeploymentSpec{
+						Replicas: pointer.Int32Ptr(1),
+						Selector: &metav1.LabelSelector{MatchLabels: map[string]string{
+							"gloo": "gloo"},
+						},
+						Template: v1.PodTemplateSpec{
+							ObjectMeta: metav1.ObjectMeta{
+								Labels: map[string]string{
+									"gloo": "gloo"},
+								Annotations: statsAnnotations,
+							},
+							Spec: v1.PodSpec{
+								ServiceAccountName: "gloo",
+								Containers: []v1.Container{
+									{
+										Name: "gloo",
+										// Note: this was NOT overwritten
+										Image: "quay.io/solo-io/gloo:dev",
+										Ports: []v1.ContainerPort{
+											{Name: "grpc", HostPort: 0, ContainerPort: 9977, Protocol: "TCP", HostIP: ""},
+										},
+										Env: []v1.EnvVar{
+											{
+												Name: "POD_NAMESPACE",
+												ValueFrom: &v1.EnvVarSource{
+													FieldRef: &v1.ObjectFieldSelector{APIVersion: "", FieldPath: "metadata.namespace"},
+												},
+											},
+											{
+												Name:  "START_STATS_SERVER",
+												Value: "true",
+											},
+										},
+										Resources: v1.ResourceRequirements{
+											Limits: nil,
+											Requests: v1.ResourceList{
+												v1.ResourceMemory: resource.MustParse("256Mi"),
+												v1.ResourceCPU:    resource.MustParse("500m"),
+											},
+										},
+										ImagePullPolicy: "Always",
+										SecurityContext: &v1.SecurityContext{
+											Capabilities:             &v1.Capabilities{Add: nil, Drop: []v1.Capability{"ALL"}},
+											RunAsUser:                pointer.Int64Ptr(10101),
+											RunAsNonRoot:             pointer.BoolPtr(true),
+											ReadOnlyRootFilesystem:   pointer.BoolPtr(true),
+											AllowPrivilegeEscalation: pointer.BoolPtr(false),
+										},
+									},
+								},
+							},
+						},
+					},
+				}
+				var ingressDeploymentPostMerge = &appsv1.Deployment{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Deployment",
+						APIVersion: "apps/v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "ingress",
+						Namespace: "gloo-system",
+						Labels: map[string]string{
+							"app": "gloo", "gloo": "ingress"},
+					},
+					Spec: appsv1.DeploymentSpec{
+						Replicas: pointer.Int32Ptr(1),
+						Selector: &metav1.LabelSelector{MatchLabels: map[string]string{
+							"gloo": "ingress"},
+						},
+						Template: v1.PodTemplateSpec{
+							ObjectMeta: metav1.ObjectMeta{
+								Labels: map[string]string{
+									"gloo": "ingress"},
+							},
+							Spec: v1.PodSpec{
+								Containers: []v1.Container{
+									{
+										Name: "ingress",
+										// Note: this WAS overwritten
+										Image: "docker.io/ilackarms/ingress:test-ilackarms",
+										Env: []v1.EnvVar{
+											{
+												Name: "POD_NAMESPACE",
+												ValueFrom: &v1.EnvVarSource{
+													FieldRef: &v1.ObjectFieldSelector{APIVersion: "", FieldPath: "metadata.namespace"},
+												},
+											},
+											{
+												Name:  "ENABLE_KNATIVE_INGRESS",
+												Value: "true",
+											},
+											{
+												Name:  "KNATIVE_VERSION",
+												Value: "0.8.0",
+											},
+											{
+												Name:  "DISABLE_KUBE_INGRESS",
+												Value: "true",
+											},
+										},
+										Resources: v1.ResourceRequirements{
+											Limits: nil,
+										},
+										ImagePullPolicy: "Always",
+									},
+								},
+							},
+						},
+					},
+				}
+				prepareMakefileFromValuesFile("install/test/merge_ingress_values.yaml")
+				testManifest.ExpectDeploymentAppsV1(glooDeploymentPostMerge)
+				testManifest.ExpectDeploymentAppsV1(ingressDeploymentPostMerge)
+			})
+
 		})
 
 	})
@@ -630,6 +812,7 @@ dynamic_resources:
     api_type: GRPC
     grpc_services:
     - envoy_grpc: {cluster_name: gloo.gloo-system.svc.cluster.local:9977}
+    rate_limit_settings: {}
   cds_config:
     ads: {}
   lds_config:
@@ -727,6 +910,7 @@ dynamic_resources:
     api_type: GRPC
     grpc_services:
     - envoy_grpc: {cluster_name: gloo.gloo-system.svc.cluster.local:9977}
+    rate_limit_settings: {}
   cds_config:
     ads: {}
   lds_config:
@@ -840,6 +1024,7 @@ dynamic_resources:
     api_type: GRPC
     grpc_services:
     - envoy_grpc: {cluster_name: gloo.gloo-system.svc.cluster.local:9977}
+    rate_limit_settings: {}
   cds_config:
     ads: {}
   lds_config:

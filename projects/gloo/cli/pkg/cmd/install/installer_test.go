@@ -1,8 +1,7 @@
 package install_test
 
 import (
-	"path/filepath"
-	"time"
+	"context"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -30,7 +29,7 @@ func (i *MockInstallClient) KubectlApply(manifest []byte) error {
 	return nil
 }
 
-func (i *MockInstallClient) WaitForCrdsToBeRegistered(crds []string, timeout, interval time.Duration) error {
+func (i *MockInstallClient) WaitForCrdsToBeRegistered(_ context.Context, crds []string) error {
 	Expect(i.waited).To(BeFalse())
 	i.waited = true
 	Expect(crds).To(ConsistOf(i.expectedCrds))
@@ -44,14 +43,12 @@ func (i *MockInstallClient) CheckKnativeInstallation() (bool, bool, error) {
 var _ = Describe("Install", func() {
 
 	var (
-		file      string
 		installer install.GlooStagedInstaller
 		opts      options.Options
 		validator MockInstallClient
 	)
 
 	BeforeEach(func() {
-		file = filepath.Join(RootDir, "_test/gloo-test-unit-testing.tgz")
 		opts.Install.Namespace = "gloo-system"
 		opts.Install.HelmChartOverride = file
 	})
@@ -77,6 +74,17 @@ var _ = Describe("Install", func() {
 				ExpectWithOffset(1, v).To(BeEquivalentTo(val))
 			}
 		}
+	}
+
+	withSettings := func(kinds []string) []string {
+		// default knative values create Settings
+		kindsWithSettings := make([]string, len(kinds))
+		for _, kind := range kinds {
+			kindsWithSettings = append(kindsWithSettings, kind)
+		}
+		kindsWithSettings = append(kindsWithSettings, "Settings")
+
+		return kindsWithSettings
 	}
 
 	Context("Gateway with default values", func() {
@@ -235,7 +243,8 @@ var _ = Describe("Install", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(validator.applied).To(BeTrue())
 			Expect(validator.waited).To(BeFalse())
-			expectKinds(validator.resources, install.GlooInstallKinds)
+
+			expectKinds(validator.resources, withSettings(install.GlooInstallKinds))
 			expectLabels(validator.resources, install.ExpectedLabels)
 		})
 
@@ -278,7 +287,7 @@ var _ = Describe("Install", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(validator.applied).To(BeTrue())
 			Expect(validator.waited).To(BeFalse())
-			expectKinds(validator.resources, install.GlooInstallKinds)
+			expectKinds(validator.resources, withSettings(install.GlooInstallKinds))
 			expectLabels(validator.resources, install.ExpectedLabels)
 		})
 
@@ -320,7 +329,7 @@ var _ = Describe("Install", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(validator.applied).To(BeTrue())
 			Expect(validator.waited).To(BeFalse())
-			expectKinds(validator.resources, install.GlooInstallKinds)
+			expectKinds(validator.resources, withSettings(install.GlooInstallKinds))
 			expectLabels(validator.resources, install.ExpectedLabels)
 		})
 

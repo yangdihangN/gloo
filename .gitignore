@@ -12,3 +12,4 @@ cloudbuild-local*.yaml
 
 .DS_Store
 docs/helm-values.md
+.gloo-helm.lock

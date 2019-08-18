@@ -331,13 +331,13 @@ update-helm-chart:
 
 HELMFLAGS ?= --namespace $(INSTALL_NAMESPACE) --set namespace.create=true
 
-MANIFEST_OUTPUT = > /dev/null
+MANIFEST_OUTPUT ?= > /dev/null
 ifneq ($(BUILD_ID),)
 MANIFEST_OUTPUT =
 endif
 
 install/gloo-gateway.yaml: prepare-helm
-	helm template install/helm/gloo $(HELMFLAGS) | tee $@ $(OUTPUT_YAML) $(MANIFEST_OUTPUT)
+	go run runlocked.go helm template install/helm/gloo $(HELMFLAGS) | tee $@ $(OUTPUT_YAML) $(MANIFEST_OUTPUT)
 
 install/gloo-knative.yaml: prepare-helm
 	helm template install/helm/gloo $(HELMFLAGS) --values install/helm/gloo/values-knative.yaml | tee $@ $(OUTPUT_YAML) $(MANIFEST_OUTPUT)

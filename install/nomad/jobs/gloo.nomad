@@ -4,6 +4,21 @@ job "gloo" {
   region      = "[[.region]]"
   type        = "service"
 
+  update {
+    max_parallel = 1
+    min_healthy_time = "10s"
+    healthy_deadline = "3m"
+    auto_revert = false
+    canary = 0
+  }
+
+  migrate {
+    max_parallel = 1
+    health_check = "checks"
+    min_healthy_time = "10s"
+    healthy_deadline = "5m"
+  }
+
 
   group "gloo" {
     count = [[.gloo.replicas]]
@@ -17,13 +32,13 @@ job "gloo" {
         }
         args = [
           "--namespace=[[.global.namespace]]",
-          "--dir=${NOMAD_TASK_DIR}/settings/",
+          "--dir=${NOMAD_TASK_DIR}/settings",
         ]
       }
 
       template {
         data = <<EOF
-bindAddr: [[.gloo.xdsPort]]
+bindAddr: 0.0.0.0:[[.gloo.xdsPort]]
 consul:
   address: [[.consul.address]]
   serviceDiscovery: {}
@@ -99,7 +114,7 @@ EOF
 
       template {
         data = <<EOF
-bindAddr: [[.gloo.xdsPort]]
+bindAddr: 0.0.0.0:[[.gloo.xdsPort]]
 consul:
   address: [[.consul.address]]
   serviceDiscovery: {}
@@ -162,7 +177,7 @@ EOF
 
       template {
         data = <<EOF
-bindAddr: [[.gloo.xdsPort]]
+bindAddr: 0.0.0.0:[[.gloo.xdsPort]]
 consul:
   address: [[.consul.address]]
   serviceDiscovery: {}

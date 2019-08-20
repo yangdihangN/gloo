@@ -19,11 +19,17 @@ job "gloo" {
     healthy_deadline = "5m"
   }
 
+  group "gloo-tasks" {
 
-  group "gloo" {
-    count = [[.gloo.replicas]]
+    restart {
+      attempts = 2
+      interval = "30m"
+      delay = "15s"
+      mode = "fail"
+    }
 
     task "gloo" {
+
       driver = "docker"
       config {
         image = "[[.gloo.image.registry]]/[[.gloo.image.repository]]:[[.gloo.image.tag]]"
@@ -43,8 +49,7 @@ consul:
   address: [[.consul.address]]
   serviceDiscovery: {}
 consulKvSource: {}
-directoryArtifactSource:
-  directory: /data
+consulKvArtifactSource: {}
 discoveryNamespace: [[.global.namespace]]
 metadata:
   name: default
@@ -90,18 +95,6 @@ EOF
       }
     }
 
-    restart {
-      attempts = 2
-      interval = "30m"
-      delay = "15s"
-      mode = "fail"
-    }
-  }
-
-
-  group "discovery" {
-    count = [[.discovery.replicas]]
-
     task "discovery" {
       driver = "docker"
       config {
@@ -119,8 +112,7 @@ consul:
   address: [[.consul.address]]
   serviceDiscovery: {}
 consulKvSource: {}
-directoryArtifactSource:
-  directory: /data
+consulKvArtifactSource: {}
 discoveryNamespace: [[.global.namespace]]
 metadata:
   name: default
@@ -153,18 +145,6 @@ EOF
       }
     }
 
-    restart {
-      attempts = 2
-      interval = "30m"
-      delay = "15s"
-      mode = "fail"
-    }
-  }
-
-
-  group "gateway" {
-    count = [[.gateway.replicas]]
-
     task "gateway" {
       driver = "docker"
       config {
@@ -182,8 +162,7 @@ consul:
   address: [[.consul.address]]
   serviceDiscovery: {}
 consulKvSource: {}
-directoryArtifactSource:
-  directory: /data
+consulKvArtifactSource: {}
 discoveryNamespace: [[.global.namespace]]
 metadata:
   name: default
@@ -212,18 +191,6 @@ EOF
 
     }
 
-    restart {
-      attempts = 2
-      interval = "30m"
-      delay = "15s"
-      mode = "fail"
-    }
-  }
-
-
-  group "gateway-proxy" {
-    count = [[.gatewayProxy.replicas]]
-
     task "gateway-proxy" {
       driver = "docker"
       config {
@@ -249,7 +216,7 @@ node:
   id: gateway~{{ env "NOMAD_ALLOC_ID" }}
   metadata:
     # this line must match !
-    role: "gloo-system~gateway-proxy"
+    role: "[[.global.namespace]]~gateway-proxy"
 
 static_resources:
   clusters:
@@ -410,13 +377,6 @@ EOF
           timeout = "2s"
         }
       }
-    }
-
-    restart {
-      attempts = 2
-      interval = "30m"
-      delay = "15s"
-      mode = "fail"
     }
 
   }

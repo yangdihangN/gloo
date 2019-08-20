@@ -17,8 +17,7 @@ gloo:
   image:
     registry: quay.io/solo-io
     repository: gloo
-    tag: test-ilackarms
-  replicas: 1
+    tag: dev
   cpuLimit: 1000
   memLimit: 500
   bandwidthLimit: 10
@@ -28,8 +27,7 @@ discovery:
   image:
     registry: quay.io/solo-io
     repository: discovery
-    tag: test-ilackarms
-  replicas: 1
+    tag: dev
   cpuLimit: 500
   memLimit: 500
   bandwidthLimit: 10
@@ -39,8 +37,7 @@ gateway:
   image:
     registry: quay.io/solo-io
     repository: gateway
-    tag: test-ilackarms
-  replicas: 1
+    tag: dev
   cpuLimit: 250
   memLimit: 250
   bandwidthLimit: 5
@@ -50,9 +47,8 @@ gateway:
 gatewayProxy:
   image:
     registry: quay.io/solo-io
-    repository: envoy-gloo-wrapper
-    tag: test-ilackarms
-  replicas: 1
+    repository: gloo-envoy-wrapper
+    tag: dev
   cpuLimit: 500
   memLimit: 500
   bandwidthLimit: 100

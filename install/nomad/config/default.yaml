@@ -1,0 +1,15 @@
+bindAddr: [[.gloo.xdsPort]]
+consul:
+  address: [[.consul.address]]
+  serviceDiscovery: {}
+consulKvSource: {}
+directoryArtifactSource:
+  directory: /data
+discoveryNamespace: [[.global.namespace]]
+metadata:
+  name: default
+  namespace: [[.global.namespace]]
+refreshRate: [[.global.refreshRate]]
+vaultSecretSource:
+  address: [[.vault.address]]
+  token: [[.vault.token]]

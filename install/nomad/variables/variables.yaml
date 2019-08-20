@@ -1,0 +1,47 @@
+datacenter: dc1
+region: us
+
+global:
+  namespace: gloo-system
+  refreshRate: 30s
+
+consul:
+  address: host.docker.internal:8500
+
+vault:
+  address: http://host.docker.internal:8200
+  token: root
+
+gloo:
+  xdsPort: 9977
+  image:
+    registry: quay.io/solo-io
+    repository: gloo
+    tag: test-ilackarms
+  replicas: 1
+  cpuLimit: 1000
+  memLimit: 500
+  bandwidthLimit: 10
+
+
+discovery:
+  image:
+    registry: quay.io/solo-io
+    repository: discovery
+    tag: test-ilackarms
+  replicas: 1
+  cpuLimit: 500
+  memLimit: 500
+  bandwidthLimit: 10
+
+
+gateway:
+  image:
+    registry: quay.io/solo-io
+    repository: gateway
+    tag: test-ilackarms
+  replicas: 1
+  cpuLimit: 250
+  memLimit: 250
+  bandwidthLimit: 5
+

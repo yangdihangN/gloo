@@ -3,8 +3,7 @@ consul:
   address: [[.consul.address]]
   serviceDiscovery: {}
 consulKvSource: {}
-directoryArtifactSource:
-  directory: /data
+consulKvArtifactSource: {}
 discoveryNamespace: [[.global.namespace]]
 metadata:
   name: default

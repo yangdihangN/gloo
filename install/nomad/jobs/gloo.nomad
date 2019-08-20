@@ -16,6 +16,7 @@ job "gloo" {
           xds = [[.gloo.xdsPort]]
         }
         args = [
+          "--namespace=[[.global.namespace]]",
           "--dir=${NOMAD_TASK_DIR}/settings/",
         ]
       }
@@ -91,6 +92,7 @@ EOF
       config {
         image = "[[.discovery.image.registry]]/[[.discovery.image.repository]]:[[.discovery.image.tag]]"
         args = [
+          "--namespace=[[.global.namespace]]",
           "--dir=${NOMAD_TASK_DIR}/settings/",
         ]
       }
@@ -153,6 +155,7 @@ EOF
       config {
         image = "[[.gateway.image.registry]]/[[.gateway.image.repository]]:[[.gateway.image.tag]]"
         args = [
+          "--namespace=[[.global.namespace]]",
           "--dir=${NOMAD_TASK_DIR}/settings/",
         ]
       }
@@ -339,24 +342,16 @@ EOF
         network {
           # bandwidth required in MBits
           mbits = [[.gatewayProxy.bandwidthLimit]]
-        }
 
-        port "http" {}
-        port "https" {}
-        port "admin" {}
-        port "stats" {}
+          port "http" {}
+          port "https" {}
+          port "admin" {}
+          port "stats" {}
+
+        }
       }
 
-    }
-
-    restart {
-      attempts = 2
-      interval = "30m"
-      delay = "15s"
-      mode = "fail"
-    }
-
-    service {
+      service {
         name = "gateway-proxy"
         tags = [
           "gloo",
@@ -371,7 +366,7 @@ EOF
         }
       }
 
-    service {
+      service {
         name = "gateway-proxy"
         tags = [
           "gloo",
@@ -386,7 +381,7 @@ EOF
         }
       }
 
-    service {
+      service {
         name = "gateway-proxy"
         tags = [
           "gloo",
@@ -400,7 +395,15 @@ EOF
           timeout = "2s"
         }
       }
-
     }
+
+    restart {
+      attempts = 2
+      interval = "30m"
+      delay = "15s"
+      mode = "fail"
+    }
+
+  }
 
  }

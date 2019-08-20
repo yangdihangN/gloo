@@ -45,3 +45,15 @@ gateway:
   memLimit: 250
   bandwidthLimit: 5
 
+
+
+gatewayProxy:
+  image:
+    registry: quay.io/solo-io
+    repository: envoy-gloo-wrapper
+    tag: test-ilackarms
+  replicas: 1
+  cpuLimit: 500
+  memLimit: 500
+  bandwidthLimit: 100
+

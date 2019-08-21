@@ -1,7 +1,7 @@
 datacenter: dc1
 region: us
 
-global:
+config:
   namespace: gloo-system
   refreshRate: 30s
 
@@ -12,6 +12,8 @@ vault:
   address: http://host.docker.internal:8200
   token: root
 
+dockerNetwork: weave
+
 gloo:
   xdsPort: 9977
   image:
@@ -21,7 +23,7 @@ gloo:
   cpuLimit: 1000
   memLimit: 500
   bandwidthLimit: 10
-
+  replicas: 1
 
 discovery:
   image:
@@ -31,7 +33,7 @@ discovery:
   cpuLimit: 500
   memLimit: 500
   bandwidthLimit: 10
-
+  replicas: 1
 
 gateway:
   image:
@@ -41,8 +43,7 @@ gateway:
   cpuLimit: 250
   memLimit: 250
   bandwidthLimit: 5
-
-
+  replicas: 1
 
 gatewayProxy:
   image:
@@ -52,4 +53,4 @@ gatewayProxy:
   cpuLimit: 500
   memLimit: 500
   bandwidthLimit: 100
-
+  replicas: 1

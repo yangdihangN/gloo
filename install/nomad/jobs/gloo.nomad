@@ -19,7 +19,8 @@ job "gloo" {
     healthy_deadline = "5m"
   }
 
-  group "gloo-tasks" {
+  group "gloo" {
+    count = [[.gloo.replicas]]
 
     restart {
       attempts = 2
@@ -37,9 +38,14 @@ job "gloo" {
           xds = [[.gloo.xdsPort]]
         }
         args = [
-          "--namespace=[[.global.namespace]]",
+          "--namespace=[[.config.namespace]]",
           "--dir=${NOMAD_TASK_DIR}/settings",
         ]
+
+        [[ if .dockerNetwork ]]
+        # Use Weave overlay network
+        network_mode = "[[.dockerNetwork]]"
+        [[ end ]]
       }
 
       template {
@@ -50,17 +56,17 @@ consul:
   serviceDiscovery: {}
 consulKvSource: {}
 consulKvArtifactSource: {}
-discoveryNamespace: [[.global.namespace]]
+discoveryNamespace: [[.config.namespace]]
 metadata:
   name: default
-  namespace: [[.global.namespace]]
-refreshRate: [[.global.refreshRate]]
+  namespace: [[.config.namespace]]
+refreshRate: [[.config.refreshRate]]
 vaultSecretSource:
   address: [[.vault.address]]
   token: [[.vault.token]]
 EOF
 
-        destination = "${NOMAD_TASK_DIR}/settings/[[.global.namespace]]/default.yaml"
+        destination = "${NOMAD_TASK_DIR}/settings/[[.config.namespace]]/default.yaml"
       }
 
       resources {
@@ -95,14 +101,31 @@ EOF
       }
     }
 
+  }
+
+  group "discovery" {
+    count = [[.discovery.replicas]]
+
+    restart {
+      attempts = 2
+      interval = "30m"
+      delay = "15s"
+      mode = "fail"
+    }
+
     task "discovery" {
       driver = "docker"
       config {
         image = "[[.discovery.image.registry]]/[[.discovery.image.repository]]:[[.discovery.image.tag]]"
         args = [
-          "--namespace=[[.global.namespace]]",
+          "--namespace=[[.config.namespace]]",
           "--dir=${NOMAD_TASK_DIR}/settings/",
         ]
+
+        [[ if .dockerNetwork ]]
+        # Use Weave overlay network
+        network_mode = "[[.dockerNetwork]]"
+        [[ end ]]
       }
 
       template {
@@ -113,17 +136,17 @@ consul:
   serviceDiscovery: {}
 consulKvSource: {}
 consulKvArtifactSource: {}
-discoveryNamespace: [[.global.namespace]]
+discoveryNamespace: [[.config.namespace]]
 metadata:
   name: default
-  namespace: [[.global.namespace]]
-refreshRate: [[.global.refreshRate]]
+  namespace: [[.config.namespace]]
+refreshRate: [[.config.refreshRate]]
 vaultSecretSource:
   address: [[.vault.address]]
   token: [[.vault.token]]
 EOF
 
-        destination = "${NOMAD_TASK_DIR}/settings/[[.global.namespace]]/default.yaml"
+        destination = "${NOMAD_TASK_DIR}/settings/[[.config.namespace]]/default.yaml"
       }
 
       resources {
@@ -144,79 +167,112 @@ EOF
         policies = ["gloo"]
       }
     }
+}
+
+  group "gateway" {
+    count = [[.gateway.replicas]]
+
+    restart {
+      attempts = 2
+      interval = "30m"
+      delay = "15s"
+      mode = "fail"
+    }
 
     task "gateway" {
-      driver = "docker"
-      config {
-        image = "[[.gateway.image.registry]]/[[.gateway.image.repository]]:[[.gateway.image.tag]]"
-        args = [
-          "--namespace=[[.global.namespace]]",
-          "--dir=${NOMAD_TASK_DIR}/settings/",
-        ]
-      }
+    driver = "docker"
+    config {
+      image = "[[.gateway.image.registry]]/[[.gateway.image.repository]]:[[.gateway.image.tag]]"
+      args = [
+        "--namespace=[[.config.namespace]]",
+        "--dir=${NOMAD_TASK_DIR}/settings/",
+      ]
 
-      template {
-        data = <<EOF
+      [[ if .dockerNetwork ]]
+      # Use Weave overlay network
+      network_mode = "[[.dockerNetwork]]"
+      [[ end ]]
+    }
+
+    template {
+      data = <<EOF
 bindAddr: 0.0.0.0:[[.gloo.xdsPort]]
 consul:
   address: [[.consul.address]]
   serviceDiscovery: {}
 consulKvSource: {}
 consulKvArtifactSource: {}
-discoveryNamespace: [[.global.namespace]]
+discoveryNamespace: [[.config.namespace]]
 metadata:
   name: default
-  namespace: [[.global.namespace]]
-refreshRate: [[.global.refreshRate]]
+  namespace: [[.config.namespace]]
+refreshRate: [[.config.refreshRate]]
 vaultSecretSource:
   address: [[.vault.address]]
   token: [[.vault.token]]
 EOF
 
-        destination = "${NOMAD_TASK_DIR}/settings/[[.global.namespace]]/default.yaml"
+      destination = "${NOMAD_TASK_DIR}/settings/[[.config.namespace]]/default.yaml"
+    }
+
+    resources {
+      # cpu required in MHz
+      cpu = [[.gateway.cpuLimit]]
+
+      # memory required in MB
+      memory = [[.gateway.memLimit]]
+
+      network {
+        # bandwidth required in MBits
+        mbits = [[.gateway.bandwidthLimit]]
       }
+    }
 
-      resources {
-        # cpu required in MHz
-        cpu = [[.gateway.cpuLimit]]
+  }
 
-        # memory required in MB
-        memory = [[.gateway.memLimit]]
+  }
 
-        network {
-          # bandwidth required in MBits
-          mbits = [[.gateway.bandwidthLimit]]
-        }
-      }
+  group "gateway-proxy" {
+    count = [[.gatewayProxy.replicas]]
 
+    restart {
+      attempts = 2
+      interval = "30m"
+      delay = "15s"
+      mode = "fail"
     }
 
     task "gateway-proxy" {
-      driver = "docker"
-      config {
-        image = "[[.gatewayProxy.image.registry]]/[[.gatewayProxy.image.repository]]:[[.gatewayProxy.image.tag]]"
-        port_map {
-          http = 8080
-          https = 8443
-          admin = 19000
-        }
-        entrypoint = ["envoy"]
-        args = [
-          "-c",
-          "${NOMAD_TASK_DIR}/envoy.yaml",
-          "--disable-hot-restart",
-          "-l debug",
-        ]
+    driver = "docker"
+    config {
+      image = "[[.gatewayProxy.image.registry]]/[[.gatewayProxy.image.repository]]:[[.gatewayProxy.image.tag]]"
+      port_map {
+        http = 8080
+        https = 8443
+        admin = 19000
       }
+      entrypoint = ["envoy"]
+      args = [
+        "-c",
+        "${NOMAD_TASK_DIR}/envoy.yaml",
+        "--disable-hot-restart",
+        "-l debug",
+      ]
 
-      template {
-        data = <<EOF
+      [[ if .dockerNetwork ]]
+      # Use Weave overlay network
+      network_mode = "[[.dockerNetwork]]"
+      [[ end ]]
+    }
+
+    template {
+      data = <<EOF
 node:
   cluster: gateway
   id: gateway~{{ env "NOMAD_ALLOC_ID" }}
   metadata:
     # this line must match !
-    role: "[[.global.namespace]]~gateway-proxy"
+    role: "[[.config.namespace]]~gateway-proxy-v2"
 
 static_resources:
   clusters:
@@ -226,11 +282,13 @@ static_resources:
       cluster_name: xds_cluster
       endpoints:
       - lb_endpoints:
+{{- range service "gloo-xds" }}
         - endpoint:
             address:
               socket_address:
-                address: {{ env "NOMAD_IP_gloo_xds" }}
-                port_value: {{ env "NOMAD_PORT_gloo_xds" }}
+                address: {{ .Address }}
+                port_value: {{ .Port }}
+{{- end }}
     http2_protocol_options: {}
     type: STATIC
 
@@ -311,73 +369,73 @@ admin:
       port_value: 19000
 EOF
 
-        destination = "${NOMAD_TASK_DIR}/envoy.yaml"
-      }
+      destination = "${NOMAD_TASK_DIR}/envoy.yaml"
+    }
 
-      resources {
-        # cpu required in MHz
-        cpu = [[.gatewayProxy.cpuLimit]]
+    resources {
+      # cpu required in MHz
+      cpu = [[.gatewayProxy.cpuLimit]]
 
-        # memory required in MB
-        memory = [[.gatewayProxy.memLimit]]
+      # memory required in MB
+      memory = [[.gatewayProxy.memLimit]]
 
-        network {
-          # bandwidth required in MBits
-          mbits = [[.gatewayProxy.bandwidthLimit]]
+      network {
+        # bandwidth required in MBits
+        mbits = [[.gatewayProxy.bandwidthLimit]]
 
-          port "http" {}
-          port "https" {}
-          port "admin" {}
-          port "stats" {}
+        port "http" {}
+        port "https" {}
+        port "admin" {}
+        port "stats" {}
 
-        }
-      }
-
-      service {
-        name = "gateway-proxy"
-        tags = [
-          "gloo",
-          "http",
-        ]
-        port = "http"
-        check {
-          name = "alive"
-          type = "tcp"
-          interval = "10s"
-          timeout = "2s"
-        }
-      }
-
-      service {
-        name = "gateway-proxy"
-        tags = [
-          "gloo",
-          "https",
-        ]
-        port = "https"
-        check {
-          name = "alive"
-          type = "tcp"
-          interval = "10s"
-          timeout = "2s"
-        }
-      }
-
-      service {
-        name = "gateway-proxy"
-        tags = [
-          "gloo",
-          "admin",
-        ]
-        port = "admin"
-        check {
-          name = "alive"
-          type = "tcp"
-          interval = "10s"
-          timeout = "2s"
-        }
       }
     }
+
+    service {
+      name = "gateway-proxy"
+      tags = [
+        "gloo",
+        "http",
+      ]
+      port = "http"
+      check {
+        name = "alive"
+        type = "tcp"
+        interval = "10s"
+        timeout = "2s"
+      }
+    }
+
+    service {
+      name = "gateway-proxy"
+      tags = [
+        "gloo",
+        "https",
+      ]
+      port = "https"
+      check {
+        name = "alive"
+        type = "tcp"
+        interval = "10s"
+        timeout = "2s"
+      }
+    }
+
+    service {
+      name = "gateway-proxy"
+      tags = [
+        "gloo",
+        "admin",
+      ]
+      port = "admin"
+      check {
+        name = "alive"
+        type = "tcp"
+        interval = "10s"
+        timeout = "2s"
+      }
+    }
+  }
 
   }
 

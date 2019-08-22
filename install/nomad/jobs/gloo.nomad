@@ -1,7 +1,6 @@
 job "gloo" {
 
   datacenters = ["[[.datacenter]]"]
-  region      = "[[.region]]"
   type        = "service"
 
   update {
@@ -43,7 +42,7 @@ job "gloo" {
         ]
 
         [[ if .dockerNetwork ]]
-        # Use Weave overlay network
+        # Use overlay network
         network_mode = "[[.dockerNetwork]]"
         [[ end ]]
       }
@@ -123,7 +122,7 @@ EOF
         ]
 
         [[ if .dockerNetwork ]]
-        # Use Weave overlay network
+        # Use overlay network
         network_mode = "[[.dockerNetwork]]"
         [[ end ]]
       }
@@ -189,7 +188,7 @@ EOF
       ]
 
       [[ if .dockerNetwork ]]
-      # Use Weave overlay network
+      # Use overlay network
       network_mode = "[[.dockerNetwork]]"
       [[ end ]]
     }
@@ -260,7 +259,7 @@ EOF
       ]
 
       [[ if .dockerNetwork ]]
-      # Use Weave overlay network
+      # Use overlay network
       network_mode = "[[.dockerNetwork]]"
       [[ end ]]
     }

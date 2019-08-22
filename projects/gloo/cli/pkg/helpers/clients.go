@@ -67,16 +67,14 @@ func getSecretClientFactory() factory.ResourceClientFactory {
 	return nil
 }
 
-func getConsulClients() *factory.ConsulResourceClientFactory {
+// wipes all the client helper overrides
+func UseDefaultClients() {
 	lock.Lock()
 	defer lock.Unlock()
-	return consulClient
-}
-
-func getVaultClients() *factory.VaultSecretClientFactory {
-	lock.Lock()
-	defer lock.Unlock()
-	return vaultClient
+	fakeKubeClientset = nil
+	memResourceClient = nil
+	consulClient = nil
+	vaultClient = nil
 }
 
 func UseMemoryClients() {

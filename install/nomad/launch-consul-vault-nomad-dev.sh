@@ -11,6 +11,7 @@ sleep 1
 VAULT_ADDR=http://127.0.0.1:8200 vault policy write gloo ./gloo-policy.hcl
 
 nomad agent -dev \
+    --bind 0.0.0.0 \
     --vault-enabled=true \
     --vault-address=http://127.0.0.1:8200 \
     --vault-token=root &

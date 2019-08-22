@@ -1,7 +1,6 @@
 job "demo" {
 
   datacenters = ["[[.datacenter]]"]
-  region      = "[[.region]]"
   type        = "service"
 
   update {

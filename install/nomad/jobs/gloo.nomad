@@ -103,7 +103,6 @@ EOF
   }
 
   group "discovery" {
-    count = [[.discovery.replicas]]
 
     restart {
       attempts = 2
@@ -169,7 +168,6 @@ EOF
 }
 
   group "gateway" {
-    count = [[.gateway.replicas]]
 
     restart {
       attempts = 2
@@ -246,9 +244,9 @@ EOF
     config {
       image = "[[.gatewayProxy.image.registry]]/[[.gatewayProxy.image.repository]]:[[.gatewayProxy.image.tag]]"
       port_map {
-        http = 8080
-        https = 8443
-        admin = 19000
+        http = [[.gatewayProxy.httpPort]]
+        https = [[.gatewayProxy.httpsPort]]
+        admin = [[.gatewayProxy.adminPort]]
       }
       entrypoint = ["envoy"]
       args = [
@@ -303,7 +301,7 @@ static_resources:
             address:
               socket_address:
                 address: 127.0.0.1
-                port_value: 19000
+                port_value: [[.gatewayProxy.adminPort]]
 
   listeners:
     - name: prometheus_listener
@@ -382,8 +380,16 @@ EOF
         # bandwidth required in MBits
         mbits = [[.gatewayProxy.bandwidthLimit]]
 
-        port "http" {}
-        port "https" {}
+        port "http" {
+          [[- if .gatewayProxy.exposePorts]]
+          static = [[.gatewayProxy.httpPort]]
+          [[- end ]]
+        }
+        port "https" {
+          [[- if .gatewayProxy.exposePorts]]
+          static = [[.gatewayProxy.httpsPort]]
+          [[- end ]]
+        }
         port "admin" {}
         port "stats" {}
 

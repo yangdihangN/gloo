@@ -280,9 +280,9 @@ func MustGatewayV2Client() gatewayv2.GatewayClient {
 }
 
 func GatewayV2Client() (gatewayv2.GatewayClient, error) {
-	memoryResourceClient := getMemoryClients()
-	if memoryResourceClient != nil {
-		return gatewayv2.NewGatewayClient(memoryResourceClient)
+	customFactory := getConfigClientFactory()
+	if customFactory != nil {
+		return gatewayv2.NewGatewayClient(customFactory)
 	}
 
 	cfg, err := kubeutils.GetConfig("", "")

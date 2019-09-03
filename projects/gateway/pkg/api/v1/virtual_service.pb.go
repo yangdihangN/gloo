@@ -27,94 +27,94 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 //
 //
-//The **VirtualService** is the root Routing object for the Gloo Gateway.
-//A virtual service describes the set of routes to match for a set of domains.
+// The **VirtualService** is the root Routing object for the Gloo Gateway.
+// A virtual service describes the set of routes to match for a set of domains.
 //
-//It defines:
-//- a set of domains
-//- the root set of routes for those domains
-//- an optional SSL configuration for server TLS Termination
-//- VirtualHostPlugins that will apply configuration to all routes that live on the VirtualService.
+// It defines:
+// - a set of domains
+// - the root set of routes for those domains
+// - an optional SSL configuration for server TLS Termination
+// - VirtualHostPlugins that will apply configuration to all routes that live on the VirtualService.
 //
-//Domains must be unique across all virtual services within a gateway (i.e. no overlap between sets).
+// Domains must be unique across all virtual services within a gateway (i.e. no overlap between sets).
 //
-//VirtualServices can delegate routing behavior to the RouteTable resource by using the `delegateAction` on routes.
+// VirtualServices can delegate routing behavior to the RouteTable resource by using the `delegateAction` on routes.
 //
-//An example configuration using two VirtualServices (one with TLS termination and one without) which share
-//a RouteTable looks as follows:
+// An example configuration using two VirtualServices (one with TLS termination and one without) which share
+// a RouteTable looks as follows:
 //
-//```yaml
-//# HTTP VirtualService:
-//apiVersion: gateway.solo.io/v1
-//kind: VirtualService
-//metadata:
-//name: 'http'
-//namespace: 'usernamespace'
-//spec:
-//virtualHost:
-//domains:
-//- '*.mydomain.com'
-//- 'mydomain.com'
-//routes:
-//- matcher:
-//prefix: '/'
-//# delegate all traffic to the `shared-routes` RouteTable
-//delegateAction:
-//name: 'shared-routes'
-//namespace: 'usernamespace'
+// ```yaml
+// # HTTP VirtualService:
+// apiVersion: gateway.solo.io/v1
+// kind: VirtualService
+// metadata:
+//   name: 'http'
+//   namespace: 'usernamespace'
+// spec:
+//   virtualHost:
+//     domains:
+//     - '*.mydomain.com'
+//     - 'mydomain.com'
+//     routes:
+//     - matcher:
+//         prefix: '/'
+//       # delegate all traffic to the `shared-routes` RouteTable
+//       delegateAction:
+//         name: 'shared-routes'
+//         namespace: 'usernamespace'
 //
-//```
+// ```
 //
-//```yaml
-//# HTTPS VirtualService:
-//apiVersion: gateway.solo.io/v1
-//kind: VirtualService
-//metadata:
-//name: 'https'
-//namespace: 'usernamespace'
-//spec:
-//virtualHost:
-//domains:
-//- '*.mydomain.com'
-//- 'mydomain.com'
-//routes:
-//- matcher:
-//prefix: '/'
-//# delegate all traffic to the `shared-routes` RouteTable
-//delegateAction:
-//name: 'shared-routes'
-//namespace: 'usernamespace'
-//sslConfig:
-//secretRef:
-//name: gateway-tls
-//namespace: gloo-system
+// ```yaml
+// # HTTPS VirtualService:
+// apiVersion: gateway.solo.io/v1
+// kind: VirtualService
+// metadata:
+//   name: 'https'
+//   namespace: 'usernamespace'
+// spec:
+//   virtualHost:
+//     domains:
+//     - '*.mydomain.com'
+//     - 'mydomain.com'
+//     routes:
+//     - matcher:
+//         prefix: '/'
+//       # delegate all traffic to the `shared-routes` RouteTable
+//       delegateAction:
+//         name: 'shared-routes'
+//         namespace: 'usernamespace'
+//   sslConfig:
+//     secretRef:
+//       name: gateway-tls
+//       namespace: gloo-system
 //
-//```
+// ```
 //
-//```yaml
-//# the RouteTable shared by both VirtualServices:
-//apiVersion: gateway.solo.io/v1
-//kind: RouteTable
-//metadata:
-//name: 'shared-routes'
-//namespace: 'usernamespace'
-//spec:
-//routes:
-//- matcher:
-//prefix: '/some-route'
-//routeAction:
-//single:
-//upstream:
-//name: 'some-upstream'
-//...
-//```
+// ```yaml
+// # the RouteTable shared by both VirtualServices:
+// apiVersion: gateway.solo.io/v1
+// kind: RouteTable
+// metadata:
+//   name: 'shared-routes'
+//   namespace: 'usernamespace'
+// spec:
+//   routes:
+//     - matcher:
+//         prefix: '/some-route'
+//       routeAction:
+//         single:
+//           upstream:
+//             name: 'some-upstream'
+//      ...
+// ```
 //
-//*Delegated Routes** are routes that use the `delegateAction` routing action. Delegated Routes obey the following
-//constraints:
+// **Delegated Routes** are routes that use the `delegateAction` routing action. Delegated Routes obey the following
+// constraints:
 //
-//- delegate routes must use `prefix` path matchers
-//- delegated routes cannot specify header, query, or methods portion of the normal route matcher.
-//- `routePlugin` configuration will be inherited from parent routes, but can be overridden by the child
+// - delegate routes must use `prefix` path matchers
+// - delegated routes cannot specify header, query, or methods portion of the normal route matcher.
+// - `routePlugin` configuration will be inherited from parent routes, but can be overridden by the child
 //
 type VirtualService struct {
 	// The VirtualHost contains the

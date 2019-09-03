@@ -49,20 +49,20 @@ a RouteTable looks as follows:
 apiVersion: gateway.solo.io/v1
 kind: VirtualService
 metadata:
-name: 'http'
-namespace: 'usernamespace'
+  name: 'http'
+  namespace: 'usernamespace'
 spec:
-virtualHost:
-domains:
-- '*.mydomain.com'
-- 'mydomain.com'
-routes:
-- matcher:
-prefix: '/'
-# delegate all traffic to the `shared-routes` RouteTable
-delegateAction:
-name: 'shared-routes'
-namespace: 'usernamespace'
+  virtualHost:
+    domains:
+    - '*.mydomain.com'
+    - 'mydomain.com'
+    routes:
+    - matcher:
+        prefix: '/'
+      # delegate all traffic to the `shared-routes` RouteTable
+      delegateAction:
+        name: 'shared-routes'
+        namespace: 'usernamespace'
 
 ```
 
@@ -71,24 +71,24 @@ namespace: 'usernamespace'
 apiVersion: gateway.solo.io/v1
 kind: VirtualService
 metadata:
-name: 'https'
-namespace: 'usernamespace'
+  name: 'https'
+  namespace: 'usernamespace'
 spec:
-virtualHost:
-domains:
-- '*.mydomain.com'
-- 'mydomain.com'
-routes:
-- matcher:
-prefix: '/'
-# delegate all traffic to the `shared-routes` RouteTable
-delegateAction:
-name: 'shared-routes'
-namespace: 'usernamespace'
-sslConfig:
-secretRef:
-name: gateway-tls
-namespace: gloo-system
+  virtualHost:
+    domains:
+    - '*.mydomain.com'
+    - 'mydomain.com'
+    routes:
+    - matcher:
+        prefix: '/'
+      # delegate all traffic to the `shared-routes` RouteTable
+      delegateAction:
+        name: 'shared-routes'
+        namespace: 'usernamespace'
+  sslConfig:
+    secretRef:
+      name: gateway-tls
+      namespace: gloo-system
 
 ```
 
@@ -97,20 +97,20 @@ namespace: gloo-system
 apiVersion: gateway.solo.io/v1
 kind: RouteTable
 metadata:
-name: 'shared-routes'
-namespace: 'usernamespace'
+  name: 'shared-routes'
+  namespace: 'usernamespace'
 spec:
-routes:
-- matcher:
-prefix: '/some-route'
-routeAction:
-single:
-upstream:
-name: 'some-upstream'
-...
+  routes:
+    - matcher:
+        prefix: '/some-route'
+      routeAction:
+        single:
+          upstream:
+            name: 'some-upstream'
+     ...
 ```
 
-*Delegated Routes** are routes that use the `delegateAction` routing action. Delegated Routes obey the following
+**Delegated Routes** are routes that use the `delegateAction` routing action. Delegated Routes obey the following
 constraints:
 
 - delegate routes must use `prefix` path matchers

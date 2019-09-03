@@ -79,7 +79,7 @@ spec:
     listKind: RouteTableList
     plural: routetables
     shortNames:
-      - vs
+      - rt
     singular: routetable
   scope: Namespaced
   version: v1

@@ -6,8 +6,7 @@
     "api.gateway.solo.io.v2": [
       {
         "name": "VirtualService",
-        "package": "gateway.solo.io",
-        "version": "v1"
+        "package": "gateway.solo.io.v2"
       },
       {
         "name": "Gateway",

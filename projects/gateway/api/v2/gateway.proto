@@ -16,21 +16,22 @@ import "github.com/solo-io/gloo/projects/gloo/api/v1/proxy.proto";
 import "github.com/solo-io/gloo/projects/gloo/api/v1/plugins.proto";
 
 /*
-A gateway describes the routes to upstreams that are reachable via a specific port on the Gateway Proxy itself.
+A Gateway describes a single Listener (bind address:port)
+and the routing configuration to upstreams that are reachable via a specific port on the Gateway Proxy itself.
 */
 message Gateway {
 
     option (core.solo.io.resource).short_name = "gw";
     option (core.solo.io.resource).plural_name = "gateways";
 
-    // if set to false, only use virtual services with no ssl configured.
+    // if set to false, only use virtual services without ssl configured.
     // if set to true, only use virtual services with ssl configured.
     bool ssl = 1;
 
     // the bind address the gateway should serve traffic on
     string bind_address = 3;
 
-    // bind ports must not conflict across gateways in a namespace
+    // bind ports must not conflict across gateways for a single proxy
     uint32 bind_port = 4;
 
     // top level plugin configuration for all routes on the gateway
@@ -54,13 +55,26 @@ message Gateway {
         TcpGateway tcp_gateway = 10;
     }
 
+    // deprecated: use proxyNames
     string gateway_proxy_name = 11;
+
+    // By default, each Gateway is exposed on the default `gateway-proxy-v2` which lives in the Gloo installation namespace.
+    // Use `proxyNames` to expose Gateways on custom proxies deployed by the user via the [Gloo Helm Chart](https://gloo.solo.io/installation/gateway/kubernetes/#list-of-gloo-helm-chart-values)
+    //
+    // > Note: when using camel-case proxy names in the Helm chart, they should be converted to kebab-case for use with `proxyNames`, such that:
+    // `gatewayProxyV2` in the Helm Values becomes `gateway-proxy-v2` in the list of proxyNames
+    string proxy_names = 12;
 }
 
 message HttpGateway {
     // names of the the virtual services, which contain the actual routes for the gateway
     // if the list is empty, all virtual services will apply to this gateway (with accordance to tls flag above).
     repeated core.solo.io.ResourceRef virtual_services = 1 [(gogoproto.nullable) = false];
+
+    // only one of `virtualServices` or `virtualServiceSelector` should be provided
+    // rather than providing
+    map<string, string> virtual_service_selector = 2 ;
+
     // http gateway configuration
     gloo.solo.io.HttpListenerPlugins plugins = 8;
 

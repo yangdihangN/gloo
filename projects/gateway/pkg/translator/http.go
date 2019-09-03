@@ -246,7 +246,7 @@ func convertRoute(ours *v1.Route) *gloov1.Route {
 		route.Action = &gloov1.Route_RedirectAction{
 			RedirectAction: ours.GetRedirectAction(),
 		}
-	default:
+	case *v1.Route_DelegateAction:
 		panic("not implemented")
 	}
 	return route

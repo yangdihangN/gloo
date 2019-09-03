@@ -289,7 +289,6 @@ metadata:
   creationTimestamp: null
 spec:
   virtualHost:
-    name: mk
     routes:
     - routePlugins:
         lbHash:

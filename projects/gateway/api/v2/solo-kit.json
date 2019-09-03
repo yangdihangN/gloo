@@ -6,7 +6,13 @@
     "api.gateway.solo.io.v2": [
       {
         "name": "VirtualService",
-        "package": "gateway.solo.io.v2"
+        "package": "gateway.solo.io",
+        "version": "v1"
+      },
+      {
+        "name": "RouteTable",
+        "package": "gateway.solo.io",
+        "version": "v1"
       },
       {
         "name": "Gateway",

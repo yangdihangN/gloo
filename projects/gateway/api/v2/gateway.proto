@@ -55,16 +55,28 @@ message Gateway {
         TcpGateway tcp_gateway = 10;
     }
 
-
     // deprecated: use proxyNames
     string gateway_proxy_name = 11;
 
-    // By default, each Gateway is exposed on the default `gateway-proxy-v2` which lives in the Gloo installation namespace.
-    // Use `proxyNames` to expose Gateways on custom proxies deployed by the user via the [Gloo Helm Chart](https://gloo.solo.io/installation/gateway/kubernetes/#list-of-gloo-helm-chart-values)
-    //
-    // > Note: when using camel-case proxy names in the Helm chart, they should be converted to kebab-case for use with `proxyNames`, such that:
-    // `gatewayProxyV2` in the Helm Values becomes `gateway-proxy-v2` in the list of proxyNames
-    // > Not implemented
+    /*
+    * Names of the [`Proxy`](https://gloo.solo.io/v1/github.com/solo-io/gloo/projects/gloo/api/v1/proxy.proto.sk/)
+    * resources to generate from this gateway. If other gateways exist which point to the same proxy,
+    * Gloo will join them together.
+    *
+    * Proxies have a one-to-many relationship with Envoy bootstrap configuration.
+    * In order to connect to Gloo, the Envoy bootstrap configuration sets a `role` in
+    * the [node metadata](https://www.envoyproxy.io/docs/envoy/latest/api-v2/api/v2/core/base.proto#envoy-api-msg-core-node)
+    * Envoy instances announce their `role` to Gloo, which maps to the  `{{ .Namespace }}~{{ .Name }}`
+    * of the Proxy resource.
+    *
+    * The template for this value can be seen in the [Gloo Helm chart](https://github.com/solo-io/gloo/blob/master/install/helm/gloo/templates/9-gateway-proxy-configmap.yaml#L22)
+    *
+    * Note: this field also accepts fields written in camel-case. They will be converted
+    * to kebab-case in the Proxy name. This allows use of the [Gateway Name Helm value](https://github.com/solo-io/gloo/blob/master/install/helm/gloo/values-gateway-template.yaml#L47)
+    * for this field
+    *
+    * Defaults to `["gateway-proxy-v2"]`
+    */
     repeated string proxy_names = 12;
 }
 

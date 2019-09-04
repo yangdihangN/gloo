@@ -26,53 +26,53 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 //
 //
-//The **RouteTable** is a child Routing object for the Gloo Gateway.
+// The **RouteTable** is a child Routing object for the Gloo Gateway.
 //
-//A **RouteTable** must always be referenced by a `delegateAction`, either
-//in a parent VirtualService or another RouteTable.
+// A **RouteTable** must always be referenced by a `delegateAction`, either
+// in a parent VirtualService or another RouteTable.
 //
-//The routes specified in route tables will have their paths prefixed by the prefixes of the
-//parent routes which delegate to them.
+// The routes specified in route tables will have their paths prefixed by the prefixes of the
+// parent routes which delegate to them.
 //
-//For example, the following (abridged) configuration:
+// For example, the following (abridged) configuration:
 //
-//```
-//virtualService: mydomain.com
-//match: /a
-//delegate: a-routes
-//---
-//routeTable: a-routes
-//match: /1
-//delegate: 1-routes
-//match: /2
-//delegate: 2-routes
-//---
-//routeTable: 1-routes
-//match: /foo
-//destination: foo-svc
-//match: /bar
-//destination: bar-svc
-//----
-//routeTable: 2-routes
-//match: /baz
-//destination: baz-svc
-//match: /qux
-//destination: qux-svc
+// ```
+// virtualService: mydomain.com
+// match: /a
+// delegate: a-routes
+// ---
+// routeTable: a-routes
+// match: /1
+// delegate: 1-routes
+// match: /2
+// delegate: 2-routes
+// ---
+// routeTable: 1-routes
+// match: /foo
+// destination: foo-svc
+// match: /bar
+// destination: bar-svc
+// ----
+// routeTable: 2-routes
+// match: /baz
+// destination: baz-svc
+// match: /qux
+// destination: qux-svc
 //
-//```
+// ```
 //
-//Would produce the following route config for `mydomain.com`:
+// Would produce the following route config for `mydomain.com`:
 //
-//```
-///a/1/foo -> foo-svc
-///a/1/bar -> bar-svc
-///a/2/baz -> baz-svc
-///a/2/qux -> qux-svc
+// ```
+// /a/1/foo -> foo-svc
+// /a/1/bar -> bar-svc
+// /a/2/baz -> baz-svc
+// /a/2/qux -> qux-svc
 //
-//```
+// ```
 //
-//Only **VirtualServices** will be loaded by Gloo. If a **RouteTable** or its parents are not
-//referenced within a **VirtualService**, it will be ignored.
+// Only **VirtualServices** will be loaded by Gloo. If a **RouteTable** or its parents are not
+// referenced within a **VirtualService**, it will be ignored.
 //
 type RouteTable struct {
 	// the list of routes for the route table

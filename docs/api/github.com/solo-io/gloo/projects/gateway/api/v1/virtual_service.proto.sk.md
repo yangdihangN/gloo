@@ -209,82 +209,82 @@ destination: qux-svc
 apiVersion: gateway.solo.io/v1
 kind: VirtualService
 metadata:
-name: 'any'
-namespace: 'any'
+  name: 'any'
+  namespace: 'any'
 spec:
-virtualHost:
-domains:
-- 'any.com'
-routes:
-- matcher:
-prefix: '/a'
-delegateAction:
-name: 'a-routes'
-namespace: 'a'
+  virtualHost:
+    domains:
+    - 'any.com'
+    routes:
+    - matcher:
+        prefix: '/a'
+      delegateAction:
+        name: 'a-routes'
+        namespace: 'a'
 ```
 
 ```yaml
 apiVersion: gateway.solo.io/v1
 kind: RouteTable
 metadata:
-name: 'a-routes'
-namespace: 'a'
+  name: 'a-routes'
+  namespace: 'a'
 spec:
-routes:
-- matcher:
-prefix: '/1'
-delegateAction:
-name: 'one-routes'
-namespace: 'one'
-- matcher:
-prefix: '/2'
-delegateAction:
-name: 'two-routes'
-namespace: 'two'
+  routes:
+    - matcher:
+        prefix: '/1'
+      delegateAction:
+        name: 'one-routes'
+        namespace: 'one'
+    - matcher:
+        prefix: '/2'
+      delegateAction:
+        name: 'two-routes'
+        namespace: 'two'
 ```
 
 ```yaml
 apiVersion: gateway.solo.io/v1
 kind: RouteTable
 metadata:
-name: 'one-routes'
-namespace: 'one'
+  name: 'one-routes'
+  namespace: 'one'
 spec:
-routes:
-- matcher:
-prefix: '/foo'
-routeAction:
-single:
-upstream:
-name: 'foo-upstream'
-- matcher:
-prefix: '/bar'
-routeAction:
-single:
-upstream:
-name: 'bar-upstream'
+  routes:
+    - matcher:
+        prefix: '/foo'
+      routeAction:
+        single:
+          upstream:
+            name: 'foo-upstream'
+    - matcher:
+        prefix: '/bar'
+      routeAction:
+        single:
+          upstream:
+            name: 'bar-upstream'
 ```
 
 ```yaml
 apiVersion: gateway.solo.io/v1
 kind: RouteTable
 metadata:
-name: 'two-routes'
-namespace: 'two'
+  name: 'two-routes'
+  namespace: 'two'
 spec:
-routes:
-- matcher:
-prefix: '/baz'
-routeAction:
-single:
-upstream:
-name: 'baz-upstream'
-- matcher:
-prefix: '/qux'
-routeAction:
-single:
-upstream:
-name: 'qux-upstream'
+  routes:
+    - matcher:
+        prefix: '/baz'
+      routeAction:
+        single:
+          upstream:
+            name: 'baz-upstream'
+    - matcher:
+        prefix: '/qux'
+      routeAction:
+        single:
+          upstream:
+            name: 'qux-upstream'
 ```
 
 
@@ -314,7 +314,7 @@ Would produce the following route config for `mydomain.com`:
 | `redirectAction` | [.gloo.solo.io.RedirectAction](../../../../gloo/api/v1/proxy.proto.sk#redirectaction) | Redirect actions tell the proxy to return a redirect response to the downstream client |  |
 | `directResponseAction` | [.gloo.solo.io.DirectResponseAction](../../../../gloo/api/v1/proxy.proto.sk#directresponseaction) | Return an arbitrary HTTP response directly, without proxying. |  |
 | `delegateAction` | [.core.solo.io.ResourceRef](../../../../../../solo-kit/api/v1/ref.proto.sk#resourceref) | delegate routing actions for the given matcher to a RouteTable the delegateAction config is simply the `name` and `namespace` of the delegated `RouteTable` resource |  |
-| `routePlugins` | [.gloo.solo.io.RoutePlugins](../../../../gloo/api/v1/plugins.proto.sk#routeplugins) | Route Plugins extend the behavior of routes. Route plugins include configuration such as retries,rate limiting, and request/response transformation. RoutePlugin behavior will be inherited by delegated routes which do not specify their own `routePlugins` |  |
+| `routePlugins` | [.gloo.solo.io.RoutePlugins](../../../../gloo/api/v1/plugins.proto.sk#routeplugins) | Route Plugins extend the behavior of routes. Route plugins include configuration such as retries, rate limiting, and request/response transformation. RoutePlugin behavior will be inherited by delegated routes which do not specify their own `routePlugins` |  |
 
 
 

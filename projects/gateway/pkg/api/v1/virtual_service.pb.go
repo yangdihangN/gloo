@@ -118,7 +118,8 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 //
 type VirtualService struct {
 	// The VirtualHost contains the
-	// The list of HTTP routes define routing actions to be taken for incoming HTTP requests whose host header matches
+	// The list of HTTP routes define routing actions to be taken
+	// for incoming HTTP requests whose host header matches
 	// this virtual host. If the request matches more than one route in the list, the first route matched will be selected.
 	// If the list of routes is empty, the virtual host will be ignored by Gloo.
 	VirtualHost *VirtualHost `protobuf:"bytes,1,opt,name=virtual_host,json=virtualHost,proto3" json:"virtual_host,omitempty"`
@@ -274,132 +275,132 @@ func (m *VirtualHost) GetVirtualHostPlugins() *v1.VirtualHostPlugins {
 
 //
 //
-//Routes declare the entry points on virtual hosts and the action to take for matched requests.
+// Routes declare the entry points on virtual hosts and the action to take for matched requests.
 //
-//DelegateActions can be used to delegate the behavior for a set out routes with a given *prefix* to
-//a top-level `RouteTable` resource.
+// DelegateActions can be used to delegate the behavior for a set out routes with a given *prefix* to
+// a top-level `RouteTable` resource.
 //
-//Routes specified in the RouteTable will have their paths prefixed by the prefix provided in the
-//parent's matcher.
+// Routes specified in the RouteTable will have their paths prefixed by the prefix provided in the
+// parent's matcher.
 //
-//For example, the following configuration:
+// For example, the following configuration:
 //
-//```
-//virtualService: mydomain.com
-//match: /a
-//delegate: a-routes
-//---
-//routeTable: a-routes
-//match: /1
-//delegate: 1-routes
-//match: /2
-//delegate: 2-routes
-//---
-//routeTable: 1-routes
-//match: /foo
-//destination: foo-svc
-//match: /bar
-//destination: bar-svc
-//----
-//routeTable: 2-routes
-//match: /baz
-//destination: baz-svc
-//match: /qux
-//destination: qux-svc
-//```
-//
-//
-//```yaml
-//apiVersion: gateway.solo.io/v1
-//kind: VirtualService
-//metadata:
-//name: 'any'
-//namespace: 'any'
-//spec:
-//virtualHost:
-//domains:
-//- 'any.com'
-//routes:
-//- matcher:
-//prefix: '/a'
-//delegateAction:
-//name: 'a-routes'
-//namespace: 'a'
-//```
-//
-//```yaml
-//apiVersion: gateway.solo.io/v1
-//kind: RouteTable
-//metadata:
-//name: 'a-routes'
-//namespace: 'a'
-//spec:
-//routes:
-//- matcher:
-//prefix: '/1'
-//delegateAction:
-//name: 'one-routes'
-//namespace: 'one'
-//- matcher:
-//prefix: '/2'
-//delegateAction:
-//name: 'two-routes'
-//namespace: 'two'
-//```
-//
-//```yaml
-//apiVersion: gateway.solo.io/v1
-//kind: RouteTable
-//metadata:
-//name: 'one-routes'
-//namespace: 'one'
-//spec:
-//routes:
-//- matcher:
-//prefix: '/foo'
-//routeAction:
-//single:
-//upstream:
-//name: 'foo-upstream'
-//- matcher:
-//prefix: '/bar'
-//routeAction:
-//single:
-//upstream:
-//name: 'bar-upstream'
-//```
-//
-//```yaml
-//apiVersion: gateway.solo.io/v1
-//kind: RouteTable
-//metadata:
-//name: 'two-routes'
-//namespace: 'two'
-//spec:
-//routes:
-//- matcher:
-//prefix: '/baz'
-//routeAction:
-//single:
-//upstream:
-//name: 'baz-upstream'
-//- matcher:
-//prefix: '/qux'
-//routeAction:
-//single:
-//upstream:
-//name: 'qux-upstream'
-//```
+// ```
+// virtualService: mydomain.com
+// match: /a
+// delegate: a-routes
+// ---
+// routeTable: a-routes
+// match: /1
+// delegate: 1-routes
+// match: /2
+// delegate: 2-routes
+// ---
+// routeTable: 1-routes
+// match: /foo
+// destination: foo-svc
+// match: /bar
+// destination: bar-svc
+// ----
+// routeTable: 2-routes
+// match: /baz
+// destination: baz-svc
+// match: /qux
+// destination: qux-svc
+// ```
 //
 //
-//Would produce the following route config for `mydomain.com`:
+// ```yaml
+// apiVersion: gateway.solo.io/v1
+// kind: VirtualService
+// metadata:
+//   name: 'any'
+//   namespace: 'any'
+// spec:
+//   virtualHost:
+//     domains:
+//     - 'any.com'
+//     routes:
+//     - matcher:
+//         prefix: '/a'
+//       delegateAction:
+//         name: 'a-routes'
+//         namespace: 'a'
+// ```
 //
-//```
-///a/1/foo -> foo-svc
-///a/1/bar -> bar-svc
-///a/2/baz -> baz-svc
-///a/2/qux -> qux-svc
-//```
+// ```yaml
+// apiVersion: gateway.solo.io/v1
+// kind: RouteTable
+// metadata:
+//   name: 'a-routes'
+//   namespace: 'a'
+// spec:
+//   routes:
+//     - matcher:
+//         prefix: '/1'
+//       delegateAction:
+//         name: 'one-routes'
+//         namespace: 'one'
+//     - matcher:
+//         prefix: '/2'
+//       delegateAction:
+//         name: 'two-routes'
+//         namespace: 'two'
+// ```
+//
+// ```yaml
+// apiVersion: gateway.solo.io/v1
+// kind: RouteTable
+// metadata:
+//   name: 'one-routes'
+//   namespace: 'one'
+// spec:
+//   routes:
+//     - matcher:
+//         prefix: '/foo'
+//       routeAction:
+//         single:
+//           upstream:
+//             name: 'foo-upstream'
+//     - matcher:
+//         prefix: '/bar'
+//       routeAction:
+//         single:
+//           upstream:
+//             name: 'bar-upstream'
+// ```
+//
+// ```yaml
+// apiVersion: gateway.solo.io/v1
+// kind: RouteTable
+// metadata:
+//   name: 'two-routes'
+//   namespace: 'two'
+// spec:
+//   routes:
+//     - matcher:
+//         prefix: '/baz'
+//       routeAction:
+//         single:
+//           upstream:
+//             name: 'baz-upstream'
+//     - matcher:
+//         prefix: '/qux'
+//       routeAction:
+//         single:
+//           upstream:
+//             name: 'qux-upstream'
+// ```
+//
+//
+// Would produce the following route config for `mydomain.com`:
+//
+// ```
+// /a/1/foo -> foo-svc
+// /a/1/bar -> bar-svc
+// /a/2/baz -> baz-svc
+// /a/2/qux -> qux-svc
+// ```
 //
 type Route struct {
 	// The matcher contains parameters for matching requests (i.e.: based on HTTP path, headers, etc.)
@@ -414,7 +415,7 @@ type Route struct {
 	//	*Route_DelegateAction
 	Action isRoute_Action `protobuf_oneof:"action"`
 	// Route Plugins extend the behavior of routes.
-	// Route plugins include configuration such as retries,rate limiting, and request/response transformation.
+	// Route plugins include configuration such as retries, rate limiting, and request/response transformation.
 	// RoutePlugin behavior will be inherited by delegated routes which do not specify their own `routePlugins`
 	RoutePlugins         *v1.RoutePlugins `protobuf:"bytes,6,opt,name=route_plugins,json=routePlugins,proto3" json:"route_plugins,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}         `json:"-"`

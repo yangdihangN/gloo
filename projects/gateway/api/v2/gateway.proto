@@ -55,6 +55,7 @@ message Gateway {
         TcpGateway tcp_gateway = 10;
     }
 
+
     // deprecated: use proxyNames
     string gateway_proxy_name = 11;
 
@@ -63,7 +64,8 @@ message Gateway {
     //
     // > Note: when using camel-case proxy names in the Helm chart, they should be converted to kebab-case for use with `proxyNames`, such that:
     // `gatewayProxyV2` in the Helm Values becomes `gateway-proxy-v2` in the list of proxyNames
-    string proxy_names = 12;
+    // > Not implemented
+    repeated string proxy_names = 12;
 }
 
 message HttpGateway {

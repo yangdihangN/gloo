@@ -333,6 +333,10 @@ func (rv *routeVisitor) convertDelegateAction(ours *v1.Route) ([]*gloov1.Route, 
 			case *gloov1.Matcher_Prefix:
 				path.Prefix = prefix + path.Prefix
 			}
+			// inherit route plugins from parent
+			if sub.RoutePlugins == nil {
+				sub.RoutePlugins = proto.Clone(ours.RoutePlugins).(*gloov1.RoutePlugins)
+			}
 			delegatedRoutes = append(delegatedRoutes, sub)
 		}
 	}

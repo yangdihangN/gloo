@@ -2,6 +2,7 @@ package translator
 
 import (
 	"context"
+	"github.com/solo-io/gloo/projects/gloo/pkg/api/v1/plugins/transformation"
 	"time"
 
 	"github.com/gogo/protobuf/types"
@@ -394,6 +395,10 @@ var _ = Describe("Translator", func() {
 
 		Context("using RouteTables and delegation", func() {
 			Context("valid configuration", func() {
+				rootLevelRoutePlugins := &gloov1.RoutePlugins{PrefixRewrite: &transformation.PrefixRewrite{PrefixRewrite: "root route plugin"}}
+				midLevelRoutePlugins := &gloov1.RoutePlugins{PrefixRewrite: &transformation.PrefixRewrite{PrefixRewrite: "mid level plugin"}}
+				leafLevelRoutePlugins := &gloov1.RoutePlugins{PrefixRewrite: &transformation.PrefixRewrite{PrefixRewrite: "leaf level plugin"}}
+
 				BeforeEach(func() {
 					translator = NewTranslator([]ListenerFactory{&HttpTranslator{}})
 					snap = &v2.ApiSnapshot{
@@ -424,6 +429,7 @@ var _ = Describe("Translator", func() {
 													Namespace: ns,
 												},
 											},
+											RoutePlugins: rootLevelRoutePlugins,
 										},
 									},
 								},
@@ -490,6 +496,7 @@ var _ = Describe("Translator", func() {
 												Namespace: ns,
 											},
 										},
+										RoutePlugins: midLevelRoutePlugins,
 									},
 								},
 							},
@@ -519,6 +526,28 @@ var _ = Describe("Translator", func() {
 												},
 											},
 										},
+									},
+									{
+										Matcher: &gloov1.Matcher{
+											PathSpecifier: &gloov1.Matcher_Prefix{
+												Prefix: "/2-upstream-plugin-override",
+											},
+										},
+										Action: &v1.Route_RouteAction{
+											RouteAction: &gloov1.RouteAction{
+												Destination: &gloov1.RouteAction_Single{
+													Single: &gloov1.Destination{
+														DestinationType: &gloov1.Destination_Upstream{
+															Upstream: &core.ResourceRef{
+																Name:      "my-upstream",
+																Namespace: ns,
+															},
+														},
+													},
+												},
+											},
+										},
+										RoutePlugins: leafLevelRoutePlugins,
 									},
 								},
 							},
@@ -552,6 +581,7 @@ var _ = Describe("Translator", func() {
 									},
 								},
 							},
+							RoutePlugins: rootLevelRoutePlugins,
 						},
 						&gloov1.Route{
 							Matcher: &gloov1.Matcher{
@@ -573,6 +603,29 @@ var _ = Describe("Translator", func() {
 									},
 								},
 							},
+							RoutePlugins: midLevelRoutePlugins,
+						},
+						&gloov1.Route{
+							Matcher: &gloov1.Matcher{
+								PathSpecifier: &gloov1.Matcher_Prefix{
+									Prefix: "/a/1-delegate/2-upstream-plugin-override",
+								},
+							},
+							Action: &gloov1.Route_RouteAction{
+								RouteAction: &gloov1.RouteAction{
+									Destination: &gloov1.RouteAction_Single{
+										Single: &gloov1.Destination{
+											DestinationType: &gloov1.Destination_Upstream{
+												Upstream: &core.ResourceRef{
+													Name:      "my-upstream",
+													Namespace: "gloo-system",
+												},
+											},
+										},
+									},
+								},
+							},
+							RoutePlugins: leafLevelRoutePlugins,
 						},
 					}))
 					Expect(listener.VirtualHosts[1].Routes).To(Equal([]*gloov1.Route{
@@ -596,6 +649,28 @@ var _ = Describe("Translator", func() {
 									},
 								},
 							},
+						},
+						&gloov1.Route{
+							Matcher: &gloov1.Matcher{
+								PathSpecifier: &gloov1.Matcher_Prefix{
+									Prefix: "/b/2-upstream-plugin-override",
+								},
+							},
+							Action: &gloov1.Route_RouteAction{
+								RouteAction: &gloov1.RouteAction{
+									Destination: &gloov1.RouteAction_Single{
+										Single: &gloov1.Destination{
+											DestinationType: &gloov1.Destination_Upstream{
+												Upstream: &core.ResourceRef{
+													Name:      "my-upstream",
+													Namespace: "gloo-system",
+												},
+											},
+										},
+									},
+								},
+							},
+							RoutePlugins: leafLevelRoutePlugins,
 						},
 					}))
 				})

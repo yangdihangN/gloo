@@ -3,6 +3,7 @@ package gateway_test
 import (
 	"context"
 	"fmt"
+	"github.com/solo-io/gloo/projects/gloo/pkg/api/v1/plugins/transformation"
 	"io/ioutil"
 	"os"
 	"time"
@@ -440,9 +441,13 @@ var _ = Describe("Kube2e: gateway", func() {
 
 			rt2 := getRouteTable("rt2", getRouteWithDest(dest, "/rt2"))
 			rt1 := getRouteTable("rt1", getRouteWithDelegate(rt2.Metadata.Name, "/rt1"))
-			vs := getVirtualServiceWithRoute(getRouteWithDelegate(rt1.Metadata.Name, "/root"), nil)
+			vs := getVirtualServiceWithRoute(addPrefixRewrite(getRouteWithDelegate(rt1.Metadata.Name, "/root"), "/"), nil)
 
 			_, err := virtualServiceClient.Write(vs, clients.WriteOpts{})
+			Expect(err).NotTo(HaveOccurred())
+			_, err = routeTableClient.Write(rt1, clients.WriteOpts{})
+			Expect(err).NotTo(HaveOccurred())
+			_, err = routeTableClient.Write(rt2, clients.WriteOpts{})
 			Expect(err).NotTo(HaveOccurred())
 
 			defaultGateway := defaults.DefaultGateway(testHelper.InstallNamespace)
@@ -1026,4 +1031,9 @@ func getRouteWithDelegate(delegate string, path string) *gatewayv1.Route {
 			},
 		},
 	}
+}
+
+func addPrefixRewrite(route *gatewayv1.Route, rewrite string) *gatewayv1.Route {
+	route.RoutePlugins = &gloov1.RoutePlugins{PrefixRewrite: &transformation.PrefixRewrite{PrefixRewrite: rewrite}}
+	return route
 }

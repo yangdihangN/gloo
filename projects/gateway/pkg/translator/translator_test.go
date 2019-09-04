@@ -1,4 +1,4 @@
-package translator_test
+package translator
 
 import (
 	"context"
@@ -9,8 +9,6 @@ import (
 	. "github.com/onsi/gomega"
 	v2 "github.com/solo-io/gloo/projects/gateway/pkg/api/v2"
 	"github.com/solo-io/gloo/projects/gloo/pkg/api/v1/plugins/tcp"
-
-	. "github.com/solo-io/gloo/projects/gateway/pkg/translator"
 
 	v1 "github.com/solo-io/gloo/projects/gateway/pkg/api/v1"
 	gloov1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
@@ -455,6 +453,48 @@ var _ = Describe("Translator", func() {
 						RouteTables: []*v1.RouteTable{
 							{
 								Metadata: core.Metadata{
+									Name:      "delegate-1",
+									Namespace: ns,
+								},
+								Routes: []*v1.Route{
+									{
+										Matcher: &gloov1.Matcher{
+											PathSpecifier: &gloov1.Matcher_Prefix{
+												Prefix: "/1-upstream",
+											},
+										},
+										Action: &v1.Route_RouteAction{
+											RouteAction: &gloov1.RouteAction{
+												Destination: &gloov1.RouteAction_Single{
+													Single: &gloov1.Destination{
+														DestinationType: &gloov1.Destination_Upstream{
+															Upstream: &core.ResourceRef{
+																Name:      "my-upstream",
+																Namespace: ns,
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+									{
+										Matcher: &gloov1.Matcher{
+											PathSpecifier: &gloov1.Matcher_Prefix{
+												Prefix: "/1-delegate",
+											},
+										},
+										Action: &v1.Route_DelegateAction{
+											DelegateAction: &core.ResourceRef{
+												Name:      "delegate-2",
+												Namespace: ns,
+											},
+										},
+									},
+								},
+							},
+							{
+								Metadata: core.Metadata{
 									Name:      "delegate-2",
 									Namespace: ns,
 								},
@@ -485,15 +525,84 @@ var _ = Describe("Translator", func() {
 						},
 					}
 				})
-				FIt("merges the vs and route tables to a single gloov1.VirtualHost", func() {
+				It("merges the vs and route tables to a single gloov1.VirtualHost", func() {
 					proxy, errs := translator.Translate(context.TODO(), "", ns, snap, snap.Gateways)
 					Expect(errs.Validate()).NotTo(HaveOccurred())
-					Expect(proxy).To(Equal("hi"))
+					Expect(proxy.Listeners).To(HaveLen(1))
+					listener := proxy.Listeners[0].ListenerType.(*gloov1.Listener_HttpListener).HttpListener
+					Expect(listener.VirtualHosts).To(HaveLen(2))
+					Expect(listener.VirtualHosts[0].Routes).To(Equal([]*gloov1.Route{
+						&gloov1.Route{
+							Matcher: &gloov1.Matcher{
+								PathSpecifier: &gloov1.Matcher_Prefix{
+									Prefix: "/a/1-upstream",
+								},
+							},
+							Action: &gloov1.Route_RouteAction{
+								RouteAction: &gloov1.RouteAction{
+									Destination: &gloov1.RouteAction_Single{
+										Single: &gloov1.Destination{
+											DestinationType: &gloov1.Destination_Upstream{
+												Upstream: &core.ResourceRef{
+													Name:      "my-upstream",
+													Namespace: "gloo-system",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+						&gloov1.Route{
+							Matcher: &gloov1.Matcher{
+								PathSpecifier: &gloov1.Matcher_Prefix{
+									Prefix: "/a/1-delegate/2-upstream",
+								},
+							},
+							Action: &gloov1.Route_RouteAction{
+								RouteAction: &gloov1.RouteAction{
+									Destination: &gloov1.RouteAction_Single{
+										Single: &gloov1.Destination{
+											DestinationType: &gloov1.Destination_Upstream{
+												Upstream: &core.ResourceRef{
+													Name:      "my-upstream",
+													Namespace: "gloo-system",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					}))
+					Expect(listener.VirtualHosts[1].Routes).To(Equal([]*gloov1.Route{
+						&gloov1.Route{
+							Matcher: &gloov1.Matcher{
+								PathSpecifier: &gloov1.Matcher_Prefix{
+									Prefix: "/b/2-upstream",
+								},
+							},
+							Action: &gloov1.Route_RouteAction{
+								RouteAction: &gloov1.RouteAction{
+									Destination: &gloov1.RouteAction_Single{
+										Single: &gloov1.Destination{
+											DestinationType: &gloov1.Destination_Upstream{
+												Upstream: &core.ResourceRef{
+													Name:      "my-upstream",
+													Namespace: "gloo-system",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					}))
 				})
 
 			})
 
-			Context("detects cycles", func() {
+			Context("delegation cycle", func() {
 				BeforeEach(func() {
 					translator = NewTranslator([]ListenerFactory{&HttpTranslator{}})
 					snap = &v2.ApiSnapshot{
@@ -508,7 +617,7 @@ var _ = Describe("Translator", func() {
 						},
 						VirtualServices: v1.VirtualServiceList{
 							{
-								Metadata: core.Metadata{Namespace: ns, Name: "name1"},
+								Metadata: core.Metadata{Namespace: ns, Name: "has-a-cycle"},
 								VirtualHost: &v1.VirtualHost{
 									Domains: []string{"d1.com"},
 									Routes: []*v1.Route{
@@ -528,27 +637,6 @@ var _ = Describe("Translator", func() {
 									},
 								},
 							},
-							{
-								Metadata: core.Metadata{Namespace: ns, Name: "name2"},
-								VirtualHost: &v1.VirtualHost{
-									Domains: []string{"d2.com"},
-									Routes: []*v1.Route{
-										{
-											Matcher: &gloov1.Matcher{
-												PathSpecifier: &gloov1.Matcher_Prefix{
-													Prefix: "/b",
-												},
-											},
-											Action: &v1.Route_DelegateAction{
-												DelegateAction: &core.ResourceRef{
-													Name:      "delegate-2",
-													Namespace: ns,
-												},
-											},
-										},
-									},
-								},
-							},
 						},
 						RouteTables: []*v1.RouteTable{
 							{
@@ -560,33 +648,33 @@ var _ = Describe("Translator", func() {
 									{
 										Matcher: &gloov1.Matcher{
 											PathSpecifier: &gloov1.Matcher_Prefix{
-												Prefix: "/1-upstream",
-											},
-										},
-										Action: &v1.Route_RouteAction{
-											RouteAction: &gloov1.RouteAction{
-												Destination: &gloov1.RouteAction_Single{
-													Single: &gloov1.Destination{
-														DestinationType: &gloov1.Destination_Upstream{
-															Upstream: &core.ResourceRef{
-																Name:      "my-upstream",
-																Namespace: ns,
-															},
-														},
-													},
-												},
-											},
-										},
-									},
-									{
-										Matcher: &gloov1.Matcher{
-											PathSpecifier: &gloov1.Matcher_Prefix{
 												Prefix: "/1-delegate",
 											},
 										},
 										Action: &v1.Route_DelegateAction{
 											DelegateAction: &core.ResourceRef{
 												Name:      "delegate-2",
+												Namespace: ns,
+											},
+										},
+									},
+								},
+							},
+							{
+								Metadata: core.Metadata{
+									Name:      "delegate-2",
+									Namespace: ns,
+								},
+								Routes: []*v1.Route{
+									{
+										Matcher: &gloov1.Matcher{
+											PathSpecifier: &gloov1.Matcher_Prefix{
+												Prefix: "/2-delegate",
+											},
+										},
+										Action: &v1.Route_DelegateAction{
+											DelegateAction: &core.ResourceRef{
+												Name:      "delegate-1",
 												Namespace: ns,
 											},
 										},
@@ -596,109 +684,108 @@ var _ = Describe("Translator", func() {
 						},
 					}
 				})
-
+				It("detects cycle and returns error", func() {
+					_, errs := translator.Translate(context.TODO(), "", ns, snap, snap.Gateways)
+					err := errs.Validate()
+					Expect(err).To(HaveOccurred())
+					Expect(err.Error()).To(ContainSubstring("cycle detected"))
+				})
 			})
+
 			Context("bad config on a delegate route", func() {
-				BeforeEach(func() {
-					translator = NewTranslator([]ListenerFactory{&HttpTranslator{}})
-					snap = &v2.ApiSnapshot{
-						Gateways: v2.GatewayList{
-							{
-								Metadata: core.Metadata{Namespace: ns, Name: "name"},
-								GatewayType: &v2.Gateway_HttpGateway{
-									HttpGateway: &v2.HttpGateway{},
+				It("returns the correct error", func() {
+					type routeErr struct {
+						route       *v1.Route
+						expectedErr error
+					}
+					for _, badRoute := range []routeErr{
+						{
+							route: &v1.Route{
+								Matcher: &gloov1.Matcher{
+									PathSpecifier: &gloov1.Matcher_Regex{
+										Regex: "/any",
+									},
 								},
-								BindPort: 2,
+								Action: &v1.Route_DelegateAction{
+									DelegateAction: &core.ResourceRef{
+										Name:      "any",
+										Namespace: ns,
+									},
+								},
 							},
+							expectedErr: missingPrefixErr,
 						},
-						VirtualServices: v1.VirtualServiceList{
-							{
-								Metadata: core.Metadata{Namespace: ns, Name: "name1"},
-								VirtualHost: &v1.VirtualHost{
-									Domains: []string{"d1.com"},
-									Routes: []*v1.Route{
-										{
-											Matcher: &gloov1.Matcher{
-												PathSpecifier: &gloov1.Matcher_Prefix{
-													Prefix: "/a",
-												},
-											},
-											Action: &v1.Route_DelegateAction{
-												DelegateAction: &core.ResourceRef{
-													Name:      "delegate-1",
-													Namespace: ns,
-												},
-											},
-										},
+						{
+							route: &v1.Route{
+								Matcher: &gloov1.Matcher{
+									PathSpecifier: &gloov1.Matcher_Exact{
+										Exact: "/any",
+									},
+								},
+								Action: &v1.Route_DelegateAction{
+									DelegateAction: &core.ResourceRef{
+										Name:      "any",
+										Namespace: ns,
 									},
 								},
 							},
-							{
-								Metadata: core.Metadata{Namespace: ns, Name: "name2"},
-								VirtualHost: &v1.VirtualHost{
-									Domains: []string{"d2.com"},
-									Routes: []*v1.Route{
-										{
-											Matcher: &gloov1.Matcher{
-												PathSpecifier: &gloov1.Matcher_Prefix{
-													Prefix: "/b",
-												},
-											},
-											Action: &v1.Route_DelegateAction{
-												DelegateAction: &core.ResourceRef{
-													Name:      "delegate-2",
-													Namespace: ns,
-												},
-											},
-										},
-									},
-								},
-							},
+							expectedErr: missingPrefixErr,
 						},
-						RouteTables: []*v1.RouteTable{
-							{
-								Metadata: core.Metadata{
-									Name:      "delegate-1",
-									Namespace: ns,
-								},
-								Routes: []*v1.Route{
-									{
-										Matcher: &gloov1.Matcher{
-											PathSpecifier: &gloov1.Matcher_Prefix{
-												Prefix: "/1-upstream",
-											},
-										},
-										Action: &v1.Route_RouteAction{
-											RouteAction: &gloov1.RouteAction{
-												Destination: &gloov1.RouteAction_Single{
-													Single: &gloov1.Destination{
-														DestinationType: &gloov1.Destination_Upstream{
-															Upstream: &core.ResourceRef{
-																Name:      "my-upstream",
-																Namespace: ns,
-															},
-														},
-													},
-												},
-											},
-										},
+						{
+							route: &v1.Route{
+								Matcher: &gloov1.Matcher{
+									PathSpecifier: &gloov1.Matcher_Prefix{
+										Prefix: "/any",
 									},
-									{
-										Matcher: &gloov1.Matcher{
-											PathSpecifier: &gloov1.Matcher_Prefix{
-												Prefix: "/1-delegate",
-											},
-										},
-										Action: &v1.Route_DelegateAction{
-											DelegateAction: &core.ResourceRef{
-												Name:      "delegate-2",
-												Namespace: ns,
-											},
-										},
+									Headers: []*gloov1.HeaderMatcher{{}},
+								},
+								Action: &v1.Route_DelegateAction{
+									DelegateAction: &core.ResourceRef{
+										Name:      "any",
+										Namespace: ns,
 									},
 								},
 							},
+							expectedErr: hasHeaderMatcherErr,
 						},
+						{
+							route: &v1.Route{
+								Matcher: &gloov1.Matcher{
+									PathSpecifier: &gloov1.Matcher_Prefix{
+										Prefix: "/any",
+									},
+									Methods: []string{"any"},
+								},
+								Action: &v1.Route_DelegateAction{
+									DelegateAction: &core.ResourceRef{
+										Name:      "any",
+										Namespace: ns,
+									},
+								},
+							},
+							expectedErr: hasMethodMatcherErr,
+						},
+						{
+							route: &v1.Route{
+								Matcher: &gloov1.Matcher{
+									PathSpecifier: &gloov1.Matcher_Prefix{
+										Prefix: "/any",
+									},
+									QueryParameters: []*gloov1.QueryParameterMatcher{{}},
+								},
+								Action: &v1.Route_DelegateAction{
+									DelegateAction: &core.ResourceRef{
+										Name:      "any",
+										Namespace: ns,
+									},
+								},
+							},
+							expectedErr: hasQueryMatcherErr,
+						},
+					} {
+						rv := &routeVisitor{}
+						_, err := rv.convertDelegateAction(badRoute.route)
+						Expect(err).To(Equal(badRoute.expectedErr))
 					}
 				})
 			})

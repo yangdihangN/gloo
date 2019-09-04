@@ -233,18 +233,18 @@ func convertRoute(ours *v1.Route) *gloov1.Route {
 		Matcher:      ours.Matcher,
 		RoutePlugins: ours.RoutePlugins,
 	}
-	switch ours.Action.(type) {
+	switch action := ours.Action.(type) {
 	case *v1.Route_RedirectAction:
 		route.Action = &gloov1.Route_RedirectAction{
-			RedirectAction: ours.GetRedirectAction(),
+			RedirectAction: action.RedirectAction,
 		}
 	case *v1.Route_DirectResponseAction:
-		route.Action = &gloov1.Route_RedirectAction{
-			RedirectAction: ours.GetRedirectAction(),
+		route.Action = &gloov1.Route_DirectResponseAction{
+			DirectResponseAction: action.DirectResponseAction,
 		}
 	case *v1.Route_RouteAction:
-		route.Action = &gloov1.Route_RedirectAction{
-			RedirectAction: ours.GetRedirectAction(),
+		route.Action = &gloov1.Route_RouteAction{
+			RouteAction: action.RouteAction,
 		}
 	case *v1.Route_DelegateAction:
 		panic("not implemented")

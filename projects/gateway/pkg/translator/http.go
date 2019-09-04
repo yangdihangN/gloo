@@ -279,29 +279,34 @@ func (rv *routeVisitor) convertRoute(ours *v1.Route) ([]*gloov1.Route, error) {
 var (
 	missingPrefixErr    = errors.Errorf("invalid route: routes with delegate actions must specify a prefix matcher")
 	hasHeaderMatcherErr = errors.Errorf("invalid route: routes with delegate actions cannot use header matchers")
-	hasMethodMatcherErr = errors.Errorf("invalid route: routes with delegate actions cannot use header matchers")
-	hasQueryMatcherErr  = errors.Errorf("invalid route: routes with delegate actions cannot use header matchers")
+	hasMethodMatcherErr = errors.Errorf("invalid route: routes with delegate actions cannot use method matchers")
+	hasQueryMatcherErr  = errors.Errorf("invalid route: routes with delegate actions cannot use query matchers")
+	delegationCycleErr  = errors.Errorf("invalid route: delegation cycle detected")
+
+	noDelegateActionErr = errors.Errorf("internal error: convertDelegateAction() called on route without delegate action")
 )
 
 func (rv *routeVisitor) convertDelegateAction(ours *v1.Route) ([]*gloov1.Route, error) {
 	action := ours.GetDelegateAction()
 	if action == nil {
-		return nil, errors.Errorf("internal error: convertDelegateAction() called on route without delegate action")
+		return nil, noDelegateActionErr
 	}
 
-	prefix := ours.GetMatcher().GetPrefix()
+	matcher := ours.GetMatcher()
+
+	prefix := matcher.GetPrefix()
 	if prefix == "" {
 		return nil, missingPrefixErr
 	}
 	prefix = "/" + strings.Trim(prefix, "/")
 
-	if len(ours.GetMatcher().GetHeaders()) > 0 {
+	if len(matcher.GetHeaders()) > 0 {
 		return nil, hasHeaderMatcherErr
 	}
-	if len(ours.GetMatcher().GetMethods()) > 0 {
+	if len(matcher.GetMethods()) > 0 {
 		return nil, hasMethodMatcherErr
 	}
-	if len(ours.GetMatcher().GetQueryParameters()) > 0 {
+	if len(matcher.GetQueryParameters()) > 0 {
 		return nil, hasQueryMatcherErr
 	}
 	routeTable, err := rv.tables.Find(action.Strings())
@@ -310,7 +315,7 @@ func (rv *routeVisitor) convertDelegateAction(ours *v1.Route) ([]*gloov1.Route, 
 	}
 	for _, visited := range rv.visited {
 		if routeTable == visited {
-			return nil, errors.Errorf("invalid route: delegation cycle detected")
+			return nil, delegationCycleErr
 		}
 	}
 

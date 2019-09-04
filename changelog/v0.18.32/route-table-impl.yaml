@@ -1,0 +1,4 @@
+changelog:
+  - type: NEW_FEATURE
+    description: Enable delegate routing & use of RouteTable Resource in Gateway
+    issueLink: https://github.com/solo-io/gloo/pull/1120

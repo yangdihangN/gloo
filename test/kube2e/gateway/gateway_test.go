@@ -3,10 +3,11 @@ package gateway_test
 import (
 	"context"
 	"fmt"
-	"github.com/solo-io/gloo/projects/gloo/pkg/api/v1/plugins/transformation"
 	"io/ioutil"
 	"os"
 	"time"
+
+	"github.com/solo-io/gloo/projects/gloo/pkg/api/v1/plugins/transformation"
 
 	defaults2 "github.com/solo-io/gloo/projects/gloo/pkg/defaults"
 	"k8s.io/apimachinery/pkg/labels"

@@ -2,8 +2,9 @@ package translator
 
 import (
 	"context"
-	"github.com/solo-io/gloo/projects/gloo/pkg/api/v1/plugins/transformation"
 	"time"
+
+	"github.com/solo-io/gloo/projects/gloo/pkg/api/v1/plugins/transformation"
 
 	"github.com/gogo/protobuf/types"
 	. "github.com/onsi/ginkgo"

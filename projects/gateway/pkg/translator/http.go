@@ -3,10 +3,11 @@ package translator
 import (
 	"context"
 	"fmt"
-	"github.com/gogo/protobuf/proto"
-	"github.com/pkg/errors"
 	"sort"
 	"strings"
+
+	"github.com/gogo/protobuf/proto"
+	"github.com/pkg/errors"
 
 	v1 "github.com/solo-io/gloo/projects/gateway/pkg/api/v1"
 	v2 "github.com/solo-io/gloo/projects/gateway/pkg/api/v2"
@@ -245,7 +246,7 @@ func convertRoutes(ours []*v1.Route, tables v1.RouteTableList) ([]*gloov1.Route,
 	return routes, nil
 }
 
-// converts a tree of gateway Routes into a list of Gloo routes 
+// converts a tree of gateway Routes into a list of Gloo routes
 type routeVisitor struct {
 	tables  v1.RouteTableList
 	visited v1.RouteTableList

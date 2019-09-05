@@ -1,0 +1,4 @@
+changelog:
+  - type: FIX
+    description: Enable Envoy stats by default during installation.
+    issueLink: https://github.com/solo-io/gloo/pull/1125

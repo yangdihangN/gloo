@@ -562,6 +562,19 @@ var _ = Describe("Translator", func() {
 					Expect(proxy.Listeners).To(HaveLen(1))
 					listener := proxy.Listeners[0].ListenerType.(*gloov1.Listener_HttpListener).HttpListener
 					Expect(listener.VirtualHosts).To(HaveLen(2))
+
+					// hack to assert equality on RouteMetadata
+					// gomega.Equals does not like *types.Struct
+					for i, vh := range listener.VirtualHosts {
+						for j, route := range vh.Routes {
+							routeMeta, err := RouteMetaFromStruct(route.RouteMetadata)
+							Expect(err).NotTo(HaveOccurred())
+							Expect(routeMeta).To(Equal(expectedRouteMetadata(i, j)))
+							// after asserting RouteMetadata equality, zero it out
+							route.RouteMetadata = nil
+						}
+					}
+
 					Expect(listener.VirtualHosts[0].Routes).To(Equal([]*gloov1.Route{
 						&gloov1.Route{
 							Matcher: &gloov1.Matcher{
@@ -631,7 +644,7 @@ var _ = Describe("Translator", func() {
 						},
 					}))
 					Expect(listener.VirtualHosts[1].Routes).To(Equal([]*gloov1.Route{
-						&gloov1.Route{
+						{
 							Matcher: &gloov1.Matcher{
 								PathSpecifier: &gloov1.Matcher_Prefix{
 									Prefix: "/b/2-upstream",
@@ -652,7 +665,7 @@ var _ = Describe("Translator", func() {
 								},
 							},
 						},
-						&gloov1.Route{
+						{
 							Matcher: &gloov1.Matcher{
 								PathSpecifier: &gloov1.Matcher_Prefix{
 									Prefix: "/b/2-upstream-plugin-override",
@@ -831,3 +844,130 @@ var _ = Describe("Translator", func() {
 	})
 
 })
+
+var expectedRouteMetadatas = [][]*RouteMetadata{
+	{
+		&RouteMetadata{
+			Owners: []OwnerRef{
+				{
+					ResourceRef: core.ResourceRef{
+						Name:      "delegate-1",
+						Namespace: "gloo-system",
+					},
+					ResourceKind:       "*v1.RouteTable",
+					ObservedGeneration: 0,
+				},
+				{
+					ResourceRef: core.ResourceRef{
+						Name:      "name1",
+						Namespace: "gloo-system",
+					},
+					ResourceKind:       "*v1.VirtualService",
+					ObservedGeneration: 0,
+				},
+			},
+		},
+		{
+			Owners: []OwnerRef{
+				{
+					ResourceRef: core.ResourceRef{
+						Name:      "delegate-2",
+						Namespace: "gloo-system",
+					},
+					ResourceKind:       "*v1.RouteTable",
+					ObservedGeneration: 0,
+				},
+				{
+					ResourceRef: core.ResourceRef{
+						Name:      "delegate-1",
+						Namespace: "gloo-system",
+					},
+					ResourceKind:       "*v1.RouteTable",
+					ObservedGeneration: 0,
+				},
+				{
+					ResourceRef: core.ResourceRef{
+						Name:      "name1",
+						Namespace: "gloo-system",
+					},
+					ResourceKind:       "*v1.VirtualService",
+					ObservedGeneration: 0,
+				},
+			},
+		},
+		{
+			Owners: []OwnerRef{
+				{
+					ResourceRef: core.ResourceRef{
+						Name:      "delegate-2",
+						Namespace: "gloo-system",
+					},
+					ResourceKind:       "*v1.RouteTable",
+					ObservedGeneration: 0,
+				},
+				{
+					ResourceRef: core.ResourceRef{
+						Name:      "delegate-1",
+						Namespace: "gloo-system",
+					},
+					ResourceKind:       "*v1.RouteTable",
+					ObservedGeneration: 0,
+				},
+				{
+					ResourceRef: core.ResourceRef{
+						Name:      "name1",
+						Namespace: "gloo-system",
+					},
+					ResourceKind:       "*v1.VirtualService",
+					ObservedGeneration: 0,
+				},
+			},
+		},
+	},
+	{
+		{
+			Owners: []OwnerRef{
+				{
+					ResourceRef: core.ResourceRef{
+						Name:      "delegate-2",
+						Namespace: "gloo-system",
+					},
+					ResourceKind:       "*v1.RouteTable",
+					ObservedGeneration: 0,
+				},
+				{
+					ResourceRef: core.ResourceRef{
+						Name:      "name2",
+						Namespace: "gloo-system",
+					},
+					ResourceKind:       "*v1.VirtualService",
+					ObservedGeneration: 0,
+				},
+			},
+		},
+		{
+			Owners: []OwnerRef{
+				{
+					ResourceRef: core.ResourceRef{
+						Name:      "delegate-2",
+						Namespace: "gloo-system",
+					},
+					ResourceKind:       "*v1.RouteTable",
+					ObservedGeneration: 0,
+				},
+				{
+					ResourceRef: core.ResourceRef{
+						Name:      "name2",
+						Namespace: "gloo-system",
+					},
+					ResourceKind:       "*v1.VirtualService",
+					ObservedGeneration: 0,
+				},
+			},
+		},
+	},
+}
+
+func expectedRouteMetadata(virtualHostIndex, routeIndex int) *RouteMetadata {
+	return expectedRouteMetadatas[virtualHostIndex][routeIndex]
+}

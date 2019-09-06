@@ -368,7 +368,6 @@ var _ = Describe("Translator", func() {
 					Expect(listener.VirtualHosts).To(HaveLen(1))
 					Expect(listener.VirtualHosts[0].Routes).To(HaveLen(1))
 				})
-<<<<<<< HEAD
 
 				It("should error when two virtual services conflict", func() {
 					snap.Gateways[0].Ssl = true
@@ -382,7 +381,6 @@ var _ = Describe("Translator", func() {
 					Expect(errs.Validate()).To(HaveOccurred())
 				})
 
-=======
 
 				It("should error when two virtual services conflict", func() {
 					snap.Gateways[0].Ssl = true
@@ -396,7 +394,6 @@ var _ = Describe("Translator", func() {
 					Expect(errs.Validate()).To(HaveOccurred())
 				})
 
->>>>>>> master
 				It("should error when two virtual services conflict", func() {
 					snap.Gateways[0].Ssl = true
 					snap.VirtualServices[0].SslConfig = new(gloov1.SslConfig)
@@ -578,7 +575,6 @@ var _ = Describe("Translator", func() {
 					Expect(proxy.Listeners).To(HaveLen(1))
 					listener := proxy.Listeners[0].ListenerType.(*gloov1.Listener_HttpListener).HttpListener
 					Expect(listener.VirtualHosts).To(HaveLen(2))
-<<<<<<< HEAD
 
 					// hack to assert equality on RouteMetadata
 					// gomega.Equals does not like *types.Struct
@@ -592,8 +588,6 @@ var _ = Describe("Translator", func() {
 						}
 					}
 
-=======
->>>>>>> master
 					Expect(listener.VirtualHosts[0].Routes).To(Equal([]*gloov1.Route{
 						&gloov1.Route{
 							Matcher: &gloov1.Matcher{
@@ -663,11 +657,7 @@ var _ = Describe("Translator", func() {
 						},
 					}))
 					Expect(listener.VirtualHosts[1].Routes).To(Equal([]*gloov1.Route{
-<<<<<<< HEAD
 						{
-=======
-						&gloov1.Route{
->>>>>>> master
 							Matcher: &gloov1.Matcher{
 								PathSpecifier: &gloov1.Matcher_Prefix{
 									Prefix: "/b/2-upstream",
@@ -688,11 +678,7 @@ var _ = Describe("Translator", func() {
 								},
 							},
 						},
-<<<<<<< HEAD
 						{
-=======
-						&gloov1.Route{
->>>>>>> master
 							Matcher: &gloov1.Matcher{
 								PathSpecifier: &gloov1.Matcher_Prefix{
 									Prefix: "/b/2-upstream-plugin-override",

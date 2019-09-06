@@ -229,6 +229,8 @@ func virtualServiceToVirtualHost(vs *v1.VirtualService, tables v1.RouteTableList
 		Domains:            vs.VirtualHost.Domains,
 		Routes:             routes,
 		VirtualHostPlugins: vs.VirtualHost.VirtualHostPlugins,
+		// TODO: remove on next breaking change
+		CorsPolicy: vs.VirtualHost.CorsPolicy,
 	}
 
 	return vh, nil

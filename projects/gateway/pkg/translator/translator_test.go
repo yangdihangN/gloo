@@ -381,7 +381,6 @@ var _ = Describe("Translator", func() {
 					Expect(errs.Validate()).To(HaveOccurred())
 				})
 
-
 				It("should error when two virtual services conflict", func() {
 					snap.Gateways[0].Ssl = true
 					snap.VirtualServices[0].SslConfig = new(gloov1.SslConfig)

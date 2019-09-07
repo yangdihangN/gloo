@@ -113,15 +113,25 @@ func NewControlPlane(ctx context.Context, grpcServer *grpc.Server, callbacks xds
 	return c
 }
 
+var DefaultXdsBindAddr = "0.0.0.0:9977"
+
 func (s *setupSyncer) Setup(ctx context.Context, kubeCache kube.SharedCache, memCache memory.InMemoryResourceCache, settings *v1.Settings) error {
 
-	ipPort := strings.Split(settings.BindAddr, ":")
+	bindAddr := settings.GetGloo().GetXdsBindAddr()
+	if bindAddr == "" {
+		bindAddr = settings.GetBindAddr()
+		if bindAddr == "" {
+			bindAddr = DefaultXdsBindAddr
+		}
+	}
+
+	ipPort := strings.Split(bindAddr, ":")
 	if len(ipPort) != 2 {
-		return errors.Errorf("invalid bind addr: %v", settings.BindAddr)
+		return errors.Errorf("invalid bind addr: %v", bindAddr)
 	}
 	port, err := strconv.Atoi(ipPort[1])
 	if err != nil {
-		return errors.Wrapf(err, "invalid bind addr: %v", settings.BindAddr)
+		return errors.Wrapf(err, "invalid bind addr: %v", bindAddr)
 	}
 	refreshRate, err := types.DurationFromProto(settings.RefreshRate)
 	if err != nil {
@@ -136,7 +146,7 @@ func (s *setupSyncer) Setup(ctx context.Context, kubeCache kube.SharedCache, mem
 
 	empty := bootstrap.ControlPlane{}
 
-	if settings.BindAddr != s.previousBindAddr {
+	if bindAddr != s.previousBindAddr {
 		if s.cancelControlPlane != nil {
 			s.cancelControlPlane()
 			s.cancelControlPlane = nil

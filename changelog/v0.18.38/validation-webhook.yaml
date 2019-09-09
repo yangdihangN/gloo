@@ -1,0 +1,4 @@
+changelog:
+  - type: NEW_FEATURE
+    description: add gloo and gateway configuration options to settings
+    issueLink: https://github.com/solo-io/gloo/pull/1145

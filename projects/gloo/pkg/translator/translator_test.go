@@ -504,7 +504,8 @@ var _ = Describe("Translator", func() {
 
 		It("should translate circuit breakers on settings", func() {
 
-			settings.CircuitBreakers = &v1.CircuitBreakerConfig{
+			settings.Gloo = &v1.GlooOptions{}
+			settings.Gloo.CircuitBreakers = &v1.CircuitBreakerConfig{
 				MaxConnections:     &types.UInt32Value{Value: 1},
 				MaxPendingRequests: &types.UInt32Value{Value: 2},
 				MaxRequests:        &types.UInt32Value{Value: 3},
@@ -528,7 +529,8 @@ var _ = Describe("Translator", func() {
 
 		It("should override circuit breakers on upstream", func() {
 
-			settings.CircuitBreakers = &v1.CircuitBreakerConfig{
+			settings.Gloo = &v1.GlooOptions{}
+			settings.Gloo.CircuitBreakers = &v1.CircuitBreakerConfig{
 				MaxConnections:     &types.UInt32Value{Value: 11},
 				MaxPendingRequests: &types.UInt32Value{Value: 12},
 				MaxRequests:        &types.UInt32Value{Value: 13},

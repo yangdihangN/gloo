@@ -16,126 +16,35 @@ import (
 )
 
 var (
-	// metrics for sending snapshots
-	mApiSnapshotIn     = stats.Int64("api.gloo.solo.io/emitter/snap_in", "The number of snapshots in", "1")
-	mApiSnapshotOut    = stats.Int64("api.gloo.solo.io/emitter/snap_out", "The number of snapshots out", "1")
-	mApiSnapshotMissed = stats.Int64("api.gloo.solo.io/emitter/snap_missed", "The number of snapshots missed", "1")
+	mApiSnapshotIn     = stats.Int64("api.gloo.solo.io/snap_emitter/snap_in", "The number of snapshots in", "1")
+	mApiSnapshotOut    = stats.Int64("api.gloo.solo.io/snap_emitter/snap_out", "The number of snapshots out", "1")
+	mApiSnapshotMissed = stats.Int64("api.gloo.solo.io/snap_emitter/snap_missed", "The number of snapshots missed", "1")
 
-	// metrics for resource watches
-
-	mApiArtifactsListIn = stats.Int64(
-		"api.gloo.solo.io/emitter/artifacts_in",
-		"The number of Artifact lists received on watch channel", "1")
-	mApiEndpointsListIn = stats.Int64(
-		"api.gloo.solo.io/emitter/endpoints_in",
-		"The number of Endpoint lists received on watch channel", "1")
-	mApiProxiesListIn = stats.Int64(
-		"api.gloo.solo.io/emitter/proxies_in",
-		"The number of Proxy lists received on watch channel", "1")
-	mApiUpstreamGroupsListIn = stats.Int64(
-		"api.gloo.solo.io/emitter/upstream_groups_in",
-		"The number of UpstreamGroup lists received on watch channel", "1")
-	mApiSecretsListIn = stats.Int64(
-		"api.gloo.solo.io/emitter/secrets_in",
-		"The number of Secret lists received on watch channel", "1")
-	mApiUpstreamsListIn = stats.Int64(
-		"api.gloo.solo.io/emitter/upstreams_in",
-		"The number of Upstream lists received on watch channel", "1")
-
-	// views for snapshots
 	apisnapshotInView = &view.View{
-		Name:        "api.gloo.solo.io/emitter/snap_in",
+		Name:        "api.gloo.solo.io_snap_emitter/snap_in",
 		Measure:     mApiSnapshotIn,
 		Description: "The number of snapshots updates coming in",
 		Aggregation: view.Count(),
 		TagKeys:     []tag.Key{},
 	}
 	apisnapshotOutView = &view.View{
-		Name:        "api.gloo.solo.io/emitter/snap_out",
+		Name:        "api.gloo.solo.io/snap_emitter/snap_out",
 		Measure:     mApiSnapshotOut,
 		Description: "The number of snapshots updates going out",
 		Aggregation: view.Count(),
 		TagKeys:     []tag.Key{},
 	}
 	apisnapshotMissedView = &view.View{
-		Name:        "api.gloo.solo.io/emitter/snap_missed",
+		Name:        "api.gloo.solo.io/snap_emitter/snap_missed",
 		Measure:     mApiSnapshotMissed,
 		Description: "The number of snapshots updates going missed. this can happen in heavy load. missed snapshot will be re-tried after a second.",
 		Aggregation: view.Count(),
 		TagKeys:     []tag.Key{},
 	}
-
-	apiNamespaceKey, _ = tag.NewKey("namespace")
-
-	// views for resource watches
-	apiArtifactsListInView = &view.View{
-		Name:        "api.gloo.solo.io/emitter/artifacts_in",
-		Measure:     mApiArtifactsListIn,
-		Description: "The number of Artifact lists received on watch channel.",
-		Aggregation: view.Count(),
-		TagKeys: []tag.Key{
-			apiNamespaceKey,
-		},
-	}
-	apiEndpointsListInView = &view.View{
-		Name:        "api.gloo.solo.io/emitter/endpoints_in",
-		Measure:     mApiEndpointsListIn,
-		Description: "The number of Endpoint lists received on watch channel.",
-		Aggregation: view.Count(),
-		TagKeys: []tag.Key{
-			apiNamespaceKey,
-		},
-	}
-	apiProxiesListInView = &view.View{
-		Name:        "api.gloo.solo.io/emitter/proxies_in",
-		Measure:     mApiProxiesListIn,
-		Description: "The number of Proxy lists received on watch channel.",
-		Aggregation: view.Count(),
-		TagKeys: []tag.Key{
-			apiNamespaceKey,
-		},
-	}
-	apiUpstreamGroupsListInView = &view.View{
-		Name:        "api.gloo.solo.io/emitter/upstream_groups_in",
-		Measure:     mApiUpstreamGroupsListIn,
-		Description: "The number of UpstreamGroup lists received on watch channel.",
-		Aggregation: view.Count(),
-		TagKeys: []tag.Key{
-			apiNamespaceKey,
-		},
-	}
-	apiSecretsListInView = &view.View{
-		Name:        "api.gloo.solo.io/emitter/secrets_in",
-		Measure:     mApiSecretsListIn,
-		Description: "The number of Secret lists received on watch channel.",
-		Aggregation: view.Count(),
-		TagKeys: []tag.Key{
-			apiNamespaceKey,
-		},
-	}
-	apiUpstreamsListInView = &view.View{
-		Name:        "api.gloo.solo.io/emitter/upstreams_in",
-		Measure:     mApiUpstreamsListIn,
-		Description: "The number of Upstream lists received on watch channel.",
-		Aggregation: view.Count(),
-		TagKeys: []tag.Key{
-			apiNamespaceKey,
-		},
-	}
 )
 
 func init() {
-	view.Register(
-		apisnapshotInView,
-		apisnapshotOutView,
-		apisnapshotMissedView,
-		apiArtifactsListInView,
-		apiEndpointsListInView,
-		apiProxiesListInView,
-		apiUpstreamGroupsListInView,
-		apiSecretsListInView,
-		apiUpstreamsListInView,
-	)
+	view.Register(apisnapshotInView, apisnapshotOutView, apisnapshotMissedView)
 }
 
 type ApiEmitter interface {
@@ -506,12 +415,6 @@ func (c *apiEmitter) Snapshots(watchNamespaces []string, opts clients.WatchOpts)
 
 				namespace := artifactNamespacedList.namespace
 
-				stats.RecordWithTags(
-					ctx,
-					[]tag.Mutator{tag.Insert(apiNamespaceKey, namespace)},
-					mApiArtifactsListIn.M(1),
-				)
-
 				// merge lists by namespace
 				artifactsByNamespace[namespace] = artifactNamespacedList.list
 				var artifactList ArtifactList
@@ -523,12 +426,6 @@ func (c *apiEmitter) Snapshots(watchNamespaces []string, opts clients.WatchOpts)
 				record()
 
 				namespace := endpointNamespacedList.namespace
-
-				stats.RecordWithTags(
-					ctx,
-					[]tag.Mutator{tag.Insert(apiNamespaceKey, namespace)},
-					mApiEndpointsListIn.M(1),
-				)
 
 				// merge lists by namespace
 				endpointsByNamespace[namespace] = endpointNamespacedList.list
@@ -542,12 +439,6 @@ func (c *apiEmitter) Snapshots(watchNamespaces []string, opts clients.WatchOpts)
 
 				namespace := proxyNamespacedList.namespace
 
-				stats.RecordWithTags(
-					ctx,
-					[]tag.Mutator{tag.Insert(apiNamespaceKey, namespace)},
-					mApiProxiesListIn.M(1),
-				)
-
 				// merge lists by namespace
 				proxiesByNamespace[namespace] = proxyNamespacedList.list
 				var proxyList ProxyList
@@ -559,12 +450,6 @@ func (c *apiEmitter) Snapshots(watchNamespaces []string, opts clients.WatchOpts)
 				record()
 
 				namespace := upstreamGroupNamespacedList.namespace
-
-				stats.RecordWithTags(
-					ctx,
-					[]tag.Mutator{tag.Insert(apiNamespaceKey, namespace)},
-					mApiUpstreamGroupsListIn.M(1),
-				)
 
 				// merge lists by namespace
 				upstreamGroupsByNamespace[namespace] = upstreamGroupNamespacedList.list
@@ -578,12 +463,6 @@ func (c *apiEmitter) Snapshots(watchNamespaces []string, opts clients.WatchOpts)
 
 				namespace := secretNamespacedList.namespace
 
-				stats.RecordWithTags(
-					ctx,
-					[]tag.Mutator{tag.Insert(apiNamespaceKey, namespace)},
-					mApiSecretsListIn.M(1),
-				)
-
 				// merge lists by namespace
 				secretsByNamespace[namespace] = secretNamespacedList.list
 				var secretList SecretList
@@ -595,12 +474,6 @@ func (c *apiEmitter) Snapshots(watchNamespaces []string, opts clients.WatchOpts)
 				record()
 
 				namespace := upstreamNamespacedList.namespace
-
-				stats.RecordWithTags(
-					ctx,
-					[]tag.Mutator{tag.Insert(apiNamespaceKey, namespace)},
-					mApiUpstreamsListIn.M(1),
-				)
 
 				// merge lists by namespace
 				upstreamsByNamespace[namespace] = upstreamNamespacedList.list

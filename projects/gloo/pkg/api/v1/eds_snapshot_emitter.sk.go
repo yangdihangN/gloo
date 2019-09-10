@@ -16,61 +16,35 @@ import (
 )
 
 var (
-	// metrics for sending snapshots
-	mEdsSnapshotIn     = stats.Int64("eds.gloo.solo.io/emitter/snap_in", "The number of snapshots in", "1")
-	mEdsSnapshotOut    = stats.Int64("eds.gloo.solo.io/emitter/snap_out", "The number of snapshots out", "1")
-	mEdsSnapshotMissed = stats.Int64("eds.gloo.solo.io/emitter/snap_missed", "The number of snapshots missed", "1")
+	mEdsSnapshotIn     = stats.Int64("eds.gloo.solo.io/snap_emitter/snap_in", "The number of snapshots in", "1")
+	mEdsSnapshotOut    = stats.Int64("eds.gloo.solo.io/snap_emitter/snap_out", "The number of snapshots out", "1")
+	mEdsSnapshotMissed = stats.Int64("eds.gloo.solo.io/snap_emitter/snap_missed", "The number of snapshots missed", "1")
 
-	// metrics for resource watches
-
-	mEdsUpstreamsListIn = stats.Int64(
-		"eds.gloo.solo.io/emitter/upstreams_in",
-		"The number of Upstream lists received on watch channel", "1")
-
-	// views for snapshots
 	edssnapshotInView = &view.View{
-		Name:        "eds.gloo.solo.io/emitter/snap_in",
+		Name:        "eds.gloo.solo.io_snap_emitter/snap_in",
 		Measure:     mEdsSnapshotIn,
 		Description: "The number of snapshots updates coming in",
 		Aggregation: view.Count(),
 		TagKeys:     []tag.Key{},
 	}
 	edssnapshotOutView = &view.View{
-		Name:        "eds.gloo.solo.io/emitter/snap_out",
+		Name:        "eds.gloo.solo.io/snap_emitter/snap_out",
 		Measure:     mEdsSnapshotOut,
 		Description: "The number of snapshots updates going out",
 		Aggregation: view.Count(),
 		TagKeys:     []tag.Key{},
 	}
 	edssnapshotMissedView = &view.View{
-		Name:        "eds.gloo.solo.io/emitter/snap_missed",
+		Name:        "eds.gloo.solo.io/snap_emitter/snap_missed",
 		Measure:     mEdsSnapshotMissed,
 		Description: "The number of snapshots updates going missed. this can happen in heavy load. missed snapshot will be re-tried after a second.",
 		Aggregation: view.Count(),
 		TagKeys:     []tag.Key{},
 	}
-
-	edsNamespaceKey, _ = tag.NewKey("namespace")
-
-	// views for resource watches
-	edsUpstreamsListInView = &view.View{
-		Name:        "eds.gloo.solo.io/emitter/upstreams_in",
-		Measure:     mEdsUpstreamsListIn,
-		Description: "The number of Upstream lists received on watch channel.",
-		Aggregation: view.Count(),
-		TagKeys: []tag.Key{
-			edsNamespaceKey,
-		},
-	}
 )
 
 func init() {
-	view.Register(
-		edssnapshotInView,
-		edssnapshotOutView,
-		edssnapshotMissedView,
-		edsUpstreamsListInView,
-	)
+	view.Register(edssnapshotInView, edssnapshotOutView, edssnapshotMissedView)
 }
 
 type EdsEmitter interface {
@@ -215,12 +189,6 @@ func (c *edsEmitter) Snapshots(watchNamespaces []string, opts clients.WatchOpts)
 				record()
 
 				namespace := upstreamNamespacedList.namespace
-
-				stats.RecordWithTags(
-					ctx,
-					[]tag.Mutator{tag.Insert(edsNamespaceKey, namespace)},
-					mEdsUpstreamsListIn.M(1),
-				)
 
 				// merge lists by namespace
 				upstreamsByNamespace[namespace] = upstreamNamespacedList.list

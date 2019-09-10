@@ -16,74 +16,35 @@ import (
 )
 
 var (
-	// metrics for sending snapshots
-	mStatusSnapshotIn     = stats.Int64("status.ingress.solo.io/emitter/snap_in", "The number of snapshots in", "1")
-	mStatusSnapshotOut    = stats.Int64("status.ingress.solo.io/emitter/snap_out", "The number of snapshots out", "1")
-	mStatusSnapshotMissed = stats.Int64("status.ingress.solo.io/emitter/snap_missed", "The number of snapshots missed", "1")
+	mStatusSnapshotIn     = stats.Int64("status.ingress.solo.io/snap_emitter/snap_in", "The number of snapshots in", "1")
+	mStatusSnapshotOut    = stats.Int64("status.ingress.solo.io/snap_emitter/snap_out", "The number of snapshots out", "1")
+	mStatusSnapshotMissed = stats.Int64("status.ingress.solo.io/snap_emitter/snap_missed", "The number of snapshots missed", "1")
 
-	// metrics for resource watches
-
-	mStatusServicesListIn = stats.Int64(
-		"status.ingress.solo.io/emitter/services_in",
-		"The number of KubeService lists received on watch channel", "1")
-	mStatusIngressesListIn = stats.Int64(
-		"status.ingress.solo.io/emitter/ingresses_in",
-		"The number of Ingress lists received on watch channel", "1")
-
-	// views for snapshots
 	statussnapshotInView = &view.View{
-		Name:        "status.ingress.solo.io/emitter/snap_in",
+		Name:        "status.ingress.solo.io_snap_emitter/snap_in",
 		Measure:     mStatusSnapshotIn,
 		Description: "The number of snapshots updates coming in",
 		Aggregation: view.Count(),
 		TagKeys:     []tag.Key{},
 	}
 	statussnapshotOutView = &view.View{
-		Name:        "status.ingress.solo.io/emitter/snap_out",
+		Name:        "status.ingress.solo.io/snap_emitter/snap_out",
 		Measure:     mStatusSnapshotOut,
 		Description: "The number of snapshots updates going out",
 		Aggregation: view.Count(),
 		TagKeys:     []tag.Key{},
 	}
 	statussnapshotMissedView = &view.View{
-		Name:        "status.ingress.solo.io/emitter/snap_missed",
+		Name:        "status.ingress.solo.io/snap_emitter/snap_missed",
 		Measure:     mStatusSnapshotMissed,
 		Description: "The number of snapshots updates going missed. this can happen in heavy load. missed snapshot will be re-tried after a second.",
 		Aggregation: view.Count(),
 		TagKeys:     []tag.Key{},
 	}
-
-	statusNamespaceKey, _ = tag.NewKey("namespace")
-
-	// views for resource watches
-	statusServicesListInView = &view.View{
-		Name:        "status.ingress.solo.io/emitter/services_in",
-		Measure:     mStatusServicesListIn,
-		Description: "The number of KubeService lists received on watch channel.",
-		Aggregation: view.Count(),
-		TagKeys: []tag.Key{
-			statusNamespaceKey,
-		},
-	}
-	statusIngressesListInView = &view.View{
-		Name:        "status.ingress.solo.io/emitter/ingresses_in",
-		Measure:     mStatusIngressesListIn,
-		Description: "The number of Ingress lists received on watch channel.",
-		Aggregation: view.Count(),
-		TagKeys: []tag.Key{
-			statusNamespaceKey,
-		},
-	}
 )
 
 func init() {
-	view.Register(
-		statussnapshotInView,
-		statussnapshotOutView,
-		statussnapshotMissedView,
-		statusServicesListInView,
-		statusIngressesListInView,
-	)
+	view.Register(statussnapshotInView, statussnapshotOutView, statussnapshotMissedView)
 }
 
 type StatusEmitter interface {
@@ -274,12 +235,6 @@ func (c *statusEmitter) Snapshots(watchNamespaces []string, opts clients.WatchOp
 
 				namespace := kubeServiceNamespacedList.namespace
 
-				stats.RecordWithTags(
-					ctx,
-					[]tag.Mutator{tag.Insert(statusNamespaceKey, namespace)},
-					mStatusServicesListIn.M(1),
-				)
-
 				// merge lists by namespace
 				servicesByNamespace[namespace] = kubeServiceNamespacedList.list
 				var kubeServiceList KubeServiceList
@@ -291,12 +246,6 @@ func (c *statusEmitter) Snapshots(watchNamespaces []string, opts clients.WatchOp
 				record()
 
 				namespace := ingressNamespacedList.namespace
-
-				stats.RecordWithTags(
-					ctx,
-					[]tag.Mutator{tag.Insert(statusNamespaceKey, namespace)},
-					mStatusIngressesListIn.M(1),
-				)
 
 				// merge lists by namespace
 				ingressesByNamespace[namespace] = ingressNamespacedList.list

@@ -257,10 +257,10 @@ type isListenerReport_ListenerTypeReport interface {
 }
 
 type ListenerReport_HttpListenerReport struct {
-	HttpListenerReport *HttpListenerReport `protobuf:"bytes,3,opt,name=http_listener_report,json=httpListenerReport,proto3,oneof"`
+	HttpListenerReport *HttpListenerReport `protobuf:"bytes,3,opt,name=http_listener_report,json=httpListenerReport,proto3,oneof" json:"http_listener_report,omitempty"`
 }
 type ListenerReport_TcpListenerReport struct {
-	TcpListenerReport *TcpListenerReport `protobuf:"bytes,4,opt,name=tcp_listener_report,json=tcpListenerReport,proto3,oneof"`
+	TcpListenerReport *TcpListenerReport `protobuf:"bytes,4,opt,name=tcp_listener_report,json=tcpListenerReport,proto3,oneof" json:"tcp_listener_report,omitempty"`
 }
 
 func (*ListenerReport_HttpListenerReport) isListenerReport_ListenerTypeReport() {}
@@ -625,10 +625,10 @@ type isTcpListenerReport_ListenerTypeReport interface {
 }
 
 type TcpListenerReport_HttpListenerReport struct {
-	HttpListenerReport *HttpListenerReport `protobuf:"bytes,3,opt,name=http_listener_report,json=httpListenerReport,proto3,oneof"`
+	HttpListenerReport *HttpListenerReport `protobuf:"bytes,3,opt,name=http_listener_report,json=httpListenerReport,proto3,oneof" json:"http_listener_report,omitempty"`
 }
 type TcpListenerReport_TcpListenerReport struct {
-	TcpListenerReport *TcpListenerReport `protobuf:"bytes,4,opt,name=tcp_listener_report,json=tcpListenerReport,proto3,oneof"`
+	TcpListenerReport *TcpListenerReport `protobuf:"bytes,4,opt,name=tcp_listener_report,json=tcpListenerReport,proto3,oneof" json:"tcp_listener_report,omitempty"`
 }
 
 func (*TcpListenerReport_HttpListenerReport) isTcpListenerReport_ListenerTypeReport() {}

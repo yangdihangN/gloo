@@ -267,7 +267,7 @@ func convertRoutes(vs *v1.VirtualService, tables v1.RouteTableList, resourceErrs
 			return nil, err
 		}
 		for _, route := range mergedRoutes {
-			if err := appendOwner(route, vs); err != nil {
+			if err := appendSource(route, vs); err != nil {
 				// should never happen
 				return nil, err
 			}
@@ -318,7 +318,7 @@ var (
 	noDelegateActionErr = errors.Errorf("internal error: convertDelegateAction() called on route without delegate action")
 )
 
-func (rv *routeVisitor) convertDelegateAction(ownerResource resources.InputResource, ours *v1.Route, resourceErrs reporter.ResourceErrors) ([]*gloov1.Route, error) {
+func (rv *routeVisitor) convertDelegateAction(sourceResource resources.InputResource, ours *v1.Route, resourceErrs reporter.ResourceErrors) ([]*gloov1.Route, error) {
 	action := ours.GetDelegateAction()
 	if action == nil {
 		return nil, noDelegateActionErr
@@ -343,7 +343,7 @@ func (rv *routeVisitor) convertDelegateAction(ownerResource resources.InputResou
 	}
 	routeTable, err := rv.tables.Find(action.Strings())
 	if err != nil {
-		resourceErrs.AddError(ownerResource, err)
+		resourceErrs.AddError(sourceResource, err)
 		return nil, err
 	}
 	for _, visited := range rv.visited {
@@ -376,7 +376,7 @@ func (rv *routeVisitor) convertDelegateAction(ownerResource resources.InputResou
 			if sub.RoutePlugins == nil {
 				sub.RoutePlugins = proto.Clone(ours.RoutePlugins).(*gloov1.RoutePlugins)
 			}
-			if err := appendOwner(sub, routeTable); err != nil {
+			if err := appendSource(sub, routeTable); err != nil {
 				// should never happen
 				return nil, err
 			}

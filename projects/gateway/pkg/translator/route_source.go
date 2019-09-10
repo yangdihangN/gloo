@@ -13,10 +13,10 @@ import (
 )
 
 type RouteMetadata struct {
-	Owners []OwnerRef `json:"owners"`
+	Source []SourceRef `json:"sources"`
 }
 
-type OwnerRef struct {
+type SourceRef struct {
 	core.ResourceRef
 	ResourceKind       string `json:"kind"`
 	ObservedGeneration int64  `json:"observedGeneration"`
@@ -56,19 +56,19 @@ func getRouteMeta(route *v1.Route) (*RouteMetadata, error) {
 	return RouteMetaFromStruct(route.RouteMetadata)
 }
 
-func appendOwner(route *v1.Route, owner resources.InputResource) error {
+func appendSource(route *v1.Route, source resources.InputResource) error {
 	meta, err := getRouteMeta(route)
 	if err != nil {
 		return errors.Wrapf(err, "getting route metadata")
 	}
-	meta.Owners = append(meta.Owners, makeOwnerRef(owner))
+	meta.Source = append(meta.Source, makeSourceRef(source))
 	return setRouteMeta(route, meta)
 }
 
-func makeOwnerRef(owner resources.InputResource) OwnerRef {
-	return OwnerRef{
-		ResourceRef:        owner.GetMetadata().Ref(),
-		ResourceKind:       resources.Kind(owner),
-		ObservedGeneration: owner.GetMetadata().Generation,
+func makeSourceRef(source resources.InputResource) SourceRef {
+	return SourceRef{
+		ResourceRef:        source.GetMetadata().Ref(),
+		ResourceKind:       resources.Kind(source),
+		ObservedGeneration: source.GetMetadata().Generation,
 	}
 }

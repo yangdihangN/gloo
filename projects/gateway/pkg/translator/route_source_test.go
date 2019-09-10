@@ -8,17 +8,17 @@ import (
 	"github.com/solo-io/solo-kit/pkg/api/v1/resources/core"
 )
 
-var _ = Describe("RouteOwner", func() {
+var _ = Describe("RouteSource", func() {
 
-	It("appends owners to the route metadata", func() {
+	It("appends sources to the route metadata", func() {
 		route := &gloov1.Route{}
-		err := appendOwner(route, &v1.VirtualService{
+		err := appendSource(route, &v1.VirtualService{
 			Metadata: core.Metadata{Name: "taco", Namespace: "pizza", Generation: 5},
 		})
 		Expect(err).NotTo(HaveOccurred())
 		meta, err := getRouteMeta(route)
 		Expect(err).NotTo(HaveOccurred())
-		Expect(meta.Owners).To(Equal([]OwnerRef{{
+		Expect(meta.Source).To(Equal([]SourceRef{{
 			ResourceKind:       "*v1.VirtualService",
 			ResourceRef:        core.ResourceRef{Namespace: "pizza", Name: "taco"},
 			ObservedGeneration: 5,

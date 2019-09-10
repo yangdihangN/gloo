@@ -16,35 +16,61 @@ import (
 )
 
 var (
-	mSetupSnapshotIn     = stats.Int64("setup.gloo.solo.io/snap_emitter/snap_in", "The number of snapshots in", "1")
-	mSetupSnapshotOut    = stats.Int64("setup.gloo.solo.io/snap_emitter/snap_out", "The number of snapshots out", "1")
-	mSetupSnapshotMissed = stats.Int64("setup.gloo.solo.io/snap_emitter/snap_missed", "The number of snapshots missed", "1")
+	// metrics for sending snapshots
+	mSetupSnapshotIn     = stats.Int64("setup.gloo.solo.io/emitter/snap_in", "The number of snapshots in", "1")
+	mSetupSnapshotOut    = stats.Int64("setup.gloo.solo.io/emitter/snap_out", "The number of snapshots out", "1")
+	mSetupSnapshotMissed = stats.Int64("setup.gloo.solo.io/emitter/snap_missed", "The number of snapshots missed", "1")
 
+	// metrics for resource watches
+
+	mSetupSettingsListIn = stats.Int64(
+		"setup.gloo.solo.io/emitter/settings_in",
+		"The number of Settings lists received on watch channel", "1")
+
+	// views for snapshots
 	setupsnapshotInView = &view.View{
-		Name:        "setup.gloo.solo.io_snap_emitter/snap_in",
+		Name:        "setup.gloo.solo.io/emitter/snap_in",
 		Measure:     mSetupSnapshotIn,
 		Description: "The number of snapshots updates coming in",
 		Aggregation: view.Count(),
 		TagKeys:     []tag.Key{},
 	}
 	setupsnapshotOutView = &view.View{
-		Name:        "setup.gloo.solo.io/snap_emitter/snap_out",
+		Name:        "setup.gloo.solo.io/emitter/snap_out",
 		Measure:     mSetupSnapshotOut,
 		Description: "The number of snapshots updates going out",
 		Aggregation: view.Count(),
 		TagKeys:     []tag.Key{},
 	}
 	setupsnapshotMissedView = &view.View{
-		Name:        "setup.gloo.solo.io/snap_emitter/snap_missed",
+		Name:        "setup.gloo.solo.io/emitter/snap_missed",
 		Measure:     mSetupSnapshotMissed,
 		Description: "The number of snapshots updates going missed. this can happen in heavy load. missed snapshot will be re-tried after a second.",
 		Aggregation: view.Count(),
 		TagKeys:     []tag.Key{},
 	}
+
+	setupNamespaceKey, _ = tag.NewKey("namespace")
+
+	// views for resource watches
+	setupSettingsListInView = &view.View{
+		Name:        "setup.gloo.solo.io/emitter/settings_in",
+		Measure:     mSetupSettingsListIn,
+		Description: "The number of Settings lists received on watch channel.",
+		Aggregation: view.Count(),
+		TagKeys: []tag.Key{
+			setupNamespaceKey,
+		},
+	}
 )
 
 func init() {
-	view.Register(setupsnapshotInView, setupsnapshotOutView, setupsnapshotMissedView)
+	view.Register(
+		setupsnapshotInView,
+		setupsnapshotOutView,
+		setupsnapshotMissedView,
+		setupSettingsListInView,
+	)
 }
 
 type SetupEmitter interface {
@@ -189,6 +215,12 @@ func (c *setupEmitter) Snapshots(watchNamespaces []string, opts clients.WatchOpt
 				record()
 
 				namespace := settingsNamespacedList.namespace
+
+				stats.RecordWithTags(
+					ctx,
+					[]tag.Mutator{tag.Insert(setupNamespaceKey, namespace)},
+					mSetupSettingsListIn.M(1),
+				)
 
 				// merge lists by namespace
 				settingsByNamespace[namespace] = settingsNamespacedList.list

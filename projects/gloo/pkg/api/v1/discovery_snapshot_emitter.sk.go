@@ -18,35 +18,87 @@ import (
 )
 
 var (
-	mDiscoverySnapshotIn     = stats.Int64("discovery.gloo.solo.io/snap_emitter/snap_in", "The number of snapshots in", "1")
-	mDiscoverySnapshotOut    = stats.Int64("discovery.gloo.solo.io/snap_emitter/snap_out", "The number of snapshots out", "1")
-	mDiscoverySnapshotMissed = stats.Int64("discovery.gloo.solo.io/snap_emitter/snap_missed", "The number of snapshots missed", "1")
+	// metrics for sending snapshots
+	mDiscoverySnapshotIn     = stats.Int64("discovery.gloo.solo.io/emitter/snap_in", "The number of snapshots in", "1")
+	mDiscoverySnapshotOut    = stats.Int64("discovery.gloo.solo.io/emitter/snap_out", "The number of snapshots out", "1")
+	mDiscoverySnapshotMissed = stats.Int64("discovery.gloo.solo.io/emitter/snap_missed", "The number of snapshots missed", "1")
 
+	// metrics for resource watches
+
+	mDiscoveryUpstreamsListIn = stats.Int64(
+		"discovery.gloo.solo.io/emitter/upstreams_in",
+		"The number of Upstream lists received on watch channel", "1")
+	mDiscoveryKubenamespacesListIn = stats.Int64(
+		"discovery.gloo.solo.io/emitter/kubenamespaces_in",
+		"The number of KubeNamespace lists received on watch channel", "1")
+	mDiscoverySecretsListIn = stats.Int64(
+		"discovery.gloo.solo.io/emitter/secrets_in",
+		"The number of Secret lists received on watch channel", "1")
+
+	// views for snapshots
 	discoverysnapshotInView = &view.View{
-		Name:        "discovery.gloo.solo.io_snap_emitter/snap_in",
+		Name:        "discovery.gloo.solo.io/emitter/snap_in",
 		Measure:     mDiscoverySnapshotIn,
 		Description: "The number of snapshots updates coming in",
 		Aggregation: view.Count(),
 		TagKeys:     []tag.Key{},
 	}
 	discoverysnapshotOutView = &view.View{
-		Name:        "discovery.gloo.solo.io/snap_emitter/snap_out",
+		Name:        "discovery.gloo.solo.io/emitter/snap_out",
 		Measure:     mDiscoverySnapshotOut,
 		Description: "The number of snapshots updates going out",
 		Aggregation: view.Count(),
 		TagKeys:     []tag.Key{},
 	}
 	discoverysnapshotMissedView = &view.View{
-		Name:        "discovery.gloo.solo.io/snap_emitter/snap_missed",
+		Name:        "discovery.gloo.solo.io/emitter/snap_missed",
 		Measure:     mDiscoverySnapshotMissed,
 		Description: "The number of snapshots updates going missed. this can happen in heavy load. missed snapshot will be re-tried after a second.",
 		Aggregation: view.Count(),
 		TagKeys:     []tag.Key{},
 	}
+
+	discoveryNamespaceKey, _ = tag.NewKey("namespace")
+
+	// views for resource watches
+	discoveryUpstreamsListInView = &view.View{
+		Name:        "discovery.gloo.solo.io/emitter/upstreams_in",
+		Measure:     mDiscoveryUpstreamsListIn,
+		Description: "The number of Upstream lists received on watch channel.",
+		Aggregation: view.Count(),
+		TagKeys: []tag.Key{
+			discoveryNamespaceKey,
+		},
+	}
+	discoveryKubenamespacesListInView = &view.View{
+		Name:        "discovery.gloo.solo.io/emitter/kubenamespaces_in",
+		Measure:     mDiscoveryKubenamespacesListIn,
+		Description: "The number of KubeNamespace lists received on watch channel.",
+		Aggregation: view.Count(),
+		TagKeys: []tag.Key{
+			discoveryNamespaceKey,
+		},
+	}
+	discoverySecretsListInView = &view.View{
+		Name:        "discovery.gloo.solo.io/emitter/secrets_in",
+		Measure:     mDiscoverySecretsListIn,
+		Description: "The number of Secret lists received on watch channel.",
+		Aggregation: view.Count(),
+		TagKeys: []tag.Key{
+			discoveryNamespaceKey,
+		},
+	}
 )
 
 func init() {
-	view.Register(discoverysnapshotInView, discoverysnapshotOutView, discoverysnapshotMissedView)
+	view.Register(
+		discoverysnapshotInView,
+		discoverysnapshotOutView,
+		discoverysnapshotMissedView,
+		discoveryUpstreamsListInView,
+		discoveryKubenamespacesListInView,
+		discoverySecretsListInView,
+	)
 }
 
 type DiscoveryEmitter interface {
@@ -282,6 +334,12 @@ func (c *discoveryEmitter) Snapshots(watchNamespaces []string, opts clients.Watc
 
 				namespace := upstreamNamespacedList.namespace
 
+				stats.RecordWithTags(
+					ctx,
+					[]tag.Mutator{tag.Insert(discoveryNamespaceKey, namespace)},
+					mDiscoveryUpstreamsListIn.M(1),
+				)
+
 				// merge lists by namespace
 				upstreamsByNamespace[namespace] = upstreamNamespacedList.list
 				var upstreamList UpstreamList
@@ -294,6 +352,12 @@ func (c *discoveryEmitter) Snapshots(watchNamespaces []string, opts clients.Watc
 
 				namespace := kubeNamespaceNamespacedList.namespace
 
+				stats.RecordWithTags(
+					ctx,
+					[]tag.Mutator{tag.Insert(discoveryNamespaceKey, namespace)},
+					mDiscoveryKubenamespacesListIn.M(1),
+				)
+
 				// merge lists by namespace
 				kubenamespacesByNamespace[namespace] = kubeNamespaceNamespacedList.list
 				var kubeNamespaceList github_com_solo_io_solo_kit_pkg_api_v1_resources_common_kubernetes.KubeNamespaceList
@@ -305,6 +369,12 @@ func (c *discoveryEmitter) Snapshots(watchNamespaces []string, opts clients.Watc
 				record()
 
 				namespace := secretNamespacedList.namespace
+
+				stats.RecordWithTags(
+					ctx,
+					[]tag.Mutator{tag.Insert(discoveryNamespaceKey, namespace)},
+					mDiscoverySecretsListIn.M(1),
+				)
 
 				// merge lists by namespace
 				secretsByNamespace[namespace] = secretNamespacedList.list

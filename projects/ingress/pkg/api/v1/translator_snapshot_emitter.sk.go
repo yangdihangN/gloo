@@ -18,35 +18,87 @@ import (
 )
 
 var (
-	mTranslatorSnapshotIn     = stats.Int64("translator.ingress.solo.io/snap_emitter/snap_in", "The number of snapshots in", "1")
-	mTranslatorSnapshotOut    = stats.Int64("translator.ingress.solo.io/snap_emitter/snap_out", "The number of snapshots out", "1")
-	mTranslatorSnapshotMissed = stats.Int64("translator.ingress.solo.io/snap_emitter/snap_missed", "The number of snapshots missed", "1")
+	// metrics for sending snapshots
+	mTranslatorSnapshotIn     = stats.Int64("translator.ingress.solo.io/emitter/snap_in", "The number of snapshots in", "1")
+	mTranslatorSnapshotOut    = stats.Int64("translator.ingress.solo.io/emitter/snap_out", "The number of snapshots out", "1")
+	mTranslatorSnapshotMissed = stats.Int64("translator.ingress.solo.io/emitter/snap_missed", "The number of snapshots missed", "1")
 
+	// metrics for resource watches
+
+	mTranslatorSecretsListIn = stats.Int64(
+		"translator.ingress.solo.io/emitter/secrets_in",
+		"The number of Secret lists received on watch channel", "1")
+	mTranslatorUpstreamsListIn = stats.Int64(
+		"translator.ingress.solo.io/emitter/upstreams_in",
+		"The number of Upstream lists received on watch channel", "1")
+	mTranslatorIngressesListIn = stats.Int64(
+		"translator.ingress.solo.io/emitter/ingresses_in",
+		"The number of Ingress lists received on watch channel", "1")
+
+	// views for snapshots
 	translatorsnapshotInView = &view.View{
-		Name:        "translator.ingress.solo.io_snap_emitter/snap_in",
+		Name:        "translator.ingress.solo.io/emitter/snap_in",
 		Measure:     mTranslatorSnapshotIn,
 		Description: "The number of snapshots updates coming in",
 		Aggregation: view.Count(),
 		TagKeys:     []tag.Key{},
 	}
 	translatorsnapshotOutView = &view.View{
-		Name:        "translator.ingress.solo.io/snap_emitter/snap_out",
+		Name:        "translator.ingress.solo.io/emitter/snap_out",
 		Measure:     mTranslatorSnapshotOut,
 		Description: "The number of snapshots updates going out",
 		Aggregation: view.Count(),
 		TagKeys:     []tag.Key{},
 	}
 	translatorsnapshotMissedView = &view.View{
-		Name:        "translator.ingress.solo.io/snap_emitter/snap_missed",
+		Name:        "translator.ingress.solo.io/emitter/snap_missed",
 		Measure:     mTranslatorSnapshotMissed,
 		Description: "The number of snapshots updates going missed. this can happen in heavy load. missed snapshot will be re-tried after a second.",
 		Aggregation: view.Count(),
 		TagKeys:     []tag.Key{},
 	}
+
+	translatorNamespaceKey, _ = tag.NewKey("namespace")
+
+	// views for resource watches
+	translatorSecretsListInView = &view.View{
+		Name:        "translator.ingress.solo.io/emitter/secrets_in",
+		Measure:     mTranslatorSecretsListIn,
+		Description: "The number of Secret lists received on watch channel.",
+		Aggregation: view.Count(),
+		TagKeys: []tag.Key{
+			translatorNamespaceKey,
+		},
+	}
+	translatorUpstreamsListInView = &view.View{
+		Name:        "translator.ingress.solo.io/emitter/upstreams_in",
+		Measure:     mTranslatorUpstreamsListIn,
+		Description: "The number of Upstream lists received on watch channel.",
+		Aggregation: view.Count(),
+		TagKeys: []tag.Key{
+			translatorNamespaceKey,
+		},
+	}
+	translatorIngressesListInView = &view.View{
+		Name:        "translator.ingress.solo.io/emitter/ingresses_in",
+		Measure:     mTranslatorIngressesListIn,
+		Description: "The number of Ingress lists received on watch channel.",
+		Aggregation: view.Count(),
+		TagKeys: []tag.Key{
+			translatorNamespaceKey,
+		},
+	}
 )
 
 func init() {
-	view.Register(translatorsnapshotInView, translatorsnapshotOutView, translatorsnapshotMissedView)
+	view.Register(
+		translatorsnapshotInView,
+		translatorsnapshotOutView,
+		translatorsnapshotMissedView,
+		translatorSecretsListInView,
+		translatorUpstreamsListInView,
+		translatorIngressesListInView,
+	)
 }
 
 type TranslatorEmitter interface {
@@ -282,6 +334,12 @@ func (c *translatorEmitter) Snapshots(watchNamespaces []string, opts clients.Wat
 
 				namespace := secretNamespacedList.namespace
 
+				stats.RecordWithTags(
+					ctx,
+					[]tag.Mutator{tag.Insert(translatorNamespaceKey, namespace)},
+					mTranslatorSecretsListIn.M(1),
+				)
+
 				// merge lists by namespace
 				secretsByNamespace[namespace] = secretNamespacedList.list
 				var secretList gloo_solo_io.SecretList
@@ -294,6 +352,12 @@ func (c *translatorEmitter) Snapshots(watchNamespaces []string, opts clients.Wat
 
 				namespace := upstreamNamespacedList.namespace
 
+				stats.RecordWithTags(
+					ctx,
+					[]tag.Mutator{tag.Insert(translatorNamespaceKey, namespace)},
+					mTranslatorUpstreamsListIn.M(1),
+				)
+
 				// merge lists by namespace
 				upstreamsByNamespace[namespace] = upstreamNamespacedList.list
 				var upstreamList gloo_solo_io.UpstreamList
@@ -305,6 +369,12 @@ func (c *translatorEmitter) Snapshots(watchNamespaces []string, opts clients.Wat
 				record()
 
 				namespace := ingressNamespacedList.namespace
+
+				stats.RecordWithTags(
+					ctx,
+					[]tag.Mutator{tag.Insert(translatorNamespaceKey, namespace)},
+					mTranslatorIngressesListIn.M(1),
+				)
 
 				// merge lists by namespace
 				ingressesByNamespace[namespace] = ingressNamespacedList.list

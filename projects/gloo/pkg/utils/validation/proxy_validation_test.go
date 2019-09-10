@@ -6,7 +6,7 @@ import (
 	"github.com/solo-io/gloo/projects/gloo/pkg/api/grpc/validation"
 	v1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
 
-	. "github.com/solo-io/gloo/projects/gloo/pkg/validation"
+	. "github.com/solo-io/gloo/projects/gloo/pkg/utils/validationdation"
 )
 
 var _ = Describe("validation utils", func() {

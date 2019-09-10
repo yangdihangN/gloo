@@ -6,7 +6,7 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 	validationapi "github.com/solo-io/gloo/projects/gloo/pkg/api/grpc/validation"
-	"github.com/solo-io/gloo/projects/gloo/pkg/validation"
+	"github.com/solo-io/gloo/projects/gloo/pkg/utils/validation"
 
 	usconversion "github.com/solo-io/gloo/projects/gloo/pkg/upstreams"
 

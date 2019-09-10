@@ -4,7 +4,7 @@ import (
 	"sort"
 
 	validationapi "github.com/solo-io/gloo/projects/gloo/pkg/api/grpc/validation"
-	"github.com/solo-io/gloo/projects/gloo/pkg/validation"
+	"github.com/solo-io/gloo/projects/gloo/pkg/utils/validation"
 
 	envoycore "github.com/envoyproxy/go-control-plane/envoy/api/v2/core"
 	envoylistener "github.com/envoyproxy/go-control-plane/envoy/api/v2/listener"

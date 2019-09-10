@@ -4,6 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/solo-io/gloo/projects/gloo/pkg/api/grpc/validation"
+
+	validationutils "github.com/solo-io/gloo/projects/gloo/pkg/utils/validation"
+	"github.com/solo-io/go-utils/log"
+
 	envoycore "github.com/envoyproxy/go-control-plane/envoy/api/v2/core"
 	envoyrouteapi "github.com/envoyproxy/go-control-plane/envoy/api/v2/route"
 	envoytcp "github.com/envoyproxy/go-control-plane/envoy/config/filter/network/tcp_proxy/v2"
@@ -186,11 +191,11 @@ var _ = Describe("Translator", func() {
 		}
 	})
 
-	translateWithError := func() {
+	translateWithError := func() *validation.ProxyReport {
 		_, errs, report, err := translator.Translate(params, proxy)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(errs.Validate()).To(HaveOccurred())
-		Expect(report).To(Equal(report))
+		return report
 	}
 
 	translate := func() {
@@ -198,7 +203,7 @@ var _ = Describe("Translator", func() {
 		Expect(err).NotTo(HaveOccurred())
 		Expect(errs.Validate()).NotTo(HaveOccurred())
 		Expect(snap).NotTo(BeNil())
-		Expect(report).To(Equal(report))
+		Expect(report).To(Equal(validationutils.MakeReport(proxy)))
 
 		clusters := snap.GetResources(xds.ClusterType)
 		clusterResource := clusters.Items[UpstreamToClusterName(upstream.Metadata.Ref())]
@@ -274,8 +279,15 @@ var _ = Describe("Translator", func() {
 			_, errs, report, err := translator.Translate(params, proxy)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(errs.Validate()).To(HaveOccurred())
-			Expect(errs.Validate().Error()).To(ContainSubstring("route_config.invalid route: no path specifier provided"))
-			Expect(report).To(Equal(report))
+			Expect(errs.Validate().Error()).To(ContainSubstring("Route Error: InvalidMatcherError. Reason: no path specifier provided"))
+			expectedReport := validationutils.MakeReport(proxy)
+			expectedReport.ListenerReports[0].ListenerTypeReport.(*validation.ListenerReport_HttpListenerReport).HttpListenerReport.VirtualHostReports[0].RouteReports[0].Errors = []*validation.RouteReport_Error{
+				{
+					Type:   validation.RouteReport_Error_InvalidMatcherError,
+					Reason: "no path specifier provided",
+				},
+			}
+			Expect(report).To(Equal(expectedReport))
 		})
 		It("should error when path math is missing even if we have grpc spec", func() {
 			dest := routes[0].GetRouteAction().GetSingle()
@@ -291,8 +303,20 @@ var _ = Describe("Translator", func() {
 			_, errs, report, err := translator.Translate(params, proxy)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(errs.Validate()).To(HaveOccurred())
-			Expect(errs.Validate().Error()).To(ContainSubstring("route_config.invalid route: no path specifier provided"))
-			Expect(report).To(Equal(report))
+			Expect(errs.Validate().Error()).To(ContainSubstring("InvalidMatcherError. Reason: no path specifier provided; Route Error: PluginError. Reason: missing path for grpc route"))
+
+			expectedReport := validationutils.MakeReport(proxy)
+			expectedReport.ListenerReports[0].ListenerTypeReport.(*validation.ListenerReport_HttpListenerReport).HttpListenerReport.VirtualHostReports[0].RouteReports[0].Errors = []*validation.RouteReport_Error{
+				{
+					Type:   validation.RouteReport_Error_InvalidMatcherError,
+					Reason: "no path specifier provided",
+				},
+				{
+					Type:   validation.RouteReport_Error_PluginError,
+					Reason: "missing path for grpc route",
+				},
+			}
+			Expect(report).To(Equal(expectedReport))
 		})
 	})
 	Context("route header match", func() {
@@ -353,7 +377,9 @@ var _ = Describe("Translator", func() {
 					Interval: &DefaultHealthCheckInterval,
 				},
 			}
-			translateWithError()
+			report := translateWithError()
+			log.Printf("%v", report)
+			Expect(report).To(Equal("hi"))
 		})
 
 		It("will error if no health checker is supplied", func() {
@@ -365,7 +391,10 @@ var _ = Describe("Translator", func() {
 					UnhealthyThreshold: DefaultThreshold,
 				},
 			}
-			translateWithError()
+			report := translateWithError()
+			log.Printf("%v", report)
+			Expect(report).To(Equal("hi"))
+
 		})
 
 		It("can translate the http health check", func() {
@@ -440,7 +469,9 @@ var _ = Describe("Translator", func() {
 				Interval: dur,
 			}
 			upstream.UpstreamSpec.OutlierDetection = expectedResult
-			translateWithError()
+			report := translateWithError()
+			log.Printf("%v", report)
+			Expect(report).To(Equal("hi"))
 		})
 
 	})

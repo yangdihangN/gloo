@@ -37,6 +37,9 @@ func MakeReport(proxy *v1.Proxy) *validation.ProxyReport {
 			}
 		case *v1.Listener_TcpListener:
 			tcpHostReports := make([]*validation.TcpHostReport, len(listenerType.TcpListener.GetTcpHosts()))
+			for j := range listenerType.TcpListener.GetTcpHosts() {
+				tcpHostReports[j] = &validation.TcpHostReport{}
+			}
 			listenerReports[i] = &validation.ListenerReport{
 				ListenerTypeReport: &validation.ListenerReport_TcpListenerReport{
 					TcpListenerReport: &validation.TcpListenerReport{

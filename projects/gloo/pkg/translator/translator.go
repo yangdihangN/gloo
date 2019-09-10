@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	validationapi "github.com/solo-io/gloo/projects/gloo/pkg/api/grpc/validation"
-	"github.com/solo-io/gloo/projects/gloo/pkg/validation"
+	"github.com/solo-io/gloo/projects/gloo/pkg/utils/validation"
 
 	envoyapi "github.com/envoyproxy/go-control-plane/envoy/api/v2"
 	"github.com/mitchellh/hashstructure"
@@ -123,6 +123,10 @@ ClusterLoop:
 	}
 
 	xdsSnapshot := generateXDSSnapshot(clusters, endpoints, routeConfigs, listeners)
+
+	if err := validation.GetProxyError(proxyRpt); err != nil {
+		resourceErrs.AddError(proxy, err)
+	}
 
 	return xdsSnapshot, resourceErrs, proxyRpt, nil
 }

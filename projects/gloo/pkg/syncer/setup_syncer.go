@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/solo-io/gloo/projects/gloo/pkg/validation"
+
 	consulapi "github.com/hashicorp/consul/api"
 	vaultapi "github.com/hashicorp/vault/api"
 	"github.com/solo-io/gloo/projects/gloo/pkg/upstreams/consul"
@@ -368,7 +370,13 @@ func RunGlooWithExtensions(opts bootstrap.Opts, extensions Extensions) error {
 
 	apiCache := v1.NewApiEmitter(artifactClient, endpointClient, proxyClient, upstreamGroupClient, secretClient, hybridUsClient)
 	rpt := reporter.NewReporter("gloo", hybridUsClient.BaseClient(), proxyClient.BaseClient(), upstreamGroupClient.BaseClient())
-	apiSync := NewTranslatorSyncer(translator.NewTranslator(sslutils.NewSslConfigTranslator(), opts.Settings, allPlugins...), opts.ControlPlane.SnapshotCache, xdsHasher, rpt, opts.DevMode, syncerExtensions)
+
+	t := translator.NewTranslator(sslutils.NewSslConfigTranslator(), opts.Settings, allPlugins...)
+
+	validationServer := validation.NewValidationServer(t)
+	validationServer.Register(opts.ValidationServer.GrpcServer)
+
+	apiSync := NewTranslatorSyncer(t, opts.ControlPlane.SnapshotCache, xdsHasher, rpt, opts.DevMode, syncerExtensions)
 	apiEventLoop := v1.NewApiEventLoop(apiCache, apiSync)
 	apiEventLoopErrs, err := apiEventLoop.Run(opts.WatchNamespaces, watchOpts)
 	if err != nil {
@@ -424,6 +432,8 @@ func RunGlooWithExtensions(opts bootstrap.Opts, extensions Extensions) error {
 		}()
 
 		go func() {
+			validationServer.Register(opts.ValidationServer.GrpcServer)
+
 			if err := opts.ValidationServer.GrpcServer.Serve(lis); err != nil {
 				logger.Errorf("validation grpc server failed to start")
 			}

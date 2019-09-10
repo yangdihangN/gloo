@@ -6,14 +6,12 @@ import (
 
 	"github.com/solo-io/gloo/projects/gloo/pkg/api/grpc/validation"
 
-	validationutils "github.com/solo-io/gloo/projects/gloo/pkg/utils/validation"
-	"github.com/solo-io/go-utils/log"
-
 	envoycore "github.com/envoyproxy/go-control-plane/envoy/api/v2/core"
 	envoyrouteapi "github.com/envoyproxy/go-control-plane/envoy/api/v2/route"
 	envoytcp "github.com/envoyproxy/go-control-plane/envoy/config/filter/network/tcp_proxy/v2"
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/mock/gomock"
+	validationutils "github.com/solo-io/gloo/projects/gloo/pkg/utils/validation"
 
 	"github.com/solo-io/gloo/projects/gloo/pkg/defaults"
 
@@ -238,7 +236,7 @@ var _ = Describe("Translator", func() {
 		Expect(err).NotTo(HaveOccurred())
 		Expect(errs.Validate()).NotTo(HaveOccurred())
 		Expect(snap).NotTo(BeNil())
-		Expect(report).To(Equal(report))
+		Expect(report).To(Equal(validationutils.MakeReport(proxy)))
 
 		routes := snap.GetResources(xds.RouteType)
 		Expect(routes.Items).To(HaveKey("http-listener-routes"))
@@ -378,8 +376,8 @@ var _ = Describe("Translator", func() {
 				},
 			}
 			report := translateWithError()
-			log.Printf("%v", report)
-			Expect(report).To(Equal("hi"))
+
+			Expect(report).To(Equal(validationutils.MakeReport(proxy)))
 		})
 
 		It("will error if no health checker is supplied", func() {
@@ -392,9 +390,7 @@ var _ = Describe("Translator", func() {
 				},
 			}
 			report := translateWithError()
-			log.Printf("%v", report)
-			Expect(report).To(Equal("hi"))
-
+			Expect(report).To(Equal(validationutils.MakeReport(proxy)))
 		})
 
 		It("can translate the http health check", func() {
@@ -470,8 +466,7 @@ var _ = Describe("Translator", func() {
 			}
 			upstream.UpstreamSpec.OutlierDetection = expectedResult
 			report := translateWithError()
-			log.Printf("%v", report)
-			Expect(report).To(Equal("hi"))
+			Expect(report).To(Equal(validationutils.MakeReport(proxy)))
 		})
 
 	})
@@ -652,7 +647,15 @@ var _ = Describe("Translator", func() {
 			err = errs.Validate()
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("destination # 1: upstream not found: list did not find upstream gloo-system.notexist"))
-			Expect(report).To(Equal(report))
+
+			expectedReport := validationutils.MakeReport(proxy)
+			expectedReport.ListenerReports[0].ListenerTypeReport.(*validation.ListenerReport_HttpListenerReport).HttpListenerReport.VirtualHostReports[0].RouteReports[0].Errors = []*validation.RouteReport_Error{
+				{
+					Type:   validation.RouteReport_Error_InvalidDestinationError,
+					Reason: "invalid destination in weighted destination in upstream group: invalid destination in weighted destination list: list did not find upstream gloo-system.notexist",
+				},
+			}
+			Expect(report).To(Equal(expectedReport))
 		})
 	})
 	Context("when handling endpoints", func() {
@@ -841,7 +844,14 @@ var _ = Describe("Translator", func() {
 				_, errs, report, err := translator.Translate(params, proxy)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(errs.Validate()).To(HaveOccurred())
-				Expect(report).To(Equal(report))
+				expectedReport := validationutils.MakeReport(proxy)
+				expectedReport.ListenerReports[0].ListenerTypeReport.(*validation.ListenerReport_HttpListenerReport).HttpListenerReport.VirtualHostReports[0].RouteReports[0].Errors = []*validation.RouteReport_Error{
+					{
+						Type:   validation.RouteReport_Error_InvalidDestinationError,
+						Reason: "route has a subset config, but none of the subsets in the upstream match it.",
+					},
+				}
+				Expect(report).To(Equal(expectedReport))
 			})
 		})
 	})

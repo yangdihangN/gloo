@@ -1,8 +1,10 @@
 package validation
 
 import (
+	"github.com/pkg/errors"
 	"github.com/solo-io/gloo/projects/gloo/pkg/api/grpc/validation"
 	v1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
+	"go.uber.org/multierr"
 )
 
 func MakeReport(proxy *v1.Proxy) *validation.ProxyReport {
@@ -17,6 +19,9 @@ func MakeReport(proxy *v1.Proxy) *validation.ProxyReport {
 
 			for j, vh := range listenerType.HttpListener.GetVirtualHosts() {
 				routeReports := make([]*validation.RouteReport, len(vh.GetRoutes()))
+				for k := range vh.GetRoutes() {
+					routeReports[k] = &validation.RouteReport{}
+				}
 
 				vhostReports[j] = &validation.VirtualHostReport{
 					RouteReports: routeReports,
@@ -45,4 +50,72 @@ func MakeReport(proxy *v1.Proxy) *validation.ProxyReport {
 	return &validation.ProxyReport{
 		ListenerReports: listenerReports,
 	}
+}
+
+func GetProxyError(proxyRpt *validation.ProxyReport) error {
+	var errs error
+	appendErr := func(level, errType, reason string) {
+		errs = multierr.Append(errs, errors.Errorf("%v Error: %v. Reason: %v", level, errType, reason))
+
+	}
+	for _, listener := range proxyRpt.GetListenerReports() {
+		for _, errReport := range listener.GetErrors() {
+			appendErr("Listener", errReport.Type.String(), errReport.Reason)
+		}
+		switch listenerType := listener.ListenerTypeReport.(type) {
+		case *validation.ListenerReport_HttpListenerReport:
+			httpListener := listenerType.HttpListenerReport
+			for _, errReport := range httpListener.GetErrors() {
+				appendErr("HTTP Plugin", "plugin", errReport)
+			}
+			for _, vhReport := range httpListener.GetVirtualHostReports() {
+				for _, errReport := range vhReport.GetErrors() {
+					appendErr("VirtualHost", errReport.Type.String(), errReport.Reason)
+				}
+				for _, routeReport := range vhReport.GetRouteReports() {
+					for _, errReport := range routeReport.GetErrors() {
+						appendErr("Route", errReport.Type.String(), errReport.Reason)
+					}
+				}
+			}
+		case *validation.ListenerReport_TcpListenerReport:
+			tcpListener := listenerType.TcpListenerReport
+			for _, errReport := range tcpListener.GetErrors() {
+				appendErr("TCP Listener", errReport.Type.String(), errReport.Reason)
+			}
+
+			for _, hostReport := range tcpListener.GetTcpHostReports() {
+				for _, errReport := range hostReport.GetErrors() {
+					appendErr("TCP Host", errReport.Type.String(), errReport.Reason)
+				}
+			}
+		}
+	}
+
+	return errs
+}
+
+func AppendListenerError(listenerReport *validation.ListenerReport, errType validation.ListenerReport_Error_Type, reason string) {
+	listenerReport.Errors = append(listenerReport.Errors, &validation.ListenerReport_Error{
+		Type:   errType,
+		Reason: reason,
+	})
+}
+
+func AppendVirtualHostError(virtualHostReport *validation.VirtualHostReport, errType validation.VirtualHostReport_Error_Type, reason string) {
+	virtualHostReport.Errors = append(virtualHostReport.Errors, &validation.VirtualHostReport_Error{
+		Type:   errType,
+		Reason: reason,
+	})
+}
+
+func AppendHTTPListenerError(httpListenerReport *validation.HttpListenerReport, reason string) {
+	httpListenerReport.Errors = append(httpListenerReport.Errors, reason)
+}
+
+func AppendRouteError(routeReport *validation.RouteReport, errType validation.RouteReport_Error_Type, reason string) {
+	routeReport.Errors = append(routeReport.Errors, &validation.RouteReport_Error{
+		Type:   errType,
+		Reason: reason,
+	})
 }

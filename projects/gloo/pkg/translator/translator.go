@@ -2,7 +2,9 @@ package translator
 
 import (
 	"fmt"
-	"github.com/solo-io/gloo/projects/gloo/pkg/api/grpc/validation"
+
+	validationapi "github.com/solo-io/gloo/projects/gloo/pkg/api/grpc/validation"
+	"github.com/solo-io/gloo/projects/gloo/pkg/validation"
 
 	envoyapi "github.com/envoyproxy/go-control-plane/envoy/api/v2"
 	"github.com/mitchellh/hashstructure"
@@ -18,7 +20,7 @@ import (
 )
 
 type Translator interface {
-	Translate(params plugins.Params, proxy *v1.Proxy) (envoycache.Snapshot, reporter.ResourceErrors, *validation.ProxyReport, error)
+	Translate(params plugins.Params, proxy *v1.Proxy) (envoycache.Snapshot, reporter.ResourceErrors, *validationapi.ProxyReport, error)
 }
 
 type translator struct {
@@ -37,7 +39,7 @@ func NewTranslator(sslConfigTranslator utils.SslConfigTranslator, settings *v1.S
 	}
 }
 
-func (t *translator) Translate(params plugins.Params, proxy *v1.Proxy) (envoycache.Snapshot, reporter.ResourceErrors, *validation.ProxyReport, error) {
+func (t *translator) Translate(params plugins.Params, proxy *v1.Proxy) (envoycache.Snapshot, reporter.ResourceErrors, *validationapi.ProxyReport, error) {
 
 	ctx, span := trace.StartSpan(params.Ctx, "gloo.translator.Translate")
 	params.Ctx = ctx
@@ -91,16 +93,14 @@ ClusterLoop:
 		listeners    []*envoyapi.Listener
 	)
 
-	proxyRpt := &validation.ProxyReport{}
+	proxyRpt := validation.MakeReport(proxy)
 
-	for _, listener := range proxy.Listeners {
+	for i, listener := range proxy.Listeners {
+		listenerReport := proxyRpt.ListenerReports[i]
 
 		logger.Infof("computing envoy resources for listener: %v", listener.Name)
-		report := func(err error, format string, args ...interface{}) {
-			resourceErrs.AddError(proxy, errors.Wrapf(err, format, args...))
-		}
 
-		envoyResources := t.computeListenerResources(params, proxy, listener, report)
+		envoyResources := t.computeListenerResources(params, proxy, listener, listenerReport)
 		if envoyResources != nil {
 			listeners = append(listeners, envoyResources.listener)
 			if envoyResources.routeConfig != nil {
@@ -134,7 +134,7 @@ type listenerResources struct {
 	listener    *envoyapi.Listener
 }
 
-func (t *translator) computeListenerResources(params plugins.Params, proxy *v1.Proxy, listener *v1.Listener, report reportFunc) *listenerResources {
+func (t *translator) computeListenerResources(params plugins.Params, proxy *v1.Proxy, listener *v1.Listener, listenerReport *validationapi.ListenerReport) *listenerResources {
 	ctx, span := trace.StartSpan(params.Ctx, "gloo.translator.Translate")
 	params.Ctx = ctx
 	defer span.End()
@@ -142,9 +142,9 @@ func (t *translator) computeListenerResources(params plugins.Params, proxy *v1.P
 	rdsName := routeConfigName(listener)
 
 	// Calculate routes before listeners, so that HttpFilters is called after ProcessVirtualHost\ProcessRoute
-	routeConfig := t.computeRouteConfig(params, proxy, listener, rdsName, report)
+	routeConfig := t.computeRouteConfig(params, proxy, listener, rdsName, listenerReport)
 
-	envoyListener := t.computeListener(params, proxy, listener, report)
+	envoyListener := t.computeListener(params, proxy, listener, listenerReport)
 	if envoyListener == nil {
 		return nil
 	}

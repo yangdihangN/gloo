@@ -115,13 +115,6 @@ message TcpListenerReport {
     // errors on top-level config of the listener
     repeated Error errors = 1;
     repeated TcpHostReport tcp_host_reports = 2;
-
-    oneof listener_type_report {
-        // report for the http listener
-        HttpListenerReport http_listener_report = 3;
-        // report for the tcp listener
-        TcpListenerReport tcp_listener_report = 4;
-    }
 }
 
 message TcpHostReport {

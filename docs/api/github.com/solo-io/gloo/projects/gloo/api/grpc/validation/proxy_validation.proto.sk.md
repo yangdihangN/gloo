@@ -247,8 +247,6 @@ error types for the given route config
 ```yaml
 "errors": []gloo.solo.io.TcpListenerReport.Error
 "tcpHostReports": []gloo.solo.io.TcpHostReport
-"httpListenerReport": .gloo.solo.io.HttpListenerReport
-"tcpListenerReport": .gloo.solo.io.TcpListenerReport
 
 ```
 
@@ -256,8 +254,6 @@ error types for the given route config
 | ----- | ---- | ----------- |----------- | 
 | `errors` | [[]gloo.solo.io.TcpListenerReport.Error](../proxy_validation.proto.sk#error) | errors on top-level config of the listener |  |
 | `tcpHostReports` | [[]gloo.solo.io.TcpHostReport](../proxy_validation.proto.sk#tcphostreport) |  |  |
-| `httpListenerReport` | [.gloo.solo.io.HttpListenerReport](../proxy_validation.proto.sk#httplistenerreport) | report for the http listener |  |
-| `tcpListenerReport` | [.gloo.solo.io.TcpListenerReport](../proxy_validation.proto.sk#tcplistenerreport) | report for the tcp listener |  |
 
 
 

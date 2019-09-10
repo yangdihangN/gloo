@@ -2,6 +2,7 @@ package translator
 
 import (
 	"fmt"
+	"github.com/solo-io/gloo/projects/gloo/pkg/api/grpc/validation"
 
 	envoyapi "github.com/envoyproxy/go-control-plane/envoy/api/v2"
 	"github.com/mitchellh/hashstructure"
@@ -17,7 +18,7 @@ import (
 )
 
 type Translator interface {
-	Translate(params plugins.Params, proxy *v1.Proxy) (envoycache.Snapshot, reporter.ResourceErrors, error)
+	Translate(params plugins.Params, proxy *v1.Proxy) (envoycache.Snapshot, reporter.ResourceErrors, *validation.ProxyReport, error)
 }
 
 type translator struct {
@@ -36,7 +37,7 @@ func NewTranslator(sslConfigTranslator utils.SslConfigTranslator, settings *v1.S
 	}
 }
 
-func (t *translator) Translate(params plugins.Params, proxy *v1.Proxy) (envoycache.Snapshot, reporter.ResourceErrors, error) {
+func (t *translator) Translate(params plugins.Params, proxy *v1.Proxy) (envoycache.Snapshot, reporter.ResourceErrors, *validation.ProxyReport, error) {
 
 	ctx, span := trace.StartSpan(params.Ctx, "gloo.translator.Translate")
 	params.Ctx = ctx
@@ -49,7 +50,7 @@ func (t *translator) Translate(params plugins.Params, proxy *v1.Proxy) (envoycac
 			ExtensionsSettings: t.extensionsSettings,
 			Settings:           t.settings,
 		}); err != nil {
-			return nil, nil, errors.Wrapf(err, "plugin init failed")
+			return nil, nil, nil, errors.Wrapf(err, "plugin init failed")
 		}
 	}
 	logger := contextutils.LoggerFrom(params.Ctx)
@@ -89,7 +90,11 @@ ClusterLoop:
 		routeConfigs []*envoyapi.RouteConfiguration
 		listeners    []*envoyapi.Listener
 	)
+
+	proxyRpt := &validation.ProxyReport{}
+
 	for _, listener := range proxy.Listeners {
+
 		logger.Infof("computing envoy resources for listener: %v", listener.Name)
 		report := func(err error, format string, args ...interface{}) {
 			resourceErrs.AddError(proxy, errors.Wrapf(err, format, args...))
@@ -119,7 +124,7 @@ ClusterLoop:
 
 	xdsSnapshot := generateXDSSnapshot(clusters, endpoints, routeConfigs, listeners)
 
-	return xdsSnapshot, resourceErrs, nil
+	return xdsSnapshot, resourceErrs, proxyRpt, nil
 }
 
 // the set of resources returned by one iteration for a single v1.Listener

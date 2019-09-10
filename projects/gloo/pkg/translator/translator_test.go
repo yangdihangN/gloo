@@ -187,17 +187,18 @@ var _ = Describe("Translator", func() {
 	})
 
 	translateWithError := func() {
-		_, errs, err := translator.Translate(params, proxy)
+		_, errs, report, err := translator.Translate(params, proxy)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(errs.Validate()).To(HaveOccurred())
+		Expect(report).To(Equal(report))
 	}
 
 	translate := func() {
-
-		snap, errs, err := translator.Translate(params, proxy)
+		snap, errs, report, err := translator.Translate(params, proxy)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(errs.Validate()).NotTo(HaveOccurred())
 		Expect(snap).NotTo(BeNil())
+		Expect(report).To(Equal(report))
 
 		clusters := snap.GetResources(xds.ClusterType)
 		clusterResource := clusters.Items[UpstreamToClusterName(upstream.Metadata.Ref())]
@@ -227,11 +228,12 @@ var _ = Describe("Translator", func() {
 		proxyClone := proto.Clone(proxy).(*v1.Proxy)
 		proxyClone.GetListeners()[0].GetHttpListener().GetVirtualHosts()[0].Name = "invalid.name"
 
-		snap, errs, err := translator.Translate(params, proxyClone)
+		snap, errs, report, err := translator.Translate(params, proxyClone)
 
 		Expect(err).NotTo(HaveOccurred())
 		Expect(errs.Validate()).NotTo(HaveOccurred())
 		Expect(snap).NotTo(BeNil())
+		Expect(report).To(Equal(report))
 
 		routes := snap.GetResources(xds.RouteType)
 		Expect(routes.Items).To(HaveKey("http-listener-routes"))
@@ -269,10 +271,11 @@ var _ = Describe("Translator", func() {
 			}
 		})
 		It("should error when path math is missing", func() {
-			_, errs, err := translator.Translate(params, proxy)
+			_, errs, report, err := translator.Translate(params, proxy)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(errs.Validate()).To(HaveOccurred())
 			Expect(errs.Validate().Error()).To(ContainSubstring("route_config.invalid route: no path specifier provided"))
+			Expect(report).To(Equal(report))
 		})
 		It("should error when path math is missing even if we have grpc spec", func() {
 			dest := routes[0].GetRouteAction().GetSingle()
@@ -285,10 +288,11 @@ var _ = Describe("Translator", func() {
 					},
 				},
 			}
-			_, errs, err := translator.Translate(params, proxy)
+			_, errs, report, err := translator.Translate(params, proxy)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(errs.Validate()).To(HaveOccurred())
 			Expect(errs.Validate().Error()).To(ContainSubstring("route_config.invalid route: no path specifier provided"))
+			Expect(report).To(Equal(report))
 		})
 	})
 	Context("route header match", func() {
@@ -612,11 +616,12 @@ var _ = Describe("Translator", func() {
 		It("should error on invalid ref in upstream groups", func() {
 			upstreamGroup.Destinations[0].Destination.GetUpstream().Name = "notexist"
 
-			_, errs, err := translator.Translate(params, proxy)
+			_, errs, report, err := translator.Translate(params, proxy)
 			Expect(err).NotTo(HaveOccurred())
 			err = errs.Validate()
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("destination # 1: upstream not found: list did not find upstream gloo-system.notexist"))
+			Expect(report).To(Equal(report))
 		})
 	})
 	Context("when handling endpoints", func() {
@@ -802,9 +807,10 @@ var _ = Describe("Translator", func() {
 			})
 
 			It("should error a route when subset in route doesnt match subset in upstream", func() {
-				_, errs, err := translator.Translate(params, proxy)
+				_, errs, report, err := translator.Translate(params, proxy)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(errs.Validate()).To(HaveOccurred())
+				Expect(report).To(Equal(report))
 			})
 		})
 	})

@@ -73,7 +73,7 @@ func NewSetupFuncWithRun(runFunc RunFunc) setuputils.SetupFunc {
 func NewSetupFuncWithRunAndExtensions(runFunc RunFunc, extensions *Extensions) setuputils.SetupFunc {
 	s := &setupSyncer{
 		extensions: extensions,
-		grpcServer: func(ctx context.Context) *grpc.Server {
+		makeGrpcServer: func(ctx context.Context) *grpc.Server {
 			return grpc.NewServer(grpc.StreamInterceptor(
 				grpc_middleware.ChainStreamServer(
 					grpc_ctxtags.StreamServerInterceptor(),
@@ -91,48 +91,78 @@ func NewSetupFuncWithRunAndExtensions(runFunc RunFunc, extensions *Extensions) s
 }
 
 type setupSyncer struct {
-	extensions         *Extensions
-	runFunc            RunFunc
-	grpcServer         func(ctx context.Context) *grpc.Server
-	previousBindAddr   string
-	controlPlane       bootstrap.ControlPlane
-	cancelControlPlane context.CancelFunc
-	callbacks          xdsserver.Callbacks
+	extensions                     *Extensions
+	runFunc                        RunFunc
+	makeGrpcServer                 func(ctx context.Context) *grpc.Server
+	previousXdsAddr                string
+	cancelPreviousXdsServer        context.CancelFunc
+	previousValidationAddr         string
+	cancelPreviousValidationServer context.CancelFunc
+	controlPlane                   bootstrap.ControlPlane
+	validationServer               bootstrap.ValidationServer
+	callbacks                      xdsserver.Callbacks
 }
 
-func NewControlPlane(ctx context.Context, grpcServer *grpc.Server, callbacks xdsserver.Callbacks, start bool) bootstrap.ControlPlane {
-	var c bootstrap.ControlPlane
-	c.GrpcServer = grpcServer
+func NewControlPlane(ctx context.Context, grpcServer *grpc.Server, bindAddr net.Addr, callbacks xdsserver.Callbacks, start bool) bootstrap.ControlPlane {
 	hasher := &xds.ProxyKeyHasher{}
 	snapshotCache := cache.NewSnapshotCache(true, hasher, contextutils.LoggerFrom(ctx))
 	xdsServer := server.NewServer(snapshotCache, callbacks)
-	envoyv2.RegisterAggregatedDiscoveryServiceServer(c.GrpcServer, xdsServer)
-	c.SnapshotCache = snapshotCache
-	c.XDSServer = xdsServer
-	c.StartGrpcServer = start
-	return c
+	envoyv2.RegisterAggregatedDiscoveryServiceServer(grpcServer, xdsServer)
+	return bootstrap.ControlPlane{
+		GrpcService: bootstrap.GrpcService{
+			GrpcServer:      grpcServer,
+			StartGrpcServer: start,
+			BindAddr:        bindAddr,
+		},
+		SnapshotCache: snapshotCache,
+		XDSServer:     xdsServer,
+	}
 }
 
-var DefaultXdsBindAddr = "0.0.0.0:9977"
+func NewValidationServer(grpcServer *grpc.Server, bindAddr net.Addr, start bool) bootstrap.ValidationServer {
+	return bootstrap.ValidationServer{
+		GrpcService: bootstrap.GrpcService{
+			GrpcServer:      grpcServer,
+			StartGrpcServer: start,
+			BindAddr:        bindAddr,
+		},
+	}
+}
+
+const (
+	DefaultXdsBindAddr        = "0.0.0.0:9977"
+	DefaultValidationBindAddr = "0.0.0.0:9988"
+)
+
+func getAddr(addr string) (*net.TCPAddr, error) {
+	addrParts := strings.Split(addr, ":")
+	if len(addrParts) != 2 {
+		return nil, errors.Errorf("invalid bind addr: %v", addr)
+	}
+	ip := net.ParseIP(addrParts[0])
+
+	port, err := strconv.Atoi(addrParts[1])
+	if err != nil {
+		return nil, errors.Wrapf(err, "invalid bind addr: %v", addr)
+	}
+
+	return &net.TCPAddr{IP: ip, Port: port}, nil
+}
 
 func (s *setupSyncer) Setup(ctx context.Context, kubeCache kube.SharedCache, memCache memory.InMemoryResourceCache, settings *v1.Settings) error {
 
-	bindAddr := settings.GetGloo().GetXdsBindAddr()
-	if bindAddr == "" {
-		bindAddr = settings.GetBindAddr()
-		if bindAddr == "" {
-			bindAddr = DefaultXdsBindAddr
+	xdsAddr := settings.GetGloo().GetXdsBindAddr()
+	if xdsAddr == "" {
+		xdsAddr = settings.GetBindAddr()
+		if xdsAddr == "" {
+			xdsAddr = DefaultXdsBindAddr
 		}
 	}
+	validationAddr := settings.GetGloo().GetValidationBindAddr()
+	if validationAddr == "" {
+		validationAddr = DefaultValidationBindAddr
+	}
 
-	ipPort := strings.Split(bindAddr, ":")
-	if len(ipPort) != 2 {
-		return errors.Errorf("invalid bind addr: %v", bindAddr)
-	}
-	port, err := strconv.Atoi(ipPort[1])
-	if err != nil {
-		return errors.Wrapf(err, "invalid bind addr: %v", bindAddr)
-	}
 	refreshRate, err := types.DurationFromProto(settings.RefreshRate)
 	if err != nil {
 		return err
@@ -144,26 +174,53 @@ func (s *setupSyncer) Setup(ctx context.Context, kubeCache kube.SharedCache, mem
 	}
 	watchNamespaces := utils.ProcessWatchNamespaces(settings.WatchNamespaces, writeNamespace)
 
-	empty := bootstrap.ControlPlane{}
+	emptyControlPlane := bootstrap.ControlPlane{}
+	emptyValidationServer := bootstrap.ValidationServer{}
 
-	if bindAddr != s.previousBindAddr {
-		if s.cancelControlPlane != nil {
-			s.cancelControlPlane()
-			s.cancelControlPlane = nil
+	if xdsAddr != s.previousXdsAddr {
+		if s.cancelPreviousXdsServer != nil {
+			s.cancelPreviousXdsServer()
+			s.cancelPreviousXdsServer = nil
 		}
-		s.controlPlane = empty
+		s.controlPlane = emptyControlPlane
 	}
 
-	// enter this block either on the first loop, or if bind addr changed
-	if s.controlPlane == empty {
+	if validationAddr != s.previousValidationAddr {
+		if s.cancelPreviousValidationServer != nil {
+			s.cancelPreviousValidationServer()
+			s.cancelPreviousValidationServer = nil
+		}
+		s.validationServer = emptyValidationServer
+	}
+
+	// initialize the control plane context in this block either on the first loop, or if bind addr changed
+	if s.controlPlane == emptyControlPlane {
+		xdsTcpAddress, err := getAddr(xdsAddr)
+		if err != nil {
+			return errors.Wrapf(err, "parsing xds addr")
+		}
+
 		// create new context as the grpc server might survive multiple iterations of this loop.
 		ctx, cancel := context.WithCancel(context.Background())
 		var callbacks xdsserver.Callbacks
 		if s.extensions != nil {
 			callbacks = s.extensions.XdsCallbacks
 		}
-		s.controlPlane = NewControlPlane(ctx, s.grpcServer(ctx), callbacks, true)
-		s.cancelControlPlane = cancel
+		s.controlPlane = NewControlPlane(ctx, s.makeGrpcServer(ctx), xdsTcpAddress, callbacks, true)
+		s.cancelPreviousXdsServer = cancel
+	}
+
+	// initialize the validation server context in this block either on the first loop, or if bind addr changed
+	if s.validationServer == emptyValidationServer {
+		validationTcpAddress, err := getAddr(validationAddr)
+		if err != nil {
+			return errors.Wrapf(err, "parsing validation addr")
+		}
+
+		// create new context as the grpc server might survive multiple iterations of this loop.
+		ctx, cancel := context.WithCancel(context.Background())
+		s.validationServer = NewValidationServer(s.makeGrpcServer(ctx), validationTcpAddress, true)
+		s.cancelPreviousValidationServer = cancel
 	}
 
 	consulClient, err := bootstrap.ConsulClientForSettings(settings)
@@ -197,11 +254,8 @@ func (s *setupSyncer) Setup(ctx context.Context, kubeCache kube.SharedCache, mem
 		Ctx:         ctx,
 		RefreshRate: refreshRate,
 	}
-	opts.BindAddr = &net.TCPAddr{
-		IP:   net.ParseIP(ipPort[0]),
-		Port: port,
-	}
 	opts.ControlPlane = s.controlPlane
+	opts.ValidationServer = s.validationServer
 	// if nil, kube plugin disabled
 	opts.KubeClient = clientset
 	opts.DevMode = true
@@ -342,24 +396,40 @@ func RunGlooWithExtensions(opts bootstrap.Opts, extensions Extensions) error {
 		}
 	}()
 
-	if !opts.ControlPlane.StartGrpcServer {
-		return nil
-	}
-
-	lis, err := net.Listen(opts.BindAddr.Network(), opts.BindAddr.String())
-	if err != nil {
-		return err
-	}
-	go func() {
-		<-opts.WatchOpts.Ctx.Done()
-		opts.ControlPlane.GrpcServer.Stop()
-	}()
-
-	go func() {
-		if err := opts.ControlPlane.GrpcServer.Serve(lis); err != nil {
-			logger.Errorf("grpc server failed to start")
+	if opts.ControlPlane.StartGrpcServer {
+		lis, err := net.Listen(opts.ControlPlane.BindAddr.Network(), opts.ControlPlane.BindAddr.String())
+		if err != nil {
+			return err
 		}
-	}()
+		go func() {
+			<-opts.WatchOpts.Ctx.Done()
+			opts.ControlPlane.GrpcServer.Stop()
+		}()
+
+		go func() {
+			if err := opts.ControlPlane.GrpcServer.Serve(lis); err != nil {
+				logger.Errorf("xds grpc server failed to start")
+			}
+		}()
+	}
+
+	if opts.ValidationServer.StartGrpcServer {
+		lis, err := net.Listen(opts.ValidationServer.BindAddr.Network(), opts.ValidationServer.BindAddr.String())
+		if err != nil {
+			return err
+		}
+		go func() {
+			<-opts.WatchOpts.Ctx.Done()
+			opts.ValidationServer.GrpcServer.Stop()
+		}()
+
+		go func() {
+			if err := opts.ValidationServer.GrpcServer.Serve(lis); err != nil {
+				logger.Errorf("validation grpc server failed to start")
+			}
+		}()
+	}
+
 	return nil
 }
 

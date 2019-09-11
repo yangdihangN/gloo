@@ -21,7 +21,8 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-var _ = Describe("ResourceClient", func() {
+//TEMP-debugging CI! Q: will all regression tests fail (this one runs first by default)?
+var _ = XDescribe("ResourceClient", func() {
 	if os.Getenv("RUN_KUBE_TESTS") != "1" {
 		log.Printf("This test creates kubernetes resources and is disabled by default. To enable, set RUN_KUBE_TESTS=1 in your env.")
 		return

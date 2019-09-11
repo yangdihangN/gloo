@@ -24,6 +24,7 @@ Gloo is a feature-rich, Kubernetes-native ingress controller, and next-generatio
 - [**What makes Gloo unique**](#what-makes-gloo-unique)
 
 
+
 ## Using Gloo
 - **Kubernetes ingress controller**: Gloo can function as a feature-rich ingress controller, built on top of the Envoy Proxy. 
 - **Next-generation API gateway** : Gloo provides a long list of API gateway features, including rate limiting, circuit breaking, retries, caching, external authentication and authorization, transformation, service-mesh integration, and security. 

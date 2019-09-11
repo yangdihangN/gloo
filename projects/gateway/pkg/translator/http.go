@@ -34,9 +34,8 @@ func (t *HttpTranslator) GenerateListeners(ctx context.Context, snap *v2.ApiSnap
 			continue
 		}
 
-		virtualServices := getVirtualServiceForGateway(gateway, snap.VirtualServices, resourceErrs)
-		filtered := filterVirtualServiceForGateway(gateway, virtualServices)
-		mergedVirtualServices := validateAndMergeVirtualServices(gateway, filtered, resourceErrs)
+		virtualServices := GetVirtualServicesForGateway(gateway, snap.VirtualServices, resourceErrs)
+		mergedVirtualServices := validateAndMergeVirtualServices(gateway, virtualServices, resourceErrs)
 		listener := desiredListenerForHttp(gateway, mergedVirtualServices, snap.RouteTables, resourceErrs)
 		result = append(result, listener)
 	}
@@ -140,7 +139,7 @@ func getMergedName(k string) string {
 	return "merged-" + k
 }
 
-func getVirtualServiceForGateway(gateway *v2.Gateway, virtualServices v1.VirtualServiceList, resourceErrs reporter.ResourceErrors) v1.VirtualServiceList {
+func GetVirtualServicesForGateway(gateway *v2.Gateway, virtualServices v1.VirtualServiceList, resourceErrs reporter.ResourceErrors) v1.VirtualServiceList {
 	httpGateway := gateway.GetHttpGateway()
 	if httpGateway == nil {
 		return nil
@@ -187,10 +186,10 @@ func getVirtualServiceForGateway(gateway *v2.Gateway, virtualServices v1.Virtual
 		}
 	}
 
-	return virtualServicesForGateway
+	return filterVirtualServicesForGateway(gateway, virtualServicesForGateway)
 }
 
-func filterVirtualServiceForGateway(gateway *v2.Gateway, virtualServices v1.VirtualServiceList) v1.VirtualServiceList {
+func filterVirtualServicesForGateway(gateway *v2.Gateway, virtualServices v1.VirtualServiceList) v1.VirtualServiceList {
 	var virtualServicesForGateway v1.VirtualServiceList
 	for _, virtualService := range virtualServices {
 		if gateway.Ssl == hasSsl(virtualService) {

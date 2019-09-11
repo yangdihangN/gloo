@@ -33,6 +33,10 @@ func NewTranslator(factories []ListenerFactory) *translator {
 	return &translator{factories: factories}
 }
 
+func NewDefaultTranslator() *translator {
+	return NewTranslator([]ListenerFactory{&HttpTranslator{}, &TcpTranslator{}})
+}
+
 func (t *translator) Translate(ctx context.Context, proxyName, namespace string, snap *v2.ApiSnapshot, gatewaysByProxy v2.GatewayList) (*gloov1.Proxy, reporter.ResourceErrors) {
 	logger := contextutils.LoggerFrom(ctx)
 

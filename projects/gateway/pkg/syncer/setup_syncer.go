@@ -3,6 +3,9 @@ package syncer
 import (
 	"context"
 
+	"github.com/solo-io/gloo/projects/gateway/pkg/translator"
+	gatewayvalidation "github.com/solo-io/gloo/projects/gateway/pkg/validation"
+
 	"github.com/solo-io/gloo/projects/gloo/pkg/api/grpc/validation"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -83,12 +86,13 @@ func Setup(ctx context.Context, kubeCache kube.SharedCache, inMemoryCache memory
 	}
 
 	opts := Opts{
-		WriteNamespace:  writeNamespace,
-		WatchNamespaces: watchNamespaces,
-		Gateways:        gatewayFactory,
-		VirtualServices: virtualServiceFactory,
-		RouteTables:     routeTableFactory,
-		Proxies:         proxyFactory,
+		WriteNamespace:          writeNamespace,
+		WatchNamespaces:         watchNamespaces,
+		Gateways:                gatewayFactory,
+		VirtualServices:         virtualServiceFactory,
+		RouteTables:             routeTableFactory,
+		Proxies:                 proxyFactory,
+		ValidationServerAddress: validationServerAddress,
 		WatchOpts: clients.WatchOpts{
 			Ctx:         ctx,
 			RefreshRate: refreshRate,
@@ -158,15 +162,25 @@ func RunGateway(opts Opts) error {
 		contextutils.LoggerFrom(opts.WatchOpts.Ctx).Errorw("failed to initialize grpc connection to validation server. validation will not be enabled", zap.Error(err))
 	}
 
-	sync := NewTranslatorSyncer(
+	t := translator.NewDefaultTranslator()
+
+	translatorSyncer := NewTranslatorSyncer(
 		opts.WriteNamespace,
 		proxyClient,
 		gatewayClient,
 		virtualServiceClient,
 		rpt,
-		prop)
+		prop,
+		t)
 
-	eventLoop := v2.NewApiEventLoop(emitter, sync)
+	validationSyncer := gatewayvalidation.NewValidator(t, validationClient, opts.WriteNamespace)
+
+	gatewaySyncers := v2.ApiSyncers{
+		translatorSyncer,
+		validationSyncer,
+	}
+
+	eventLoop := v2.NewApiEventLoop(emitter, gatewaySyncers)
 	eventLoopErrs, err := eventLoop.Run(opts.WatchNamespaces, opts.WatchOpts)
 	if err != nil {
 		return err

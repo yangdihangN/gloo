@@ -23,7 +23,7 @@ type validationServer struct {
 	translator     translator.Translator
 }
 
-func NewValidationServer(translator translator.Translator) ValidationServer {
+func NewValidationServer(translator translator.Translator) *validationServer {
 	return &validationServer{translator: translator}
 }
 

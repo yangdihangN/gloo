@@ -374,10 +374,15 @@ func RunGlooWithExtensions(opts bootstrap.Opts, extensions Extensions) error {
 	t := translator.NewTranslator(sslutils.NewSslConfigTranslator(), opts.Settings, allPlugins...)
 
 	validationServer := validation.NewValidationServer(t)
-	validationServer.Register(opts.ValidationServer.GrpcServer)
 
-	apiSync := NewTranslatorSyncer(t, opts.ControlPlane.SnapshotCache, xdsHasher, rpt, opts.DevMode, syncerExtensions)
-	apiEventLoop := v1.NewApiEventLoop(apiCache, apiSync)
+	translationSync := NewTranslatorSyncer(t, opts.ControlPlane.SnapshotCache, xdsHasher, rpt, opts.DevMode, syncerExtensions)
+
+	syncers := v1.ApiSyncers{
+		translationSync,
+		validationServer,
+	}
+
+	apiEventLoop := v1.NewApiEventLoop(apiCache, syncers)
 	apiEventLoopErrs, err := apiEventLoop.Run(opts.WatchNamespaces, watchOpts)
 	if err != nil {
 		return err

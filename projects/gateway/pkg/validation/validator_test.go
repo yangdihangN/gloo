@@ -2,15 +2,15 @@ package validation_test
 
 import (
 	"context"
-	validationutils "github.com/solo-io/gloo/projects/gloo/pkg/utils/validation"
-	"github.com/solo-io/gloo/test/samples"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	gatewayv1 "github.com/solo-io/gloo/projects/gateway/pkg/api/v1"
 	v2 "github.com/solo-io/gloo/projects/gateway/pkg/api/v2"
 	"github.com/solo-io/gloo/projects/gateway/pkg/translator"
 	"github.com/solo-io/gloo/projects/gloo/pkg/api/grpc/validation"
 	v1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
+	validationutils "github.com/solo-io/gloo/projects/gloo/pkg/utils/validation"
+	"github.com/solo-io/gloo/test/samples"
 	"google.golang.org/grpc"
 
 	. "github.com/solo-io/gloo/projects/gateway/pkg/validation"
@@ -48,6 +48,7 @@ var _ = Describe("Validator", func() {
 				Expect(err).NotTo(HaveOccurred())
 				err = v.ValidateVirtualService(context.TODO(), snap.VirtualServices[0])
 				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("rendered proxy had errors"))
 			})
 		})
 		Context("no gateways for virtualservice", func() {
@@ -69,18 +70,26 @@ var _ = Describe("Validator", func() {
 				Expect(err).NotTo(HaveOccurred())
 			})
 		})
-		Context("proxy rejected", func() {
+		Context("virtual service rejected", func() {
 			It("rejects the vs", func() {
-				vc.validateProxy = failProxy
+				badRoute := &gatewayv1.Route{
+					Action: &gatewayv1.Route_DelegateAction{
+						DelegateAction: nil,
+					},
+				}
+
+				// validate proxy should never be called
+				vc.validateProxy = nil
 				us := samples.SimpleUpstream()
 				snap := samples.SimpleGatewaySnapshot(us.Metadata.Ref(), ns)
+				snap.VirtualServices[0].VirtualHost.Routes = append(snap.VirtualServices[0].VirtualHost.Routes, badRoute)
 				err := v.Sync(context.TODO(), snap)
 				Expect(err).NotTo(HaveOccurred())
 				err = v.ValidateVirtualService(context.TODO(), snap.VirtualServices[0])
 				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("could not render proxy from *v1.VirtualService"))
 			})
 		})
-
 	})
 })
 

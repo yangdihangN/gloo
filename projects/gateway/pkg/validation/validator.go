@@ -103,7 +103,7 @@ func (v *validator) ValidateVirtualService(ctx context.Context, vs *v1.VirtualSe
 		}
 
 		if proxyErr := validationutils.GetProxyError(proxyReport); proxyErr != nil {
-			return errors.Wrapf(err, "rendered proxy had errors")
+			return errors.Wrapf(proxyErr, "rendered proxy had errors")
 		}
 	}
 

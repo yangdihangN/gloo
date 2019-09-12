@@ -22,8 +22,6 @@ import (
 )
 
 func TestIngress(t *testing.T) {
-	// TEMP - disable
-	return
 	if testutils.AreTestsDisabled() {
 		return
 	}

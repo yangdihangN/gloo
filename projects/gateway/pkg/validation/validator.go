@@ -12,7 +12,6 @@ import (
 	"github.com/solo-io/gloo/projects/gloo/pkg/api/grpc/validation"
 	validationutils "github.com/solo-io/gloo/projects/gloo/pkg/utils/validation"
 	"github.com/solo-io/go-utils/contextutils"
-	"github.com/solo-io/solo-kit/pkg/api/v1/reporter"
 	"github.com/solo-io/solo-kit/pkg/api/v1/resources/core"
 	"go.uber.org/zap"
 )
@@ -51,41 +50,17 @@ func (v *validator) Sync(_ context.Context, snap *v2.ApiSnapshot) error {
 	return nil
 }
 
-func (v *validator) ValidateVirtualService(ctx context.Context, vs *v1.VirtualService) error {
+func (v *validator) validateSnapshot(ctx context.Context, snap *v2.ApiSnapshot, proxyNames []string) error {
 	if !v.Ready() {
-		return errors.Errorf("Gateway validation is yet not available. Waiting for first snapshot")
+		return errors.Errorf("validation is yet not available. Waiting for first snapshot")
 	}
-	v.l.RLock()
-	snap := v.latestSnapshot.Clone()
-	v.l.RUnlock()
-
-	vsRef := vs.GetMetadata().Ref()
-
-	var isUpdate bool
-	for i, existingVs := range snap.VirtualServices {
-		if vsRef == existingVs.GetMetadata().Ref() {
-			// replace the existing virtual service in the snapshot
-			snap.VirtualServices[i] = vs
-			isUpdate = true
-			break
-		}
-	}
-	if !isUpdate {
-		snap.VirtualServices = append(snap.VirtualServices, vs)
-		snap.VirtualServices.Sort()
-	}
-
 	gatewaysByProxy := utils.GatewaysByProxyName(snap.Gateways)
 
-	for proxyName, gatewayList := range gatewaysByProxy {
-		if !gatewayListContainsVirtualService(gatewayList, snap.VirtualServices, vs) {
-			// we only care about validating this proxy if it contains this virtual service
-			continue
-		}
-
-		proxy, resourceErrs := v.translator.Translate(ctx, proxyName, v.writeNamespace, &snap, gatewayList)
+	for _, proxyName := range proxyNames {
+		gatewayList := gatewaysByProxy[proxyName]
+		proxy, resourceErrs := v.translator.Translate(ctx, proxyName, v.writeNamespace, snap, gatewayList)
 		if err := resourceErrs.Validate(); err != nil {
-			return errors.Wrapf(err, "could not render proxy from %T %v", vs, vsRef)
+			return errors.Wrapf(err, "could not render proxy")
 		}
 
 		if v.validationClient == nil {
@@ -105,6 +80,40 @@ func (v *validator) ValidateVirtualService(ctx context.Context, vs *v1.VirtualSe
 		if proxyErr := validationutils.GetProxyError(proxyReport); proxyErr != nil {
 			return errors.Wrapf(proxyErr, "rendered proxy had errors")
 		}
+	}
+	return nil
+}
+
+func (v *validator) ValidateVirtualService(ctx context.Context, vs *v1.VirtualService) error {
+	if !v.Ready() {
+		return errors.Errorf("Gateway validation is yet not available. Waiting for first snapshot")
+	}
+	v.l.RLock()
+	snap := v.latestSnapshot.Clone()
+	v.l.RUnlock()
+
+	vsRef := vs.GetMetadata().Ref()
+
+	// TODO: move this to a function when generics become a thing
+	var isUpdate bool
+	for i, existingVs := range snap.VirtualServices {
+		if vsRef == existingVs.GetMetadata().Ref() {
+			// replace the existing virtual service in the snapshot
+			snap.VirtualServices[i] = vs
+			isUpdate = true
+			break
+		}
+	}
+	if !isUpdate {
+		snap.VirtualServices = append(snap.VirtualServices, vs)
+		snap.VirtualServices.Sort()
+	}
+
+	proxiesToConsider := proxiesForVirtualService(snap.Gateways, vs)
+
+	if err := v.validateSnapshot(ctx, &snap, proxiesToConsider); err != nil {
+		contextutils.LoggerFrom(ctx).Debugw("Rejected %T %v: %v", vs, vsRef, err)
+		return errors.Wrapf(err, "validating %T %v", vs, vsRef)
 	}
 
 	contextutils.LoggerFrom(ctx).Debugw("Accepted %T %v", vs, vsRef)
@@ -128,12 +137,55 @@ func (v *validator) ValidateDeleteVirtualService(ctx context.Context, vs core.Re
 	panic("implement me")
 }
 
-func gatewayListContainsVirtualService(gwList v2.GatewayList, vsList v1.VirtualServiceList, vs *v1.VirtualService) bool {
-	for _, gw := range gwList {
-		// we don't care about validating the gateways here, pass an anonymous ResourceErrs
-		vssForGateway := translator.GetVirtualServicesForGateway(gw, vsList, reporter.ResourceErrors{})
+func proxiesForVirtualService(gwList v2.GatewayList, vs *v1.VirtualService) []string {
 
-		if _, err := vssForGateway.Find(vs.Metadata.Ref().Strings()); err == nil {
+	gatewaysByProxy := utils.GatewaysByProxyName(gwList)
+
+	var proxiesToConsider []string
+
+	for proxyName, gatewayList := range gatewaysByProxy {
+		if gatewayListContainsVirtualService(gatewayList, vs) {
+			// we only care about validating this proxy if it contains this virtual service
+			proxiesToConsider = append(proxiesToConsider, proxyName)
+		}
+	}
+
+	return proxiesToConsider
+}
+
+func virtualServicesForRouteTable(rt *v1.RouteTable, allVirtualServices v1.VirtualServiceList, allRoutes v1.RouteTableList) v1.VirtualServiceList {
+	// this route table + its parents
+	refsContainingRouteTable := []core.ResourceRef{rt.Metadata.Ref()}
+
+	// keep going until the ref list stops expanding
+	for countedRefs := 0; countedRefs == len(refsContainingRouteTable); countedRefs = len(refsContainingRouteTable) {
+		for _, rt := range allRoutes {
+			if routesContainRefs(rt.Routes, refsContainingRouteTable...) {
+				refsContainingRouteTable = append(refsContainingRouteTable, rt.Metadata.Ref())
+			}
+		}
+	}
+	return nil
+}
+
+func routesContainRefs(list []*v1.Route, refs ...core.ResourceRef) bool {
+	for _, r := range list {
+		delegate := r.GetDelegateAction()
+		if delegate == nil {
+			return false
+		}
+		for _, ref := range refs {
+			if *delegate == ref {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func gatewayListContainsVirtualService(gwList v2.GatewayList, vs *v1.VirtualService) bool {
+	for _, gw := range gwList {
+		if translator.GatewayContainsVirtualService(gw, vs) {
 			return true
 		}
 	}

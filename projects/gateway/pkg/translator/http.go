@@ -34,7 +34,7 @@ func (t *HttpTranslator) GenerateListeners(ctx context.Context, snap *v2.ApiSnap
 			continue
 		}
 
-		virtualServices := GetVirtualServicesForGateway(gateway, snap.VirtualServices, resourceErrs)
+		virtualServices := getVirtualServicesForGateway(gateway, snap.VirtualServices)
 		mergedVirtualServices := validateAndMergeVirtualServices(gateway, virtualServices, resourceErrs)
 		listener := desiredListenerForHttp(gateway, mergedVirtualServices, snap.RouteTables, resourceErrs)
 		result = append(result, listener)
@@ -139,64 +139,57 @@ func getMergedName(k string) string {
 	return "merged-" + k
 }
 
-func GetVirtualServicesForGateway(gateway *v2.Gateway, virtualServices v1.VirtualServiceList, resourceErrs reporter.ResourceErrors) v1.VirtualServiceList {
-	httpGateway := gateway.GetHttpGateway()
-	if httpGateway == nil {
-		return nil
-	}
+func getVirtualServicesForGateway(gateway *v2.Gateway, virtualServices v1.VirtualServiceList) v1.VirtualServiceList {
 
 	var virtualServicesForGateway v1.VirtualServiceList
+	for _, vs := range virtualServices {
+		if GatewayContainsVirtualService(gateway, vs) {
+			virtualServicesForGateway = append(virtualServicesForGateway, vs)
+		}
+	}
 
-	switch {
-	case len(httpGateway.VirtualServiceSelector) > 0:
+	return virtualServicesForGateway
+}
+
+func GatewayContainsVirtualService(gateway *v2.Gateway, virtualService *v1.VirtualService) bool {
+	httpGateway := gateway.GetHttpGateway()
+	if httpGateway == nil {
+		return false
+	}
+
+	if gateway.Ssl != hasSsl(virtualService) {
+		return false
+	}
+
+	if len(httpGateway.VirtualServiceSelector) > 0 {
 		// select virtual services by the label selector
 		// must be in the same namespace as the Gateway
 		selector := labels.SelectorFromSet(httpGateway.VirtualServiceSelector)
 
-		virtualServices.Each(func(element *v1.VirtualService) {
-			vsLabels := labels.Set(element.Metadata.Labels)
-			if element.Metadata.Namespace == gateway.Metadata.Namespace && selector.Matches(vsLabels) {
-				virtualServicesForGateway = append(virtualServicesForGateway, element)
-			}
-		})
+		vsLabels := labels.Set(virtualService.Metadata.Labels)
 
-	default:
-		// use individual refs to collect virtual services
-		virtualServiceRefs := httpGateway.VirtualServices
+		// must match both labels and namespace
+		return virtualService.Metadata.Namespace == gateway.Metadata.Namespace && selector.Matches(vsLabels)
+	}
+	// use individual refs to collect virtual services
+	virtualServiceRefs := httpGateway.VirtualServices
 
+	if len(virtualServiceRefs) == 0 {
 		// fall back to all virtual services in all watchNamespaces
 		// TODO: make this all vs in a single namespace
 		// https://github.com/solo-io/gloo/issues/1142
-		if len(virtualServiceRefs) == 0 {
-			for _, virtualService := range virtualServices {
-				virtualServiceRefs = append(virtualServiceRefs, core.ResourceRef{
-					Name:      virtualService.GetMetadata().Name,
-					Namespace: virtualService.GetMetadata().Namespace,
-				})
-			}
-		}
+		return true
+	}
 
-		for _, ref := range virtualServiceRefs {
-			virtualService, err := virtualServices.Find(ref.Strings())
-			if err != nil {
-				resourceErrs.AddError(gateway, err)
-				continue
-			}
-			virtualServicesForGateway = append(virtualServicesForGateway, virtualService)
+	vsRef := virtualService.Metadata.Ref()
+
+	for _, ref := range virtualServiceRefs {
+		if ref == vsRef {
+			return true
 		}
 	}
 
-	return filterVirtualServicesForGateway(gateway, virtualServicesForGateway)
-}
-
-func filterVirtualServicesForGateway(gateway *v2.Gateway, virtualServices v1.VirtualServiceList) v1.VirtualServiceList {
-	var virtualServicesForGateway v1.VirtualServiceList
-	for _, virtualService := range virtualServices {
-		if gateway.Ssl == hasSsl(virtualService) {
-			virtualServicesForGateway = append(virtualServicesForGateway, virtualService)
-		}
-	}
-	return virtualServicesForGateway
+	return false
 }
 
 func hasSsl(vs *v1.VirtualService) bool {

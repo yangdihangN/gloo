@@ -165,6 +165,7 @@ func SimpleGatewaySnapshot(us core.ResourceRef, namespace string) *v2.ApiSnapsho
 		},
 		VirtualServices: []*gwv1.VirtualService{
 			{
+				Metadata: core.Metadata{Namespace:namespace, Name:"virtualservice"},
 				VirtualHost: &gwv1.VirtualHost{
 					Domains: []string{"*"},
 					Routes:  routes,
@@ -172,4 +173,116 @@ func SimpleGatewaySnapshot(us core.ResourceRef, namespace string) *v2.ApiSnapsho
 			},
 		},
 	}
+}
+
+func GatewaySnapshotWithDelegates(us core.ResourceRef, namespace string) *v2.ApiSnapshot {
+	rtRoutes := []*gwv1.Route{
+		{
+			Matcher: &v1.Matcher{
+				PathSpecifier: &v1.Matcher_Prefix{
+					Prefix: "/",
+				},
+			},
+			Action: &gwv1.Route_RouteAction{
+				RouteAction: &v1.RouteAction{
+					Destination: &v1.RouteAction_Single{
+						Single: &v1.Destination{
+							DestinationType: &v1.Destination_Upstream{
+								Upstream: utils.ResourceRefPtr(us),
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	rt := &gwv1.RouteTable{
+		Metadata: core.Metadata{Namespace:namespace, Name:"delegated-routes"},
+		Routes: rtRoutes,
+	}
+
+	vsRoutes := []*gwv1.Route{
+		{
+			Matcher: &v1.Matcher{
+				PathSpecifier: &v1.Matcher_Prefix{
+					Prefix: "/",
+				},
+			},
+			Action: &gwv1.Route_DelegateAction{
+				DelegateAction: utils.ResourceRefPtr(rt.Metadata.Ref()),
+			},
+		},
+	}
+	snap := SimpleGatewaySnapshot(us, namespace)
+	snap.VirtualServices.Each(func(element *gwv1.VirtualService) {
+		element.VirtualHost.Routes = append(element.VirtualHost.Routes, vsRoutes...)
+	})
+	snap.RouteTables = []*gwv1.RouteTable{rt}
+	return snap
+}
+
+func GatewaySnapshotWithMultiDelegates(us core.ResourceRef, namespace string) *v2.ApiSnapshot {
+	rtLeafRoutes := []*gwv1.Route{
+		{
+			Matcher: &v1.Matcher{
+				PathSpecifier: &v1.Matcher_Prefix{
+					Prefix: "/",
+				},
+			},
+			Action: &gwv1.Route_RouteAction{
+				RouteAction: &v1.RouteAction{
+					Destination: &v1.RouteAction_Single{
+						Single: &v1.Destination{
+							DestinationType: &v1.Destination_Upstream{
+								Upstream: utils.ResourceRefPtr(us),
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	rtLeaf := &gwv1.RouteTable{
+		Metadata: core.Metadata{Namespace:namespace, Name:"delegated-leaf-routes"},
+		Routes: rtLeafRoutes ,
+	}
+
+	rtRoutes := []*gwv1.Route{
+		{
+			Matcher: &v1.Matcher{
+				PathSpecifier: &v1.Matcher_Prefix{
+					Prefix: "/",
+				},
+			},
+			Action: &gwv1.Route_DelegateAction{
+				DelegateAction: utils.ResourceRefPtr(rtLeaf.Metadata.Ref()),
+			},
+		},
+	}
+
+	rt := &gwv1.RouteTable{
+		Metadata: core.Metadata{Namespace:namespace, Name:"delegated-routes"},
+		Routes: rtRoutes,
+	}
+
+	vsRoutes := []*gwv1.Route{
+		{
+			Matcher: &v1.Matcher{
+				PathSpecifier: &v1.Matcher_Prefix{
+					Prefix: "/",
+				},
+			},
+			Action: &gwv1.Route_DelegateAction{
+				DelegateAction: utils.ResourceRefPtr(rt.Metadata.Ref()),
+			},
+		},
+	}
+	snap := SimpleGatewaySnapshot(us, namespace)
+	snap.VirtualServices.Each(func(element *gwv1.VirtualService) {
+		element.VirtualHost.Routes = append(element.VirtualHost.Routes, vsRoutes...)
+	})
+	snap.RouteTables = []*gwv1.RouteTable{rt, rtLeaf}
+	return snap
 }

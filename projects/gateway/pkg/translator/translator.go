@@ -3,6 +3,7 @@ package translator
 import (
 	"context"
 	"fmt"
+	v1 "github.com/solo-io/gloo/projects/gateway/pkg/api/v1"
 	"strings"
 
 	"github.com/solo-io/gloo/projects/gateway/pkg/defaults"
@@ -49,7 +50,7 @@ func (t *translator) Translate(ctx context.Context, proxyName, namespace string,
 		logger.Debugf("%v had no gateways", snap.Hash())
 		return nil, resourceErrs
 	}
-	validateGateways(filteredGateways, resourceErrs)
+	validateGateways(filteredGateways, snap.VirtualServices, resourceErrs)
 	listeners := make([]*gloov1.Listener, 0, len(filteredGateways))
 	for _, factory := range t.factories {
 		listeners = append(listeners, factory.GenerateListeners(ctx, snap, filteredGateways, resourceErrs)...)
@@ -80,13 +81,21 @@ func gatewayName(gateway *v2.Gateway) string {
 	return fmt.Sprintf("listener-%s-%d", gateway.BindAddress, gateway.BindPort)
 }
 
-func validateGateways(gateways v2.GatewayList, resourceErrs reporter.ResourceErrors) {
+func validateGateways(gateways v2.GatewayList, virtualServices v1.VirtualServiceList, resourceErrs reporter.ResourceErrors) {
 	bindAddresses := map[string]v2.GatewayList{}
 	// if two gateway (=listener) that belong to the same proxy share the same bind address,
 	// they are invalid.
 	for _, gw := range gateways {
 		bindAddress := fmt.Sprintf("%s:%d", gw.BindAddress, gw.BindPort)
 		bindAddresses[bindAddress] = append(bindAddresses[bindAddress], gw)
+
+		if httpGw := gw.GetHttpGateway(); httpGw != nil {
+			for _, vs := range httpGw.VirtualServices {
+				if _, err := virtualServices.Find(vs.Strings()); err != nil {
+					resourceErrs.AddError(gw, fmt.Errorf("invalid virtual service ref %v", vs))
+				}
+			}
+		}
 	}
 
 	for addr, gateways := range bindAddresses {

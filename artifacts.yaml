@@ -1,43 +1,43 @@
-build:
-  go:
-    version: github.com/solo-io/gloo/pkg/version.Version
-    gcFlags: "all=-N -l"
-    binaries:
-      - name: glooctl
-        os: [linux, darwin, windows]
-        entrypoint: projects/gloo/cli/cmd/main.go
-      - name: gloo
-        entrypoint: projects/gloo/cmd/main.go
-      - name: discovery
-        entrypoint: projects/discovery/cmd/main.go
-      - name: gateway
-        entrypoint: projects/gateway/cmd/main.go
-      - name: envoyinit
-        entrypoint: projects/envoyinit/cmd/main.go
-      - name: ingress
-        entrypoint: projects/ingress/cmd/main.go
-      - name: gateway-conversion
-        entrypoint: projects/gateway/pkg/conversion/cmd/main.go
-
-docker:
-  registries: [quay.io/solo-io]
-  containers:
-    - name: gloo
-      dockerfile: projects/gloo/cmd/Dockerfile
-    - name: gateway
-      dockerfile: projects/gateway/cmd/Dockerfile
-    - name: discovery
-      dockerfile: projects/discovery/cmd/Dockerfile
-    - name: envoy-gloo
-      dockerfile: projects/envoyinit/cmd/Dockerfile
-    - name: gateway-conversion
-      dockerfile: projects/gateway/pkg/conversion/cmd/Dockerfile
+#build:
+#  go:
+#    version: github.com/solo-io/gloo/pkg/version.Version
+#    gcFlags: "all=-N -l"
+#    binaries:
+#      - name: glooctl
+#        os: [linux, darwin, windows]
+#        entrypoint: projects/gloo/cli/cmd/main.go
+#      - name: gloo
+#        entrypoint: projects/gloo/cmd/main.go
+#      - name: discovery
+#        entrypoint: projects/discovery/cmd/main.go
+#      - name: gateway
+#        entrypoint: projects/gateway/cmd/main.go
+#      - name: envoyinit
+#        entrypoint: projects/envoyinit/cmd/main.go
+#      - name: ingress
+#        entrypoint: projects/ingress/cmd/main.go
+#      - name: gateway-conversion
+#        entrypoint: projects/gateway/pkg/conversion/cmd/main.go
+#
+#docker:
+#  registries: [quay.io/solo-io]
+#  containers:
+#    - name: gloo
+#      dockerfile: projects/gloo/cmd/Dockerfile
+#    - name: gateway
+#      dockerfile: projects/gateway/cmd/Dockerfile
+#    - name: discovery
+#      dockerfile: projects/discovery/cmd/Dockerfile
+#    - name: gloo-envoy-wrapper
+#      dockerfile: projects/envoyinit/cmd/Dockerfile
+#    - name: gateway-conversion
+#      dockerfile: projects/gateway/pkg/conversion/cmd/Dockerfile
 
 helm:
   charts:
     - name: gloo
       directory: install/helm/gloo
-      generator: generate.go
+      generator: install/helm/gloo/generate.go
       manifests:
         - name: gloo-gateway.yaml
         - name: gloo-ingress.yaml

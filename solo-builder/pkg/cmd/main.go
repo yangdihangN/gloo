@@ -6,6 +6,7 @@ import (
 	"github.com/solo-io/gloo/solo-builder/pkg/config"
 	"github.com/solo-io/go-utils/contextutils"
 	"go.uber.org/zap"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -17,6 +18,8 @@ func main() {
 	runtime := config.MustGetRuntimeConfig()
 	mustEnsureArtifactsDir(ctx)
 	mustBuild(ctx, artifacts.Build, runtime)
+	mustDocker(ctx, artifacts.Docker, runtime)
+	mustHelm(ctx, artifacts.Helm, runtime)
 }
 
 const (
@@ -76,5 +79,81 @@ func goEnv(os string) []string {
 		"CGO_ENABLED=0",
 		"GOOS=" + os,
 		"GOARCH=amd64",
+	}
+}
+
+func mustDocker(ctx context.Context, docker config.Docker, runtime *config.RuntimeConfig) {
+	for _, registry := range docker.Registries {
+		for _, container := range docker.Containers {
+			dockerTag := fmt.Sprintf("%s:%s", filepath.Join(registry, container.Name), runtime.Version)
+			cmd := exec.Command("docker", "build", "-t", dockerTag, "-f", container.Dockerfile, "_artifacts")
+			fmt.Printf("Building docker container %s\n", dockerTag)
+			output, err := cmd.CombinedOutput()
+			if err != nil {
+				fmt.Printf(string(output))
+				contextutils.LoggerFrom(ctx).Fatalw("Error building docker container",
+					zap.Error(err))
+			}
+
+			cmd = exec.Command("docker", "push", dockerTag)
+			fmt.Printf("Pushing docker container %s\n", dockerTag)
+			output, err = cmd.CombinedOutput()
+			if err != nil {
+				fmt.Printf(string(output))
+				contextutils.LoggerFrom(ctx).Fatalw("Error pushing docker container",
+					zap.Error(err))
+			}
+		}
+	}
+}
+
+func mustHelm(ctx context.Context, helm config.Helm, runtime *config.RuntimeConfig) {
+	for _, chart := range helm.Charts {
+		mustHelmChart(ctx, chart, runtime)
+	}
+}
+
+func mustHelmChart(ctx context.Context, chart config.Chart, runtime *config.RuntimeConfig) {
+	generate := exec.Command("go", "run", chart.Generator, runtime.Version)
+	fmt.Printf("Generating helm chart %s\n", chart.Name)
+	output, err := generate.CombinedOutput()
+	if err != nil {
+		fmt.Printf(string(output))
+		contextutils.LoggerFrom(ctx).Fatalw("Error generating helm chart",
+			zap.Error(err))
+	}
+	pkg := exec.Command("helm", "package", "--destination", ArtifactsDir, chart.Directory)
+	output, err = pkg.CombinedOutput()
+	if err != nil {
+		fmt.Printf(string(output))
+		contextutils.LoggerFrom(ctx).Fatalw("Error packaging helm chart",
+			zap.Error(err))
+	}
+
+	for _, manifest := range chart.Manifests {
+		cmd := []string {"helm", "template",
+			chart.Directory,
+			"--namespace", "gloo-system",
+			"--set", "namespace.create=true",
+		}
+		if manifest.Values != "" {
+			valuesPath := filepath.Join(chart.Directory, manifest.Values)
+			cmd = append(cmd, "--values", valuesPath)
+		}
+
+		fmt.Printf("Generating manifest %s\n", manifest.Name)
+		manifestCmd := exec.Command(cmd[0], cmd[1:]...)
+		output, err = manifestCmd.CombinedOutput()
+		if err != nil {
+			fmt.Printf(string(output))
+			contextutils.LoggerFrom(ctx).Fatalw("Error generating manifest",
+				zap.Error(err))
+		}
+		manifestPath := filepath.Join(ArtifactsDir, manifest.Name)
+		err := ioutil.WriteFile(manifestPath, output, os.ModePerm)
+		if err != nil {
+			contextutils.LoggerFrom(ctx).Fatalw("Error writing manifest",
+				zap.Error(err))
+		}
 	}
 }

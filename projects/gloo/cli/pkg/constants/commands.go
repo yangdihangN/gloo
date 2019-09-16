@@ -51,6 +51,11 @@ var (
 		Long:    "Gloo resources be created from files (including stdin)",
 	}
 
+	DEBUG_COMMAND = cobra.Command{
+		Use:   "debug",
+		Short: "Debug a Gloo resource (requires Gloo running on Kubernetes)",
+	}
+
 	DELETE_COMMAND = cobra.Command{
 		Use:     "delete",
 		Aliases: []string{"d"},

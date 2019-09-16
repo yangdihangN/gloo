@@ -1,8 +1,15 @@
 package add_test
 
 import (
+	"github.com/solo-io/gloo/projects/gloo/cli/pkg/cmd/add"
+	"github.com/solo-io/gloo/projects/gloo/cli/pkg/cmd/options"
+	v1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
+	"github.com/solo-io/go-utils/cliutils"
+	"github.com/spf13/cobra"
 	"log"
 	"os"
+	"reflect"
+	"testing"
 
 	"github.com/hashicorp/consul/api"
 	. "github.com/onsi/ginkgo"
@@ -74,3 +81,169 @@ var _ = Describe("Add", func() {
 		})
 	})
 })
+
+func TestRootCmd(t *testing.T) {
+	type args struct {
+		opts        *options.Options
+		optionsFunc []cliutils.OptionsFunc
+	}
+	tests := []struct {
+		name string
+		args args
+		want *cobra.Command
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := add.RootCmd(tt.args.opts, tt.args.optionsFunc...); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("RootCmd() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestRoute(t *testing.T) {
+	type args struct {
+		opts        *options.Options
+		optionsFunc []cliutils.OptionsFunc
+	}
+	tests := []struct {
+		name string
+		args args
+		want *cobra.Command
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := add.Route(tt.args.opts, tt.args.optionsFunc...); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Route() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_actionFromInput(t *testing.T) {
+	type args struct {
+		input options.InputRoute
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    *gatewayv1.Route_RouteAction
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := add.actionFromInput(tt.args.input)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("actionFromInput() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("actionFromInput() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_addRoute(t *testing.T) {
+	type args struct {
+		opts *options.Options
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := add.addRoute(tt.args.opts); (err != nil) != tt.wantErr {
+				t.Errorf("addRoute() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func Test_destSpecFromInput(t *testing.T) {
+	type args struct {
+		input options.DestinationSpec
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    *v1.DestinationSpec
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := add.destSpecFromInput(tt.args.input)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("destSpecFromInput() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("destSpecFromInput() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_matcherFromInput(t *testing.T) {
+	type args struct {
+		input options.RouteMatchers
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    *v1.Matcher
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := add.matcherFromInput(tt.args.input)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("matcherFromInput() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("matcherFromInput() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_pluginsFromInput(t *testing.T) {
+	type args struct {
+		input options.RoutePlugins
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    *v1.RoutePlugins
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := add.pluginsFromInput(tt.args.input)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("pluginsFromInput() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("pluginsFromInput() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

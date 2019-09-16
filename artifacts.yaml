@@ -1,3 +1,7 @@
+# For building Gloo artifacts with Valet
+# From the root of the repo:
+# valet build -v $(git describe --tags --dirty | cut -c 2-)
+
 build:
   go:
     version: github.com/solo-io/gloo/pkg/version.Version
@@ -6,8 +10,8 @@ build:
       - name: glooctl
         os: [linux, darwin, windows]
         entrypoint: projects/gloo/cli/cmd/main.go
-        tests:
-          - path: install/test
+        #tests:
+        #  - path: install/test
       - name: gloo
         entrypoint: projects/gloo/cmd/main.go
       - name: discovery

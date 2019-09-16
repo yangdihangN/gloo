@@ -6,6 +6,8 @@ build:
       - name: glooctl
         os: [linux, darwin, windows]
         entrypoint: projects/gloo/cli/cmd/main.go
+        tests:
+          - path: install/test
       - name: gloo
         entrypoint: projects/gloo/cmd/main.go
       - name: discovery
@@ -44,3 +46,5 @@ helm:
           values: values-ingress.yaml
         - name: gloo-knative.yaml
           values: values-knative.yaml
+
+productName: gloo

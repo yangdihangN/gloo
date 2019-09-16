@@ -1,15 +1,17 @@
 package add_test
 
 import (
+	"log"
+	"os"
+	"reflect"
+	"testing"
+
+	gatewayv1 "github.com/solo-io/gloo/projects/gateway/pkg/api/v1"
 	"github.com/solo-io/gloo/projects/gloo/cli/pkg/cmd/add"
 	"github.com/solo-io/gloo/projects/gloo/cli/pkg/cmd/options"
 	v1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
 	"github.com/solo-io/go-utils/cliutils"
 	"github.com/spf13/cobra"
-	"log"
-	"os"
-	"reflect"
-	"testing"
 
 	"github.com/hashicorp/consul/api"
 	. "github.com/onsi/ginkgo"

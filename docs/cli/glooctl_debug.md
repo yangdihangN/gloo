@@ -17,6 +17,7 @@ glooctl debug [flags]
 ### Options
 
 ```
+  -f, --file string        file to be read or written to
   -h, --help               help for debug
   -n, --namespace string   namespace for reading or writing resources (default "gloo-system")
 ```

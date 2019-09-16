@@ -1357,7 +1357,7 @@
   version = "0.1.0"
 
 [[projects]]
-  digest = "1:e1910fcaf3aa225161246ae2e603f98155c4dcc4e062d0cfffefd26e96babfae"
+  digest = "1:9b4ddf47612615b52c2e648087c054a3e819c937d786ce14247b5738e6ae664e"
   name = "github.com/solo-io/go-utils"
   packages = [
     "changelogutils",
@@ -1395,8 +1395,8 @@
     "vfsutils",
   ]
   pruneopts = "UT"
-  revision = "acf7af80d72935c89b022e3c98ab68226a52eeda"
-  version = "v0.10.2"
+  revision = "489ace5fd8dbf9fa6138a968447f7c433428a489"
+  version = "v0.10.3"
 
 [[projects]]
   digest = "1:957449f2169cc164f2fd2f73a81aa6bfa80b5a610c3bec8d8ff54d46eb21020b"
@@ -2751,7 +2751,6 @@
     "github.com/solo-io/go-utils/hashutils",
     "github.com/solo-io/go-utils/healthchecker",
     "github.com/solo-io/go-utils/installutils/helmchart",
-    "github.com/solo-io/go-utils/installutils/kuberesource",
     "github.com/solo-io/go-utils/kubeutils",
     "github.com/solo-io/go-utils/log",
     "github.com/solo-io/go-utils/manifesttestutils",

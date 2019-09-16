@@ -6,10 +6,8 @@ import (
 	"github.com/solo-io/gloo/projects/gloo/cli/pkg/cmd/options"
 	"github.com/solo-io/gloo/projects/gloo/cli/pkg/helpers"
 	"github.com/solo-io/go-utils/debugutils"
-	"github.com/solo-io/go-utils/installutils/kuberesource"
 	"github.com/solo-io/go-utils/tarutils"
 	"github.com/spf13/afero"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -28,7 +26,7 @@ func DebugResources(opts *options.Options) error {
 	if err != nil {
 		return err
 	}
-	resources, err := ConvertPodsToUnstructured(pods)
+	resources, err := debugutils.ConvertPodsToUnstructured(pods)
 	if err != nil {
 		return err
 	}
@@ -72,18 +70,4 @@ func DebugResources(opts *options.Options) error {
 	}
 
 	return nil
-}
-
-func ConvertPodsToUnstructured(pods *corev1.PodList) (kuberesource.UnstructuredResources, error) {
-	result := make(kuberesource.UnstructuredResources, len(pods.Items))
-	for idx, val := range pods.Items {
-		resource, err := kuberesource.ConvertToUnstructured(&val)
-		if err != nil {
-			return nil, err
-		}
-		resource.SetKind("Pod")
-		resource.SetAPIVersion("v1")
-		result[idx] = resource
-	}
-	return result, nil
 }

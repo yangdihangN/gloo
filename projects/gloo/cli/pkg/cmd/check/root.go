@@ -51,7 +51,7 @@ func DebugCmd(opts *options.Options, optionsFunc ...cliutils.OptionsFunc) *cobra
 		Use:   constants.DEBUG_COMMAND.Use,
 		Short: constants.DEBUG_COMMAND.Short,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			err := debugResources(opts)
+			err := DebugResources(opts)
 			if err != nil {
 				// Not returning error here because this shouldn't propagate as a standard CLI error, which prints usage.
 				fmt.Printf("Error!\n")

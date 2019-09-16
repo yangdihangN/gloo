@@ -15,10 +15,10 @@ import (
 )
 
 const (
-	filename = "/tmp/gloo-system-logs.tgz"
+	Filename = "/tmp/gloo-system-logs.tgz"
 )
 
-func debugResources(opts *options.Options) error {
+func DebugResources(opts *options.Options) error {
 	pods, err := helpers.MustKubeClient().CoreV1().Pods(opts.Metadata.Namespace).List(metav1.ListOptions{
 		LabelSelector: "gloo",
 	})
@@ -65,8 +65,8 @@ func debugResources(opts *options.Options) error {
 		return err
 	}
 
-	if err := storageClient.Save(filepath.Dir(filename), &debugutils.StorageObject{
-		Name:     filepath.Base(filename),
+	if err := storageClient.Save(filepath.Dir(Filename), &debugutils.StorageObject{
+		Name:     filepath.Base(Filename),
 		Resource: tarball,
 	}); err != nil {
 		return err

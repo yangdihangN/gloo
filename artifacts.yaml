@@ -10,6 +10,7 @@ build:
       - name: glooctl
         os: [linux, darwin, windows]
         entrypoint: projects/gloo/cli/cmd/main.go
+        upload: true
         #tests:
         #  - path: install/test
       - name: gloo
@@ -50,5 +51,6 @@ helm:
           values: values-ingress.yaml
         - name: gloo-knative.yaml
           values: values-knative.yaml
+      upload: true
 
 productName: gloo

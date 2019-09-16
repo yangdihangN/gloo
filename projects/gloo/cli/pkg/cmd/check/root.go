@@ -63,6 +63,7 @@ func DebugCmd(opts *options.Options, optionsFunc ...cliutils.OptionsFunc) *cobra
 	}
 	pflags := cmd.PersistentFlags()
 	flagutils.AddNamespaceFlag(pflags, &opts.Metadata.Namespace)
+	flagutils.AddFileFlag(cmd.PersistentFlags(), &opts.Top.File)
 	cliutils.ApplyOptions(cmd, optionsFunc)
 	return cmd
 }

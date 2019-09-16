@@ -1,7 +1,6 @@
 package check
 
 import (
-	"io"
 	"path/filepath"
 
 	"github.com/solo-io/gloo/projects/gloo/cli/pkg/cmd/options"
@@ -19,6 +18,10 @@ const (
 )
 
 func DebugResources(opts *options.Options) error {
+	if opts.Top.File == "" {
+		opts.Top.File = Filename
+	}
+
 	pods, err := helpers.MustKubeClient().CoreV1().Pods(opts.Metadata.Namespace).List(metav1.ListOptions{
 		LabelSelector: "gloo",
 	})
@@ -60,13 +63,9 @@ func DebugResources(opts *options.Options) error {
 	if err := tarutils.Tar(dir, fs, tarball); err != nil {
 		return err
 	}
-	_, err = tarball.Seek(0, io.SeekStart)
-	if err != nil {
-		return err
-	}
 
-	if err := storageClient.Save(filepath.Dir(Filename), &debugutils.StorageObject{
-		Name:     filepath.Base(Filename),
+	if err := storageClient.Save(filepath.Dir(opts.Top.File), &debugutils.StorageObject{
+		Name:     filepath.Base(opts.Top.File),
 		Resource: tarball,
 	}); err != nil {
 		return err

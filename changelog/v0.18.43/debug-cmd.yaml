@@ -1,0 +1,4 @@
+changelog:
+- type: NEW_FEATURE
+  description: Add glooctl debug command, which prints out all the gloo pod logs into a tarfile
+  issueLink: https://github.com/solo-io/gloo/issues/997

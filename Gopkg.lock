@@ -1053,6 +1053,17 @@
   version = "v0.0.3"
 
 [[projects]]
+  digest = "1:36aebe90a13cf9128280ac834399b8bebf83685283c78df279d61c46bb2a8d83"
+  name = "github.com/mattn/go-zglob"
+  packages = [
+    ".",
+    "fastwalk",
+  ]
+  pruneopts = "UT"
+  revision = "2ea3427bfa539cca900ca2768d8663ecc8a708c1"
+  version = "v0.0.1"
+
+[[projects]]
   digest = "1:ff5ebae34cfbf047d505ee150de27e60570e8c394b3b8fdbb720ff6ac71985fc"
   name = "github.com/matttproud/golang_protobuf_extensions"
   packages = ["pbutil"]
@@ -1378,7 +1389,7 @@
   version = "v0.10.2"
 
 [[projects]]
-  digest = "1:957449f2169cc164f2fd2f73a81aa6bfa80b5a610c3bec8d8ff54d46eb21020b"
+  digest = "1:5e19cb305ec44e90b7de581cf401d285772a3fc62d47a0a2c1a44b99b864c53b"
   name = "github.com/solo-io/solo-kit"
   packages = [
     "api/external/kubernetes/configmap",
@@ -1431,6 +1442,7 @@
     "pkg/code-generator/model",
     "pkg/code-generator/parser",
     "pkg/errors",
+    "pkg/stats",
     "pkg/utils/fileutils",
     "pkg/utils/kubeutils",
     "pkg/utils/protoutils",
@@ -1439,8 +1451,7 @@
     "test/setup",
   ]
   pruneopts = "UT"
-  revision = "6f7e0f9898235c000129c61484d6546cba7915de"
-  version = "v0.10.17"
+  revision = "ee5f1fa8f5625b9f17ea05c8d24a76375bc625ce"
 
 [[projects]]
   digest = "1:3e39bafd6c2f4bf3c76c3bfd16a2e09e016510ad5db90dc02b88e2f565d6d595"
@@ -1502,7 +1513,7 @@
   version = "v0.2.1"
 
 [[projects]]
-  digest = "1:b7c2ac33d95453f9285cb06d1dd07e666341f597e8090c0c925af4e9f8a3a150"
+  digest = "1:61fbe4e62b000d9eda1f434453bacdc1bdb1f1060fcf88aa535efd713432ca3a"
   name = "go.opencensus.io"
   packages = [
     ".",
@@ -1525,8 +1536,8 @@
     "zpages/internal",
   ]
   pruneopts = "UT"
-  revision = "9c377598961b706d1542bd2d84d538b5094d596e"
-  version = "v0.22.0"
+  revision = "59d1ce35d30f3c25ba762169da2a37eab6ffa041"
+  version = "v0.22.1"
 
 [[projects]]
   digest = "1:3c1a69cdae3501bf75e76d0d86dc6f2b0a7421bc205c0cb7b96b19eed464a34d"
@@ -2591,6 +2602,7 @@
     "github.com/k0kubun/pp",
     "github.com/kelseyhightower/envconfig",
     "github.com/keybase/go-ps",
+    "github.com/mattn/go-zglob",
     "github.com/mitchellh/hashstructure",
     "github.com/olekukonko/tablewriter",
     "github.com/onsi/ginkgo",
@@ -2657,6 +2669,7 @@
     "github.com/solo-io/solo-kit/pkg/code-generator/cmd",
     "github.com/solo-io/solo-kit/pkg/code-generator/docgen/options",
     "github.com/solo-io/solo-kit/pkg/errors",
+    "github.com/solo-io/solo-kit/pkg/stats",
     "github.com/solo-io/solo-kit/pkg/utils/kubeutils",
     "github.com/solo-io/solo-kit/pkg/utils/protoutils",
     "github.com/solo-io/solo-kit/test/helpers",

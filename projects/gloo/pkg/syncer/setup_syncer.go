@@ -5,6 +5,7 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	"time"
 
 	consulapi "github.com/hashicorp/consul/api"
 	vaultapi "github.com/hashicorp/vault/api"
@@ -142,6 +143,7 @@ func (s *setupSyncer) Setup(ctx context.Context, kubeCache kube.SharedCache, mem
 			s.cancelControlPlane = nil
 		}
 		s.controlPlane = empty
+		s.previousBindAddr = settings.BindAddr
 	}
 
 	// enter this block either on the first loop, or if bind addr changed
@@ -273,8 +275,10 @@ func RunGlooWithExtensions(opts bootstrap.Opts, extensions Extensions) error {
 		return err
 	}
 
-	// Register grpc endpoints to the grpc server
-	xdsHasher := xds.SetupEnvoyXds(opts.ControlPlane.GrpcServer, opts.ControlPlane.XDSServer, opts.ControlPlane.SnapshotCache)
+	// Register grpc endpoints to the grpc server if we need to
+	xds.SetupEnvoyXds(opts.ControlPlane.GrpcServer, opts.ControlPlane.XDSServer, opts.ControlPlane.SnapshotCache)
+
+	xdsHasher := xds.NewNodeHasher()
 
 	allPlugins := registry.Plugins(opts, extensions.PluginExtensions...)
 
@@ -302,16 +306,6 @@ func RunGlooWithExtensions(opts bootstrap.Opts, extensions Extensions) error {
 
 	errs := make(chan error)
 
-	apiCache := v1.NewApiEmitter(artifactClient, endpointClient, proxyClient, upstreamGroupClient, secretClient, hybridUsClient)
-	rpt := reporter.NewReporter("gloo", hybridUsClient.BaseClient(), proxyClient.BaseClient(), upstreamGroupClient.BaseClient())
-	apiSync := NewTranslatorSyncer(translator.NewTranslator(sslutils.NewSslConfigTranslator(), opts.Settings, allPlugins...), opts.ControlPlane.SnapshotCache, xdsHasher, rpt, opts.DevMode, syncerExtensions)
-	apiEventLoop := v1.NewApiEventLoop(apiCache, apiSync)
-	apiEventLoopErrs, err := apiEventLoop.Run(opts.WatchNamespaces, watchOpts)
-	if err != nil {
-		return err
-	}
-	go errutils.AggregateErrs(watchOpts.Ctx, errs, apiEventLoopErrs, "event_loop.gloo")
-
 	disc := discovery.NewEndpointDiscovery(opts.WatchNamespaces, opts.WriteNamespace, endpointClient, discoveryPlugins)
 	edsSync := discovery.NewEdsSyncer(disc, discovery.Opts{}, watchOpts.RefreshRate)
 	discoveryCache := v1.NewEdsEmitter(hybridUsClient)
@@ -321,6 +315,28 @@ func RunGlooWithExtensions(opts bootstrap.Opts, extensions Extensions) error {
 		return err
 	}
 	go errutils.AggregateErrs(watchOpts.Ctx, errs, edsErrs, "eds.gloo")
+
+	warmingTimeout, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	select {
+	case <-opts.WatchOpts.Ctx.Done():
+		return opts.WatchOpts.Ctx.Err()
+	case <-edsEventLoop.Ready():
+		// wait for endpoints to finish one iteration so that we have valid endpoints in the api snapshot
+	case <-warmingTimeout.Done():
+		panic("failing warming up endpoints")
+	}
+
+	apiCache := v1.NewApiEmitter(artifactClient, endpointClient, proxyClient, upstreamGroupClient, secretClient, hybridUsClient)
+	rpt := reporter.NewReporter("gloo", hybridUsClient.BaseClient(), proxyClient.BaseClient(), upstreamGroupClient.BaseClient())
+	apiSync := NewTranslatorSyncer(translator.NewTranslator(sslutils.NewSslConfigTranslator(), opts.Settings, allPlugins...), opts.ControlPlane.SnapshotCache, xdsHasher, rpt, opts.DevMode, syncerExtensions)
+	apiEventLoop := v1.NewApiEventLoop(apiCache, apiSync)
+	apiEventLoopErrs, err := apiEventLoop.Run(opts.WatchNamespaces, watchOpts)
+	if err != nil {
+		return err
+	}
+	go errutils.AggregateErrs(watchOpts.Ctx, errs, apiEventLoopErrs, "event_loop.gloo")
 
 	go func() {
 		for {

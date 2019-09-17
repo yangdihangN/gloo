@@ -111,6 +111,7 @@ func NewControlPlane(ctx context.Context, grpcServer *grpc.Server, callbacks xds
 	c.SnapshotCache = snapshotCache
 	c.XDSServer = xdsServer
 	c.StartGrpcServer = start
+	c.Ctx = ctx
 	return c
 }
 
@@ -357,7 +358,7 @@ func RunGlooWithExtensions(opts bootstrap.Opts, extensions Extensions) error {
 		return err
 	}
 	go func() {
-		<-opts.WatchOpts.Ctx.Done()
+		<-opts.ControlPlane.Ctx.Done()
 		opts.ControlPlane.GrpcServer.Stop()
 	}()
 

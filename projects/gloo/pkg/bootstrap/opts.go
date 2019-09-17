@@ -1,6 +1,7 @@
 package bootstrap
 
 import (
+	"context"
 	"net"
 
 	"github.com/solo-io/gloo/projects/gloo/pkg/upstreams/consul"
@@ -40,4 +41,5 @@ type ControlPlane struct {
 	StartGrpcServer bool
 	SnapshotCache   cache.SnapshotCache
 	XDSServer       server.Server
+	Ctx             context.Context
 }

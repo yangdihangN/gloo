@@ -77,12 +77,42 @@ var _ = Describe("Validator", func() {
 				vc.validateProxy = nil
 				us := samples.SimpleUpstream()
 				snap := samples.GatewaySnapshotWithDelegates(us.Metadata.Ref(), ns)
-				snap.RouteTables[0].Routes = append(snap.RouteTables[0].Routes, badRoute)
+				rt := snap.RouteTables[0].DeepCopyObject().(*gatewayv1.RouteTable)
+				rt.Routes = append(rt.Routes, badRoute)
 				err := v.Sync(context.TODO(), snap)
 				Expect(err).NotTo(HaveOccurred())
-				err = v.ValidateRouteTable(context.TODO(), snap.RouteTables[0])
+				err = v.ValidateRouteTable(context.TODO(), rt)
 				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).To(ContainSubstring("could not render proxy"))
+			})
+		})
+	})
+
+	Context("delete a route table", func() {
+		Context("has parents", func() {
+			It("rejects deletion", func() {
+				vc.validateProxy = acceptProxy
+				us := samples.SimpleUpstream()
+				snap := samples.GatewaySnapshotWithDelegateChain(us.Metadata.Ref(), ns)
+				err := v.Sync(context.TODO(), snap)
+				Expect(err).NotTo(HaveOccurred())
+				err = v.ValidateDeleteRouteTable(context.TODO(), snap.RouteTables[0].Metadata.Ref())
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("Deletion blocked because active Routes delegate to this Route Table. " +
+					"Remove delegate actions to this route table the virtual services: [] and the route tables: [{node-0 my-namespace}], then try again"))
+			})
+		})
+		Context("has no parents", func() {
+			It("deletes safely", func() {
+				vc.validateProxy = acceptProxy
+				us := samples.SimpleUpstream()
+				snap := samples.GatewaySnapshotWithDelegateChain(us.Metadata.Ref(), ns)
+				// break the parent chain
+				snap.RouteTables[1].Routes = nil
+				err := v.Sync(context.TODO(), snap)
+				Expect(err).NotTo(HaveOccurred())
+				err = v.ValidateDeleteRouteTable(context.TODO(), snap.RouteTables[0].Metadata.Ref())
+				Expect(err).NotTo(HaveOccurred())
 			})
 		})
 	})
@@ -143,12 +173,49 @@ var _ = Describe("Validator", func() {
 				vc.validateProxy = nil
 				us := samples.SimpleUpstream()
 				snap := samples.SimpleGatewaySnapshot(us.Metadata.Ref(), ns)
-				snap.VirtualServices[0].VirtualHost.Routes = append(snap.VirtualServices[0].VirtualHost.Routes, badRoute)
+				vs := snap.VirtualServices[0].DeepCopyObject().(*gatewayv1.VirtualService)
+				vs.VirtualHost.Routes = append(vs.VirtualHost.Routes, badRoute)
 				err := v.Sync(context.TODO(), snap)
 				Expect(err).NotTo(HaveOccurred())
-				err = v.ValidateVirtualService(context.TODO(), snap.VirtualServices[0])
+				err = v.ValidateVirtualService(context.TODO(), vs)
 				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).To(ContainSubstring("could not render proxy"))
+			})
+		})
+	})
+
+	Context("delete a virtual service", func() {
+		Context("has parent gateways", func() {
+			It("rejects deletion", func() {
+				vc.validateProxy = acceptProxy
+				us := samples.SimpleUpstream()
+				snap := samples.SimpleGatewaySnapshot(us.Metadata.Ref(), ns)
+				ref := snap.VirtualServices[0].Metadata.Ref()
+				snap.Gateways.Each(func(element *v2.Gateway) {
+					http, ok := element.GatewayType.(*v2.Gateway_HttpGateway)
+					if !ok {
+						return
+					}
+					http.HttpGateway.VirtualServices = []core.ResourceRef{ref}
+				})
+				err := v.Sync(context.TODO(), snap)
+				Expect(err).NotTo(HaveOccurred())
+				err = v.ValidateDeleteVirtualService(context.TODO(), ref)
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("Deletion blocked because active Gateways reference this Virtual Service. " +
+					"Remove refs to this virtual service from the gateways: [{gateway my-namespace} {gateway-ssl my-namespace}], then try again"))
+			})
+		})
+		Context("has no parent gateways", func() {
+			It("deletes safely", func() {
+				vc.validateProxy = acceptProxy
+				us := samples.SimpleUpstream()
+				snap := samples.SimpleGatewaySnapshot(us.Metadata.Ref(), ns)
+				err := v.Sync(context.TODO(), snap)
+				Expect(err).NotTo(HaveOccurred())
+				ref := snap.VirtualServices[0].Metadata.Ref()
+				err = v.ValidateDeleteVirtualService(context.TODO(), ref)
+				Expect(err).NotTo(HaveOccurred())
 			})
 		})
 	})
@@ -186,15 +253,18 @@ var _ = Describe("Validator", func() {
 				vc.validateProxy = nil
 				us := samples.SimpleUpstream()
 				snap := samples.SimpleGatewaySnapshot(us.Metadata.Ref(), ns)
-				snap.Gateways[0].GatewayType.(*v2.Gateway_HttpGateway).HttpGateway.VirtualServices = append(snap.Gateways[0].GatewayType.(*v2.Gateway_HttpGateway).HttpGateway.VirtualServices, badRef)
+				gw := snap.Gateways[0].DeepCopyObject().(*v2.Gateway)
+
+				gw.GatewayType.(*v2.Gateway_HttpGateway).HttpGateway.VirtualServices = append(gw.GatewayType.(*v2.Gateway_HttpGateway).HttpGateway.VirtualServices, badRef)
 				err := v.Sync(context.TODO(), snap)
 				Expect(err).NotTo(HaveOccurred())
-				err = v.ValidateGateway(context.TODO(), snap.Gateways[0])
+				err = v.ValidateGateway(context.TODO(), gw)
 				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).To(ContainSubstring("could not render proxy"))
 			})
 		})
 	})
+
 })
 
 type mockValidationClient struct {

@@ -335,6 +335,7 @@ func (rv *routeVisitor) convertDelegateAction(sourceResource resources.InputReso
 	}
 	routeTable, err := rv.tables.Find(action.Strings())
 	if err != nil {
+		err = errors.Wrapf(err, "invalid delegate action")
 		resourceErrs.AddError(sourceResource, err)
 		return nil, err
 	}

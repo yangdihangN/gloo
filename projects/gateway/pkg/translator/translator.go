@@ -3,8 +3,9 @@ package translator
 import (
 	"context"
 	"fmt"
-	v1 "github.com/solo-io/gloo/projects/gateway/pkg/api/v1"
 	"strings"
+
+	v1 "github.com/solo-io/gloo/projects/gateway/pkg/api/v1"
 
 	"github.com/solo-io/gloo/projects/gateway/pkg/defaults"
 

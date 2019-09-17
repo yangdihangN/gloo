@@ -92,17 +92,20 @@ func NewSetupFuncWithRunAndExtensions(runFunc RunFunc, extensions *Extensions) s
 	return s.Setup
 }
 
+type grpcServer struct {
+	addr   net.Addr
+	cancel context.CancelFunc
+}
+
 type setupSyncer struct {
-	extensions                     *Extensions
-	runFunc                        RunFunc
-	makeGrpcServer                 func(ctx context.Context) *grpc.Server
-	previousXdsAddr                string
-	cancelPreviousXdsServer        context.CancelFunc
-	previousValidationAddr         string
-	cancelPreviousValidationServer context.CancelFunc
-	controlPlane                   bootstrap.ControlPlane
-	validationServer               bootstrap.ValidationServer
-	callbacks                      xdsserver.Callbacks
+	extensions               *Extensions
+	runFunc                  RunFunc
+	makeGrpcServer           func(ctx context.Context) *grpc.Server
+	previousXdsServer        grpcServer
+	previousValidationServer grpcServer
+	controlPlane             bootstrap.ControlPlane
+	validationServer         bootstrap.ValidationServer
+	callbacks                xdsserver.Callbacks
 }
 
 func NewControlPlane(ctx context.Context, grpcServer *grpc.Server, bindAddr net.Addr, callbacks xdsserver.Callbacks, start bool) bootstrap.ControlPlane {
@@ -160,9 +163,18 @@ func (s *setupSyncer) Setup(ctx context.Context, kubeCache kube.SharedCache, mem
 			xdsAddr = DefaultXdsBindAddr
 		}
 	}
+	xdsTcpAddress, err := getAddr(xdsAddr)
+	if err != nil {
+		return errors.Wrapf(err, "parsing xds addr")
+	}
+
 	validationAddr := settings.GetGloo().GetValidationBindAddr()
 	if validationAddr == "" {
 		validationAddr = DefaultValidationBindAddr
+	}
+	validationTcpAddress, err := getAddr(validationAddr)
+	if err != nil {
+		return errors.Wrapf(err, "parsing validation addr")
 	}
 
 	refreshRate, err := types.DurationFromProto(settings.RefreshRate)
@@ -179,29 +191,26 @@ func (s *setupSyncer) Setup(ctx context.Context, kubeCache kube.SharedCache, mem
 	emptyControlPlane := bootstrap.ControlPlane{}
 	emptyValidationServer := bootstrap.ValidationServer{}
 
-	if xdsAddr != s.previousXdsAddr {
-		if s.cancelPreviousXdsServer != nil {
-			s.cancelPreviousXdsServer()
-			s.cancelPreviousXdsServer = nil
+	if xdsTcpAddress != s.previousXdsServer.addr {
+		if s.previousXdsServer.cancel != nil {
+			s.previousXdsServer.cancel()
+			s.previousXdsServer.cancel = nil
 		}
 		s.controlPlane = emptyControlPlane
+		s.previousXdsServer.addr = xdsTcpAddress
 	}
 
-	if validationAddr != s.previousValidationAddr {
-		if s.cancelPreviousValidationServer != nil {
-			s.cancelPreviousValidationServer()
-			s.cancelPreviousValidationServer = nil
+	if validationTcpAddress != s.previousValidationServer.addr {
+		if s.previousValidationServer.cancel != nil {
+			s.previousValidationServer.cancel()
+			s.previousValidationServer.cancel = nil
 		}
 		s.validationServer = emptyValidationServer
+		s.previousValidationServer.addr = validationTcpAddress
 	}
 
 	// initialize the control plane context in this block either on the first loop, or if bind addr changed
 	if s.controlPlane == emptyControlPlane {
-		xdsTcpAddress, err := getAddr(xdsAddr)
-		if err != nil {
-			return errors.Wrapf(err, "parsing xds addr")
-		}
-
 		// create new context as the grpc server might survive multiple iterations of this loop.
 		ctx, cancel := context.WithCancel(context.Background())
 		var callbacks xdsserver.Callbacks
@@ -209,20 +218,15 @@ func (s *setupSyncer) Setup(ctx context.Context, kubeCache kube.SharedCache, mem
 			callbacks = s.extensions.XdsCallbacks
 		}
 		s.controlPlane = NewControlPlane(ctx, s.makeGrpcServer(ctx), xdsTcpAddress, callbacks, true)
-		s.cancelPreviousXdsServer = cancel
+		s.previousXdsServer.cancel = cancel
 	}
 
 	// initialize the validation server context in this block either on the first loop, or if bind addr changed
 	if s.validationServer == emptyValidationServer {
-		validationTcpAddress, err := getAddr(validationAddr)
-		if err != nil {
-			return errors.Wrapf(err, "parsing validation addr")
-		}
-
 		// create new context as the grpc server might survive multiple iterations of this loop.
 		ctx, cancel := context.WithCancel(context.Background())
 		s.validationServer = NewValidationServer(s.makeGrpcServer(ctx), validationTcpAddress, true)
-		s.cancelPreviousValidationServer = cancel
+		s.previousValidationServer.cancel = cancel
 	}
 
 	consulClient, err := bootstrap.ConsulClientForSettings(settings)

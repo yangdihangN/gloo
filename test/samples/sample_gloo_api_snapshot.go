@@ -165,7 +165,7 @@ func SimpleGatewaySnapshot(us core.ResourceRef, namespace string) *v2.ApiSnapsho
 		},
 		VirtualServices: []*gwv1.VirtualService{
 			{
-				Metadata: core.Metadata{Namespace:namespace, Name:"virtualservice"},
+				Metadata: core.Metadata{Namespace: namespace, Name: "virtualservice"},
 				VirtualHost: &gwv1.VirtualHost{
 					Domains: []string{"*"},
 					Routes:  routes,
@@ -198,8 +198,8 @@ func GatewaySnapshotWithDelegates(us core.ResourceRef, namespace string) *v2.Api
 	}
 
 	rt := &gwv1.RouteTable{
-		Metadata: core.Metadata{Namespace:namespace, Name:"delegated-routes"},
-		Routes: rtRoutes,
+		Metadata: core.Metadata{Namespace: namespace, Name: "delegated-routes"},
+		Routes:   rtRoutes,
 	}
 
 	vsRoutes := []*gwv1.Route{
@@ -245,8 +245,8 @@ func GatewaySnapshotWithMultiDelegates(us core.ResourceRef, namespace string) *v
 	}
 
 	rtLeaf := &gwv1.RouteTable{
-		Metadata: core.Metadata{Namespace:namespace, Name:"delegated-leaf-routes"},
-		Routes: rtLeafRoutes ,
+		Metadata: core.Metadata{Namespace: namespace, Name: "delegated-leaf-routes"},
+		Routes:   rtLeafRoutes,
 	}
 
 	rtRoutes := []*gwv1.Route{
@@ -263,8 +263,8 @@ func GatewaySnapshotWithMultiDelegates(us core.ResourceRef, namespace string) *v
 	}
 
 	rt := &gwv1.RouteTable{
-		Metadata: core.Metadata{Namespace:namespace, Name:"delegated-routes"},
-		Routes: rtRoutes,
+		Metadata: core.Metadata{Namespace: namespace, Name: "delegated-routes"},
+		Routes:   rtRoutes,
 	}
 
 	vsRoutes := []*gwv1.Route{

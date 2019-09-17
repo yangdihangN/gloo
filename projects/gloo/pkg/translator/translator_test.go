@@ -301,7 +301,7 @@ var _ = Describe("Translator", func() {
 			_, errs, report, err := translator.Translate(params, proxy)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(errs.Validate()).To(HaveOccurred())
-			Expect(errs.Validate().Error()).To(ContainSubstring("InvalidMatcherError. Reason: no path specifier provided; Route Error: PluginError. Reason: missing path for grpc route"))
+			Expect(errs.Validate().Error()).To(ContainSubstring("InvalidMatcherError. Reason: no path specifier provided; Route Error: ProcessingError. Reason: missing path for grpc route"))
 
 			expectedReport := validationutils.MakeReport(proxy)
 			expectedReport.ListenerReports[0].ListenerTypeReport.(*validation.ListenerReport_HttpListenerReport).HttpListenerReport.VirtualHostReports[0].RouteReports[0].Errors = []*validation.RouteReport_Error{
@@ -310,7 +310,7 @@ var _ = Describe("Translator", func() {
 					Reason: "no path specifier provided",
 				},
 				{
-					Type:   validation.RouteReport_Error_PluginError,
+					Type:   validation.RouteReport_Error_ProcessingError,
 					Reason: "missing path for grpc route",
 				},
 			}
@@ -654,7 +654,7 @@ var _ = Describe("Translator", func() {
 			expectedReport.ListenerReports[0].ListenerTypeReport.(*validation.ListenerReport_HttpListenerReport).HttpListenerReport.VirtualHostReports[0].RouteReports[0].Errors = []*validation.RouteReport_Error{
 				{
 					Type:   validation.RouteReport_Error_InvalidDestinationError,
-					Reason: "invalid destination in weighted destination in upstream group: invalid destination in weighted destination list: list did not find upstream gloo-system.notexist",
+					Reason: "invalid destination in weighted destination list: list did not find upstream gloo-system.notexist",
 				},
 			}
 			Expect(report).To(Equal(expectedReport))

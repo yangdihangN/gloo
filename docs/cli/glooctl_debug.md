@@ -17,9 +17,11 @@ glooctl debug [flags]
 ### Options
 
 ```
+      --errors-only        filter for error logs only
   -f, --file string        file to be read or written to
   -h, --help               help for debug
   -n, --namespace string   namespace for reading or writing resources (default "gloo-system")
+      --zip                save logs to a tar file (specify location with -f)
 ```
 
 ### Options inherited from parent commands

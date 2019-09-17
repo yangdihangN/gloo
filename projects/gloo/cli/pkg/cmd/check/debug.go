@@ -2,19 +2,19 @@ package check
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 	"sync"
+
+	"github.com/solo-io/go-utils/tarutils"
+	"github.com/spf13/afero"
 
 	"golang.org/x/sync/errgroup"
 
 	"github.com/solo-io/gloo/projects/gloo/cli/pkg/cmd/options"
 	"github.com/solo-io/gloo/projects/gloo/cli/pkg/helpers"
 	"github.com/solo-io/go-utils/debugutils"
-	"github.com/solo-io/go-utils/tarutils"
-	"github.com/spf13/afero"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -23,30 +23,11 @@ const (
 )
 
 func DebugResources(opts *options.Options) error {
-	// Setup
-	if opts.Top.File == "" {
-		opts.Top.File = Filename
-	}
-	pods, err := helpers.MustKubeClient().CoreV1().Pods(opts.Metadata.Namespace).List(metav1.ListOptions{
-		LabelSelector: "gloo",
-	})
-	if err != nil {
-		return err
-	}
-	resources, err := debugutils.ConvertPodsToUnstructured(pods)
-	if err != nil {
-		return err
-	}
-	logCollector, err := debugutils.DefaultLogCollector()
-	if err != nil {
-		return err
-	}
-	logRequests, err := logCollector.GetLogRequests(resources)
+	responses, err := setup(opts)
 	if err != nil {
 		return err
 	}
 
-	// Save the logs in a tar file
 	fs := afero.NewOsFs()
 	dir, err := afero.TempDir(fs, "", "")
 	if err != nil {
@@ -54,52 +35,82 @@ func DebugResources(opts *options.Options) error {
 	}
 	defer fs.RemoveAll(dir)
 	storageClient := debugutils.NewFileStorageClient(fs)
-	if err = logCollector.SaveLogs(storageClient, dir, logRequests); err != nil {
-		return err
-	}
-	tarball, err := afero.TempFile(fs, "", "")
-	defer fs.Remove(tarball.Name())
-	if err != nil {
-		return err
-	}
-	if err := tarutils.Tar(dir, fs, tarball); err != nil {
-		return err
+	if opts.Top.File == "" {
+		opts.Top.File = Filename
 	}
 
-	if err := storageClient.Save(filepath.Dir(opts.Top.File), &debugutils.StorageObject{
-		Name:     filepath.Base(opts.Top.File),
-		Resource: tarball,
-	}); err != nil {
-		return err
-	}
-
-	// Print out the error logs
-	responses, err := StreamLogs(logRequests)
-	if err != nil {
-		return err
-	}
 	for _, response := range responses {
 		response := response
 		scanner := bufio.NewScanner(response.Response)
-		errorLogs := ""
+		logs := ""
 		for scanner.Scan() {
-			if strings.Contains(strings.ToLower(scanner.Text()), strings.ToLower("error")) {
-				errorLogs += scanner.Text() + "\n"
+			line := scanner.Text()
+			if opts.Top.ErrorsOnly {
+				in := []byte(line)
+				var raw map[string]interface{}
+				if err = json.Unmarshal(in, &raw); err != nil {
+					break
+				}
+				if raw["level"] == "error" {
+					logs += line + "\n"
+				}
+			} else {
+				logs += line + "\n"
 			}
 		}
-		if err := scanner.Err(); err != nil {
-			fmt.Fprintln(os.Stderr, "reading standard input:", err)
+		if logs != "" {
+			if opts.Top.Zip {
+				err = storageClient.Save(dir, &debugutils.StorageObject{
+					Resource: strings.NewReader(logs),
+					Name:     response.ResourceId(),
+				})
+				if err != nil {
+					return err
+				}
+			} else {
+				fmt.Printf("\n\n\nContainer name: %s\n", response.LogMeta.ContainerName)
+				fmt.Printf("ResourceID: %s\n\n", response.ResourceId())
+				fmt.Print(logs)
+			}
 		}
-		if errorLogs != "" {
-			fmt.Printf("Container name: %s\n", response.LogMeta.ContainerName)
-			fmt.Printf("ResourceID: %s\n", response.ResourceId())
-			fmt.Printf("%s\n", errorLogs)
-		}
+
 		response.Response.Close()
+	}
+
+	if opts.Top.Zip {
+		tarball, err := fs.Create(opts.Top.File)
+		if err != nil {
+			return err
+		}
+		if err := tarutils.Tar(dir, fs, tarball); err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
+
+func setup(opts *options.Options) ([]*debugutils.LogsResponse, error) {
+	pods, err := helpers.MustKubeClient().CoreV1().Pods(opts.Metadata.Namespace).List(metav1.ListOptions{
+		LabelSelector: "gloo",
+	})
+	if err != nil {
+		return nil, err
+	}
+	resources, err := debugutils.ConvertPodsToUnstructured(pods)
+	if err != nil {
+		return nil, err
+	}
+	logCollector, err := debugutils.DefaultLogCollector()
+	if err != nil {
+		return nil, err
+	}
+	logRequests, err := logCollector.GetLogRequests(resources)
+
+	return logCollector.LogRequestBuilder.StreamLogs(logRequests)
+}
+
+//func saveZip(fs afero.Fs)
 
 func StreamLogs(requests []*debugutils.LogsRequest) ([]*debugutils.LogsResponse, error) {
 	result := make([]*debugutils.LogsResponse, 0, len(requests))

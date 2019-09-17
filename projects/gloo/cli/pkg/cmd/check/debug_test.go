@@ -19,6 +19,7 @@ var _ = Describe("Debug", func() {
 		opts := options.Options{}
 		opts.Metadata.Namespace = "gloo-system"
 		opts.Top.File = "/tmp/log.tgz"
+		opts.Top.Zip = true
 		check.DebugResources(&opts)
 
 		_, err := os.Stat(opts.Top.File)

@@ -2,9 +2,10 @@ package validation
 
 import (
 	"context"
-	"go.uber.org/multierr"
 	"sort"
 	"sync"
+
+	"go.uber.org/multierr"
 
 	"github.com/pkg/errors"
 	v1 "github.com/solo-io/gloo/projects/gateway/pkg/api/v1"
@@ -32,7 +33,6 @@ var (
 const (
 	InvalidSnapshotErrMessage = "validation is disabled due to an invalid resource which has been written to storage. " +
 		"Please correct any Rejected resources to re-enable validation."
-
 )
 
 type Validator interface {

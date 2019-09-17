@@ -287,7 +287,6 @@ func GatewaySnapshotWithMultiDelegates(us core.ResourceRef, namespace string) *v
 	return snap
 }
 
-
 func GatewaySnapshotWithDelegateChain(us core.ResourceRef, namespace string) *v2.ApiSnapshot {
 	vs, rtList := LinkedRouteTablesWithVirtualService("vs", namespace, "/prefix", "/exact")
 

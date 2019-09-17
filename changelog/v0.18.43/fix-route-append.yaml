@@ -1,3 +1,4 @@
 changelog:
-  - type: NON_USER_FACING
-    description: add internal validation syncer to Gateway. this is business logic of the kubernetes validation webhook
+  - type: FIX
+    description: fix prepending of route prefixes when the prefix is a /
+    issueLink: https://github.com/solo-io/gloo/pull/1178

@@ -76,10 +76,17 @@ func NewUpstreamDiscovery(watchNamespaces []string, writeNamespace string,
 	}
 }
 
+type startedUds struct {
+	DiscoveryPlugin DiscoveryPlugin
+	Upstreams       <-chan v1.UpstreamList
+	Errs            <-chan error
+}
+
 // launch a goroutine for all the UDS plugins
 func (d *UpstreamDiscovery) StartUds(opts clients.WatchOpts, discOpts Opts) (chan error, error) {
 	aggregatedErrs := make(chan error)
 	d.extraSelectorLabels = opts.Selector
+	var straredUdses []startedUds
 	for _, uds := range d.discoveryPlugins {
 		upstreams, errs, err := uds.DiscoverUpstreams(d.watchNamespaces, d.writeNamespace, opts, discOpts)
 		if err != nil {
@@ -87,29 +94,44 @@ func (d *UpstreamDiscovery) StartUds(opts clients.WatchOpts, discOpts Opts) (cha
 			continue
 		}
 
-		go func(uds DiscoveryPlugin) {
+		straredUdses = append(straredUdses, startedUds{
+			DiscoveryPlugin: uds,
+			Upstreams:       upstreams,
+			Errs:            errs,
+		})
+	}
+
+	for _, suds := range straredUdses {
+
+		go func(startedUds startedUds) {
 			// TODO (ilackarms): when we have less problems, solve this
-			udsName := strings.Replace(reflect.TypeOf(uds).String(), "*", "", -1)
+			udsName := strings.Replace(reflect.TypeOf(startedUds.DiscoveryPlugin).String(), "*", "", -1)
 			udsName = strings.Replace(udsName, ".", "", -1)
 			for {
 				select {
-				case upstreamList := <-upstreams:
+				case upstreamList := <-startedUds.Upstreams:
 					d.lock.Lock()
 					upstreamList = setLabels(udsName, upstreamList)
-					d.latestDesiredUpstreams[uds] = upstreamList
+					d.latestDesiredUpstreams[startedUds.DiscoveryPlugin] = upstreamList
+					if len(d.latestDesiredUpstreams) == len(straredUdses) {
+						d.ready()
+					}
 					d.lock.Unlock()
 					if err := d.Resync(opts.Ctx); err != nil {
 						aggregatedErrs <- errors.Wrapf(err, "error in uds plugin %v", reflect.TypeOf(uds).Name())
 					}
-				case err := <-errs:
+				case err := <-startedUds.Errs:
 					aggregatedErrs <- errors.Wrapf(err, "error in uds plugin %v", reflect.TypeOf(uds).Name())
 				case <-opts.Ctx.Done():
 					return
 				}
 			}
-		}(uds)
+		}(suds)
 	}
 	return aggregatedErrs, nil
+}
+
+func (d *UpstreamDiscovery) ready() {
 }
 
 // ensures that the latest desired upstreams are in sync

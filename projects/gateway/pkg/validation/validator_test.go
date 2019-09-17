@@ -3,6 +3,8 @@ package validation_test
 import (
 	"context"
 
+	"github.com/solo-io/solo-kit/pkg/api/v1/resources/core"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	gatewayv1 "github.com/solo-io/gloo/projects/gateway/pkg/api/v1"
@@ -150,6 +152,49 @@ var _ = Describe("Validator", func() {
 			})
 		})
 	})
+
+	Context("validating a gateway", func() {
+
+		Context("proxy validation returns error", func() {
+			It("rejects the gw", func() {
+				vc.validateProxy = failProxy
+				us := samples.SimpleUpstream()
+				snap := samples.SimpleGatewaySnapshot(us.Metadata.Ref(), ns)
+				err := v.Sync(context.TODO(), snap)
+				Expect(err).NotTo(HaveOccurred())
+				err = v.ValidateGateway(context.TODO(), snap.Gateways[0])
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("rendered proxy had errors"))
+			})
+		})
+		Context("proxy validation accepted", func() {
+			It("accepts the gw", func() {
+				vc.validateProxy = acceptProxy
+				us := samples.SimpleUpstream()
+				snap := samples.SimpleGatewaySnapshot(us.Metadata.Ref(), ns)
+				err := v.Sync(context.TODO(), snap)
+				Expect(err).NotTo(HaveOccurred())
+				err = v.ValidateGateway(context.TODO(), snap.Gateways[0])
+				Expect(err).NotTo(HaveOccurred())
+			})
+		})
+		Context("gw rejected", func() {
+			It("rejects the gw", func() {
+				badRef := core.ResourceRef{}
+
+				// validate proxy should never be called
+				vc.validateProxy = nil
+				us := samples.SimpleUpstream()
+				snap := samples.SimpleGatewaySnapshot(us.Metadata.Ref(), ns)
+				snap.Gateways[0].GatewayType.(*v2.Gateway_HttpGateway).HttpGateway.VirtualServices = append(snap.Gateways[0].GatewayType.(*v2.Gateway_HttpGateway).HttpGateway.VirtualServices, badRef)
+				err := v.Sync(context.TODO(), snap)
+				Expect(err).NotTo(HaveOccurred())
+				err = v.ValidateGateway(context.TODO(), snap.Gateways[0])
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("could not render proxy"))
+			})
+		})
+	})
 })
 
 type mockValidationClient struct {
@@ -166,6 +211,6 @@ func acceptProxy(ctx context.Context, in *v1.Proxy, opts ...grpc.CallOption) (re
 
 func failProxy(ctx context.Context, in *v1.Proxy, opts ...grpc.CallOption) (report *validation.ProxyReport, e error) {
 	rpt := validationutils.MakeReport(in)
-	validationutils.AppendListenerError(rpt.ListenerReports[0], validation.ListenerReport_Error_SSLConfigError, "")
+	validationutils.AppendListenerError(rpt.ListenerReports[0], validation.ListenerReport_Error_SSLConfigError, "you should try harder next time")
 	return rpt, nil
 }

@@ -178,7 +178,40 @@ func (v *validator) ValidateDeleteRouteTable(ctx context.Context, rt core.Resour
 }
 
 func (v *validator) ValidateGateway(ctx context.Context, gw *v2.Gateway) error {
-	panic("implement me")
+	if !v.Ready() {
+		return errors.Errorf("Gateway validation is yet not available. Waiting for first snapshot")
+	}
+	v.l.RLock()
+	snap := v.latestSnapshot.Clone()
+	v.l.RUnlock()
+
+	gwRef := gw.GetMetadata().Ref()
+
+	// TODO: move this to a function when generics become a thing
+	var isUpdate bool
+	for i, existingRt := range snap.Gateways {
+		if gwRef == existingRt.GetMetadata().Ref() {
+			// replace the existing virtual service in the snapshot
+			snap.Gateways[i] = gw
+			isUpdate = true
+			break
+		}
+	}
+	if !isUpdate {
+		snap.Gateways = append(snap.Gateways, gw)
+		snap.Gateways.Sort()
+	}
+
+	proxiesToConsider := utils.GetProxyNamesForGateway(gw)
+
+	if err := v.validateSnapshot(ctx, &snap, proxiesToConsider); err != nil {
+		contextutils.LoggerFrom(ctx).Debugw("Rejected %T %v: %v", gw, gwRef, err)
+		return errors.Wrapf(err, "validating %T %v", gw, gwRef)
+	}
+
+	contextutils.LoggerFrom(ctx).Debugw("Accepted %T %v", gw, gwRef)
+
+	return nil
 }
 
 func (v *validator) ValidateDeleteVirtualService(ctx context.Context, vs core.ResourceRef) error {

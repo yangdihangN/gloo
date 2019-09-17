@@ -1,7 +1,14 @@
 package check
 
 import (
+	"bufio"
+	"fmt"
+	"os"
 	"path/filepath"
+	"strings"
+	"sync"
+
+	"golang.org/x/sync/errgroup"
 
 	"github.com/solo-io/gloo/projects/gloo/cli/pkg/cmd/options"
 	"github.com/solo-io/gloo/projects/gloo/cli/pkg/helpers"
@@ -16,10 +23,10 @@ const (
 )
 
 func DebugResources(opts *options.Options) error {
+	// Setup
 	if opts.Top.File == "" {
 		opts.Top.File = Filename
 	}
-
 	pods, err := helpers.MustKubeClient().CoreV1().Pods(opts.Metadata.Namespace).List(metav1.ListOptions{
 		LabelSelector: "gloo",
 	})
@@ -39,20 +46,17 @@ func DebugResources(opts *options.Options) error {
 		return err
 	}
 
+	// Save the logs in a tar file
 	fs := afero.NewOsFs()
 	dir, err := afero.TempDir(fs, "", "")
 	if err != nil {
 		return err
 	}
 	defer fs.RemoveAll(dir)
-
-	// Request the logs and save them
 	storageClient := debugutils.NewFileStorageClient(fs)
 	if err = logCollector.SaveLogs(storageClient, dir, logRequests); err != nil {
 		return err
 	}
-
-	// Tar the logs
 	tarball, err := afero.TempFile(fs, "", "")
 	defer fs.Remove(tarball.Name())
 	if err != nil {
@@ -69,5 +73,60 @@ func DebugResources(opts *options.Options) error {
 		return err
 	}
 
+	// Print out the error logs
+	responses, err := StreamLogs(logRequests)
+	if err != nil {
+		return err
+	}
+	for _, response := range responses {
+		response := response
+		scanner := bufio.NewScanner(response.Response)
+		errorLogs := ""
+		for scanner.Scan() {
+			if strings.Contains(strings.ToLower(scanner.Text()), strings.ToLower("error")) {
+				errorLogs += scanner.Text() + "\n"
+			}
+		}
+		if err := scanner.Err(); err != nil {
+			fmt.Fprintln(os.Stderr, "reading standard input:", err)
+		}
+		if errorLogs != "" {
+			fmt.Printf("Container name: %s\n", response.LogMeta.ContainerName)
+			fmt.Printf("ResourceID: %s\n", response.ResourceId())
+			fmt.Printf("%s\n", errorLogs)
+		}
+		response.Response.Close()
+	}
+
 	return nil
+}
+
+func StreamLogs(requests []*debugutils.LogsRequest) ([]*debugutils.LogsResponse, error) {
+	result := make([]*debugutils.LogsResponse, 0, len(requests))
+	eg := errgroup.Group{}
+	lock := sync.Mutex{}
+	for _, request := range requests {
+		// necessary to shadow this variable so that it is unique within the goroutine
+		restRequest := request
+		eg.Go(func() error {
+			reader, err := restRequest.Request.Stream()
+			if err != nil {
+				return err
+			}
+			lock.Lock()
+			defer lock.Unlock()
+			result = append(result, &debugutils.LogsResponse{
+				LogMeta: debugutils.LogMeta{
+					PodMeta:       restRequest.PodMeta,
+					ContainerName: restRequest.ContainerName,
+				},
+				Response: reader,
+			})
+			return nil
+		})
+	}
+	if err := eg.Wait(); err != nil {
+		return nil, err
+	}
+	return result, nil
 }

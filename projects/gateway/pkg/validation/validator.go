@@ -2,6 +2,7 @@ package validation
 
 import (
 	"context"
+	"sort"
 	"sync"
 
 	"github.com/pkg/errors"
@@ -122,7 +123,54 @@ func (v *validator) ValidateVirtualService(ctx context.Context, vs *v1.VirtualSe
 }
 
 func (v *validator) ValidateRouteTable(ctx context.Context, rt *v1.RouteTable) error {
+	if !v.Ready() {
+		return errors.Errorf("Gateway validation is yet not available. Waiting for first snapshot")
+	}
+	v.l.RLock()
+	snap := v.latestSnapshot.Clone()
+	v.l.RUnlock()
 
+	rtRef := rt.GetMetadata().Ref()
+
+	// TODO: move this to a function when generics become a thing
+	var isUpdate bool
+	for i, existingRt := range snap.RouteTables {
+		if rtRef == existingRt.GetMetadata().Ref() {
+			// replace the existing virtual service in the snapshot
+			snap.RouteTables[i] = rt
+			isUpdate = true
+			break
+		}
+	}
+	if !isUpdate {
+		snap.RouteTables = append(snap.RouteTables, rt)
+		snap.RouteTables.Sort()
+	}
+
+	affectedVirtualServices := virtualServicesForRouteTable(rt, snap.VirtualServices, snap.RouteTables)
+
+	affectedProxies := make(map[string]struct{})
+	for _, vs := range affectedVirtualServices {
+		proxiesToConsider := proxiesForVirtualService(snap.Gateways, vs)
+		for _, proxy := range proxiesToConsider {
+			affectedProxies[proxy] = struct{}{}
+		}
+	}
+
+	var proxiesToConsider []string
+	for proxy := range affectedProxies {
+		proxiesToConsider = append(proxiesToConsider, proxy)
+	}
+	sort.Strings(proxiesToConsider)
+
+	if err := v.validateSnapshot(ctx, &snap, proxiesToConsider); err != nil {
+		contextutils.LoggerFrom(ctx).Debugw("Rejected %T %v: %v", rt, rtRef, err)
+		return errors.Wrapf(err, "validating %T %v", rt, rtRef)
+	}
+
+	contextutils.LoggerFrom(ctx).Debugw("Accepted %T %v", rt, rtRef)
+
+	return nil
 }
 
 func (v *validator) ValidateDeleteRouteTable(ctx context.Context, rt core.ResourceRef) error {
@@ -183,7 +231,7 @@ func routesContainRefs(list []*v1.Route, refs refSet) bool {
 	for _, r := range list {
 		delegate := r.GetDelegateAction()
 		if delegate == nil {
-			return false
+			continue
 		}
 		if _, ok := refs[*delegate]; ok {
 			return true

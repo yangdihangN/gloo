@@ -46,8 +46,41 @@ var _ = Describe("Validator", func() {
 				err := v.Sync(context.TODO(), snap)
 				Expect(err).NotTo(HaveOccurred())
 				err = v.ValidateRouteTable(context.TODO(), snap.RouteTables[0])
+				Expect(err).NotTo(HaveOccurred())
+			})
+		})
+
+		Context("proxy validation returns error", func() {
+			It("rejects the rt", func() {
+				vc.validateProxy = failProxy
+				us := samples.SimpleUpstream()
+				snap := samples.GatewaySnapshotWithDelegates(us.Metadata.Ref(), ns)
+				err := v.Sync(context.TODO(), snap)
+				Expect(err).NotTo(HaveOccurred())
+				err = v.ValidateRouteTable(context.TODO(), snap.RouteTables[0])
 				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).To(ContainSubstring("rendered proxy had errors"))
+			})
+		})
+
+		Context("route table rejected", func() {
+			It("rejects the rt", func() {
+				badRoute := &gatewayv1.Route{
+					Action: &gatewayv1.Route_DelegateAction{
+						DelegateAction: nil,
+					},
+				}
+
+				// validate proxy should never be called
+				vc.validateProxy = nil
+				us := samples.SimpleUpstream()
+				snap := samples.GatewaySnapshotWithDelegates(us.Metadata.Ref(), ns)
+				snap.RouteTables[0].Routes = append(snap.RouteTables[0].Routes, badRoute)
+				err := v.Sync(context.TODO(), snap)
+				Expect(err).NotTo(HaveOccurred())
+				err = v.ValidateRouteTable(context.TODO(), snap.RouteTables[0])
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("could not render proxy"))
 			})
 		})
 	})
@@ -113,7 +146,7 @@ var _ = Describe("Validator", func() {
 				Expect(err).NotTo(HaveOccurred())
 				err = v.ValidateVirtualService(context.TODO(), snap.VirtualServices[0])
 				Expect(err).To(HaveOccurred())
-				Expect(err.Error()).To(ContainSubstring("could not render proxy from *v1.VirtualService"))
+				Expect(err.Error()).To(ContainSubstring("could not render proxy"))
 			})
 		})
 	})

@@ -9,16 +9,10 @@ import (
 	v2 "github.com/solo-io/gloo/projects/gateway/pkg/api/v2"
 	"github.com/solo-io/gloo/projects/gateway/pkg/translator"
 	. "github.com/solo-io/gloo/projects/gateway/pkg/validation"
-	"github.com/solo-io/gloo/projects/gloo/cli/pkg/helpers"
 	"github.com/solo-io/gloo/projects/gloo/pkg/api/grpc/validation"
 	v1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
 	validationutils "github.com/solo-io/gloo/projects/gloo/pkg/utils/validation"
 	"github.com/solo-io/gloo/test/samples"
-	"github.com/solo-io/go-utils/kubeutils"
-	"github.com/solo-io/solo-kit/pkg/api/v1/clients"
-	"github.com/solo-io/solo-kit/pkg/api/v1/clients/factory"
-	"github.com/solo-io/solo-kit/pkg/api/v1/clients/kube"
-	"github.com/solo-io/solo-kit/pkg/api/v1/resources/core"
 	"google.golang.org/grpc"
 )
 
@@ -56,31 +50,6 @@ var _ = Describe("Validator", func() {
 				Expect(err.Error()).To(ContainSubstring("rendered proxy had errors"))
 			})
 		})
-	})
-
-	FIt("write me a boy", func() {
-
-		cfg, err := kubeutils.GetConfig("", "")
-		Expect(err).NotTo(HaveOccurred())
-
-		cache := kube.NewKubeCache(context.TODO())
-		rtc, _ := gatewayv1.NewRouteTableClient(&factory.KubeResourceClientFactory{
-			Crd:         gatewayv1.RouteTableCrd,
-			Cfg:         cfg,
-			SharedCache: cache,
-		})
-		snap := samples.GatewaySnapshotWithMultiDelegates(core.ResourceRef{"a", "b"}, "gloo-system")
-		snap.RouteTables.Each(func(element *gatewayv1.RouteTable) {
-			_, err = rtc.Write(element, clients.WriteOpts{})
-		})
-
-		vsc := helpers.MustVirtualServiceClient()
-		snap.VirtualServices.Each(func(element *gatewayv1.VirtualService) {
-			_, err = vsc.Write(element, clients.WriteOpts{})
-		})
-		//Expect(err).NotTo(HaveOccurred())
-
-		cfg.Timeout = 0
 	})
 
 	Context("validating a virtual service", func() {

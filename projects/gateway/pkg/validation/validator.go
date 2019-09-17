@@ -122,7 +122,7 @@ func (v *validator) ValidateVirtualService(ctx context.Context, vs *v1.VirtualSe
 }
 
 func (v *validator) ValidateRouteTable(ctx context.Context, rt *v1.RouteTable) error {
-	panic("implement me")
+
 }
 
 func (v *validator) ValidateDeleteRouteTable(ctx context.Context, rt core.ResourceRef) error {
@@ -153,31 +153,40 @@ func proxiesForVirtualService(gwList v2.GatewayList, vs *v1.VirtualService) []st
 	return proxiesToConsider
 }
 
+type refSet map[core.ResourceRef]struct{}
+
 func virtualServicesForRouteTable(rt *v1.RouteTable, allVirtualServices v1.VirtualServiceList, allRoutes v1.RouteTableList) v1.VirtualServiceList {
 	// this route table + its parents
-	refsContainingRouteTable := []core.ResourceRef{rt.Metadata.Ref()}
+	refsContainingRouteTable := refSet{rt.Metadata.Ref(): struct{}{}}
 
 	// keep going until the ref list stops expanding
-	for countedRefs := 0; countedRefs == len(refsContainingRouteTable); countedRefs = len(refsContainingRouteTable) {
+	for countedRefs := 0; countedRefs != len(refsContainingRouteTable); {
+		countedRefs = len(refsContainingRouteTable)
 		for _, rt := range allRoutes {
-			if routesContainRefs(rt.Routes, refsContainingRouteTable...) {
-				refsContainingRouteTable = append(refsContainingRouteTable, rt.Metadata.Ref())
+			if routesContainRefs(rt.GetRoutes(), refsContainingRouteTable) {
+				refsContainingRouteTable[rt.Metadata.Ref()] = struct{}{}
 			}
 		}
 	}
-	return nil
+
+	var parentVirtualServices v1.VirtualServiceList
+	allVirtualServices.Each(func(element *v1.VirtualService) {
+		if routesContainRefs(element.GetVirtualHost().GetRoutes(), refsContainingRouteTable) {
+			parentVirtualServices = append(parentVirtualServices, element)
+		}
+	})
+
+	return parentVirtualServices
 }
 
-func routesContainRefs(list []*v1.Route, refs ...core.ResourceRef) bool {
+func routesContainRefs(list []*v1.Route, refs refSet) bool {
 	for _, r := range list {
 		delegate := r.GetDelegateAction()
 		if delegate == nil {
 			return false
 		}
-		for _, ref := range refs {
-			if *delegate == ref {
-				return true
-			}
+		if _, ok := refs[*delegate]; ok {
+			return true
 		}
 	}
 	return false

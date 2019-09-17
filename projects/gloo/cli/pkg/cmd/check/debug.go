@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"io"
 	"strings"
 	"sync"
 
@@ -83,6 +84,10 @@ func DebugResources(opts *options.Options) error {
 			return err
 		}
 		if err := tarutils.Tar(dir, fs, tarball); err != nil {
+			return err
+		}
+		_, err = tarball.Seek(0, io.SeekStart)
+		if err != nil {
 			return err
 		}
 	}

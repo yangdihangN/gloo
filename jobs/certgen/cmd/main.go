@@ -2,11 +2,12 @@ package main
 
 import (
 	"context"
+	"os"
+
 	"github.com/solo-io/gloo/jobs/pkg/run"
 	"github.com/solo-io/gloo/projects/gloo/cli/pkg/constants"
 	"github.com/solo-io/go-utils/contextutils"
 	"github.com/spf13/cobra"
-	"os"
 )
 
 func main() {

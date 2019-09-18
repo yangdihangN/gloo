@@ -253,7 +253,6 @@ message Settings {
     // Options to configure Gloo's integration with [HashiCorp Consul](https://www.consul.io/).
     ConsulConfiguration consul = 20;
 
-
     // Provides overrides for the default configuration parameters used to interact with Kubernetes.
     message KubernetesConfiguration {
 
@@ -272,7 +271,7 @@ message Settings {
     KubernetesConfiguration kubernetes = 22;
 
     // Deprecated: Opaque settings config for Gloo extensions
-    Extensions extensions = 16 [deprecated=true];
+    Extensions extensions = 16 [deprecated = true];
 
     // Enterprise-only: Partial config for GlooE's rate-limiting service, based on Envoy's rate-limit service;
     // supports Envoy's rate-limit service API. (reference here: https://github.com/lyft/ratelimit#configuration)
@@ -307,6 +306,24 @@ message GlooOptions {
 
 // Settings specific to the Gateway controller
 message GatewayOptions {
-    // Address of the `gloo` config validation server. Defaults to `gloo:9988`
-    string validation_server_addr = 1;
+
+    // options for configuring admission control / validation
+    message ValidationOptions {
+        // Address of the `gloo` proxy validation grpc server. Defaults to `gloo:9988`
+        // This field is required in order to enable fine-grained admission control
+        string proxy_validation_server_addr = 2;
+
+        // Bind Port for the Kubernetes Validating webhook, served by the Gateway. Defaults to `443`
+        uint32 validation_webhook_bind_port = 3;
+
+        // Path to TLS Certificate for Kubernetes Validating webhook. Defaults to `/etc/gateway/validation-certs/tls.crt`
+        string validation_webhook_tls_cert = 4;
+
+        // Path to TLS Private Key for Kubernetes Validating webhook. Defaults to `/etc/gateway/validation-certs/tls.key`
+        string validation_webhook_tls_key = 5;
+    }
+
+    // if provided, the Gateway will perform[Dynamic Admission Control](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/)
+    // of Gateways, Virtual Services, and Route Tables when running in Kubernetes.
+    ValidationOptions validation = 1;
 }

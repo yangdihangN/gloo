@@ -27,6 +27,7 @@ weight: 5
 - [RateLimits](#ratelimits)
 - [GlooOptions](#gloooptions)
 - [GatewayOptions](#gatewayoptions)
+- [ValidationOptions](#validationoptions)
   
 
 
@@ -411,13 +412,37 @@ Settings specific to the gloo (Envoy xDS server) controller
 Settings specific to the Gateway controller
 
 ```yaml
-"validationServerAddr": string
+"validation": .gloo.solo.io.GatewayOptions.ValidationOptions
 
 ```
 
 | Field | Type | Description | Default |
 | ----- | ---- | ----------- |----------- | 
-| `validationServerAddr` | `string` | Address of the `gloo` config validation server. Defaults to `gloo:9988` |  |
+| `validation` | [.gloo.solo.io.GatewayOptions.ValidationOptions](../settings.proto.sk#validationoptions) | if provided, the Gateway will perform[Dynamic Admission Control](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/) of Gateways, Virtual Services, and Route Tables when running in Kubernetes. |  |
+
+
+
+
+---
+### ValidationOptions
+
+ 
+options for configuring admission control / validation
+
+```yaml
+"proxyValidationServerAddr": string
+"validationWebhookBindPort": int
+"validationWebhookTlsCert": string
+"validationWebhookTlsKey": string
+
+```
+
+| Field | Type | Description | Default |
+| ----- | ---- | ----------- |----------- | 
+| `proxyValidationServerAddr` | `string` | Address of the `gloo` proxy validation grpc server. Defaults to `gloo:9988` This field is required in order to enable fine-grained admission control |  |
+| `validationWebhookBindPort` | `int` | Bind Port for the Kubernetes Validating webhook, served by the Gateway. Defaults to `443` |  |
+| `validationWebhookTlsCert` | `string` | Path to TLS Certificate for Kubernetes Validating webhook. Defaults to `/etc/gateway/validation-certs/tls.crt` |  |
+| `validationWebhookTlsKey` | `string` | Path to TLS Private Key for Kubernetes Validating webhook. Defaults to `/etc/gateway/validation-certs/tls.key` |  |
 
 
 

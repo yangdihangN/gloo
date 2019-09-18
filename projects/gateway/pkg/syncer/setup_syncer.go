@@ -2,12 +2,14 @@ package syncer
 
 import (
 	"context"
+	"go.uber.org/zap"
+
+	"github.com/solo-io/gloo/projects/gateway/pkg/services/k8sadmisssion"
 
 	"github.com/solo-io/gloo/projects/gateway/pkg/translator"
 	gatewayvalidation "github.com/solo-io/gloo/projects/gateway/pkg/validation"
 
 	"github.com/solo-io/gloo/projects/gloo/pkg/api/grpc/validation"
-	"go.uber.org/zap"
 	"google.golang.org/grpc"
 
 	"github.com/gogo/protobuf/types"
@@ -28,8 +30,6 @@ import (
 	"github.com/solo-io/solo-kit/pkg/errors"
 	"k8s.io/client-go/rest"
 )
-
-const DefaultValidationServerAddress = "gloo:9988"
 
 func Setup(ctx context.Context, kubeCache kube.SharedCache, inMemoryCache memory.InMemoryResourceCache, settings *gloov1.Settings) error {
 	var (
@@ -80,24 +80,42 @@ func Setup(ctx context.Context, kubeCache kube.SharedCache, inMemoryCache memory
 	}
 	watchNamespaces := utils.ProcessWatchNamespaces(settings.WatchNamespaces, writeNamespace)
 
-	validationServerAddress := settings.GetGateway().GetValidationServerAddr()
-	if validationServerAddress == "" {
-		validationServerAddress = DefaultValidationServerAddress
+	var validation *ValidationOpts
+	validationCfg := settings.GetGateway().GetValidation()
+	if validationCfg != nil {
+		validation = &ValidationOpts{
+			ProxyValidationServerAddress: validationCfg.GetProxyValidationServerAddr(),
+			ValidatingWebhookPort:        int(validationCfg.GetValidationWebhookBindPort()),
+			ValidatingWebhookCertPath:    validationCfg.GetValidationWebhookTlsCert(),
+			ValidatingWebhookKeyPath:     validationCfg.GetValidationWebhookTlsKey(),
+		}
+		if validation.ProxyValidationServerAddress == "" {
+			validation.ProxyValidationServerAddress = defaults.GlooProxyValidationServerAddr
+		}
+		if validation.ValidatingWebhookPort == 0 {
+			validation.ValidatingWebhookPort = defaults.ValidationWebhookBindPort
+		}
+		if validation.ValidatingWebhookCertPath == "" {
+			validation.ValidatingWebhookCertPath = defaults.ValidationWebhookTlsCertPath
+		}
+		if validation.ValidatingWebhookKeyPath == "" {
+			validation.ValidatingWebhookKeyPath = defaults.ValidationWebhookTlsKeyPath
+		}
 	}
 
 	opts := Opts{
-		WriteNamespace:          writeNamespace,
-		WatchNamespaces:         watchNamespaces,
-		Gateways:                gatewayFactory,
-		VirtualServices:         virtualServiceFactory,
-		RouteTables:             routeTableFactory,
-		Proxies:                 proxyFactory,
-		ValidationServerAddress: validationServerAddress,
+		WriteNamespace:  writeNamespace,
+		WatchNamespaces: watchNamespaces,
+		Gateways:        gatewayFactory,
+		VirtualServices: virtualServiceFactory,
+		RouteTables:     routeTableFactory,
+		Proxies:         proxyFactory,
 		WatchOpts: clients.WatchOpts{
 			Ctx:         ctx,
 			RefreshRate: refreshRate,
 		},
-		DevMode: true,
+		DevMode:    true,
+		Validation: validation,
 	}
 
 	return RunGateway(opts)
@@ -105,7 +123,7 @@ func Setup(ctx context.Context, kubeCache kube.SharedCache, inMemoryCache memory
 
 func RunGateway(opts Opts) error {
 	opts.WatchOpts = opts.WatchOpts.WithDefaults()
-	opts.WatchOpts.Ctx = contextutils.WithLogger(opts.WatchOpts.Ctx, "gateway")
+	ctx := contextutils.WithLogger(opts.WatchOpts.Ctx, "gateway")
 
 	gatewayClient, err := v2.NewGatewayClient(opts.Gateways)
 	if err != nil {
@@ -141,7 +159,7 @@ func RunGateway(opts Opts) error {
 
 	for _, gw := range []*v2.Gateway{defaults.DefaultGateway(opts.WriteNamespace), defaults.DefaultSslGateway(opts.WriteNamespace)} {
 		if _, err := gatewayClient.Write(gw, clients.WriteOpts{
-			Ctx: opts.WatchOpts.Ctx,
+			Ctx: ctx,
 		}); err != nil && !errors.IsExist(err) {
 			return err
 		}
@@ -154,15 +172,7 @@ func RunGateway(opts Opts) error {
 
 	prop := propagator.NewPropagator("gateway", gatewayClient, virtualServiceClient, proxyClient, writeErrs)
 
-	var validationClient validation.ProxyValidationServiceClient
-	cc, err := grpc.DialContext(opts.WatchOpts.Ctx, opts.ValidationServerAddress, grpc.WithBlock())
-	if err == nil {
-		validationClient = validation.NewProxyValidationServiceClient(cc)
-	} else {
-		contextutils.LoggerFrom(opts.WatchOpts.Ctx).Errorw("failed to initialize grpc connection to validation server. validation will not be enabled", zap.Error(err))
-	}
-
-	t := translator.NewDefaultTranslator()
+	trans := translator.NewDefaultTranslator()
 
 	translatorSyncer := NewTranslatorSyncer(
 		opts.WriteNamespace,
@@ -171,9 +181,18 @@ func RunGateway(opts Opts) error {
 		virtualServiceClient,
 		rpt,
 		prop,
-		t)
+		trans)
 
-	validationSyncer := gatewayvalidation.NewValidator(t, validationClient, opts.WriteNamespace)
+	var validationClient validation.ProxyValidationServiceClient
+	if opts.Validation != nil {
+		cc, err := grpc.DialContext(ctx, opts.Validation.ProxyValidationServerAddress, grpc.WithBlock())
+		if err != nil {
+			return errors.Wrapf(err, "failed to initialize grpc connection to validation server.")
+		}
+		validationClient = validation.NewProxyValidationServiceClient(cc)
+	}
+
+	validationSyncer := gatewayvalidation.NewValidator(trans, validationClient, opts.WriteNamespace)
 
 	gatewaySyncers := v2.ApiSyncers{
 		translatorSyncer,
@@ -185,19 +204,44 @@ func RunGateway(opts Opts) error {
 	if err != nil {
 		return err
 	}
-	go errutils.AggregateErrs(opts.WatchOpts.Ctx, writeErrs, eventLoopErrs, "event_loop")
+	go errutils.AggregateErrs(ctx, writeErrs, eventLoopErrs, "event_loop")
 
-	logger := contextutils.LoggerFrom(opts.WatchOpts.Ctx)
+	logger := contextutils.LoggerFrom(ctx)
 
 	go func() {
 		for {
 			select {
 			case err := <-writeErrs:
 				logger.Errorf("error: %v", err)
-			case <-opts.WatchOpts.Ctx.Done():
+			case <-ctx.Done():
 				return
 			}
 		}
 	}()
+
+	if opts.Validation != nil {
+		validationWebhook, err := k8sadmisssion.NewGatewayValidatingWebhook(
+			ctx,
+			validationSyncer,
+			opts.Validation.ValidatingWebhookPort,
+			opts.Validation.ValidatingWebhookCertPath,
+			opts.Validation.ValidatingWebhookKeyPath,
+		)
+		if err != nil {
+			return errors.Wrapf(err, "creating validating webhook")
+		}
+
+		go func() {
+			// close out validation server when context is cancelled
+			<-ctx.Done()
+			validationWebhook.Close()
+		}()
+		go func() {
+			if err := validationWebhook.ListenAndServeTLS("", ""); err != nil {
+				logger.DPanicw("failed to start validation webhook server", zap.Error(err))
+			}
+		}()
+	}
+
 	return nil
 }

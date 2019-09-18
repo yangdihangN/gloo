@@ -1,4 +1,4 @@
-package check
+package debug
 
 import (
 	"bufio"
@@ -51,13 +51,13 @@ var _ = Describe("Debug", func() {
 
 	It("should be able to parse out all logs", func() {
 		logs := ioutil.NopCloser(strings.NewReader(testLogLevels))
-		filteredLogs := parseLogsFrom(logs, false)
+		filteredLogs := check.parseLogsFrom(logs, false)
 		Expect(filteredLogs.String()).To(Equal(testLogLevels + "\n"))
 	})
 
 	It("should be able to parse out error logs", func() {
 		logs := ioutil.NopCloser(strings.NewReader(testLogLevels))
-		filteredLogs := parseLogsFrom(logs, true)
+		filteredLogs := check.parseLogsFrom(logs, true)
 		Expect(filteredLogs.String()).To(Equal("{\"level\":\"error\",\"ts\":1}\n"))
 	})
 

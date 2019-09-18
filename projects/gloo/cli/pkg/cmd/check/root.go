@@ -46,42 +46,6 @@ func RootCmd(opts *options.Options, optionsFunc ...cliutils.OptionsFunc) *cobra.
 	return cmd
 }
 
-func DebugCmd(opts *options.Options, optionsFunc ...cliutils.OptionsFunc) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   constants.DEBUG_COMMAND.Use,
-		Short: constants.DEBUG_COMMAND.Short,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return constants.SubcommandError
-		},
-	}
-
-	cmd.AddCommand(DebugLogCmd(opts))
-	cliutils.ApplyOptions(cmd, optionsFunc)
-	return cmd
-}
-
-func DebugLogCmd(opts *options.Options, optionsFunc ...cliutils.OptionsFunc) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:     constants.DEBUG_LOG_COMMAND.Use,
-		Aliases: constants.DEBUG_LOG_COMMAND.Aliases,
-		Short:   constants.DEBUG_LOG_COMMAND.Short,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			err := DebugResources(opts, os.Stdout)
-			if err != nil {
-				return err
-			}
-			return nil
-		},
-	}
-
-	pflags := cmd.PersistentFlags()
-	flagutils.AddNamespaceFlag(pflags, &opts.Metadata.Namespace)
-	flagutils.AddFileFlag(cmd.PersistentFlags(), &opts.Top.File)
-	flagutils.AddDebugFlags(cmd.PersistentFlags(), &opts.Top)
-	cliutils.ApplyOptions(cmd, optionsFunc)
-	return cmd
-}
-
 func checkResources(opts *options.Options) (bool, error) {
 	err := checkConnection()
 	if err != nil {

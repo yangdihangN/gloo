@@ -1,4 +1,4 @@
-package check_test
+package debug_test
 
 import (
 	"github.com/solo-io/gloo/projects/gloo/cli/pkg/constants"

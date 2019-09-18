@@ -1,4 +1,4 @@
-package check_test
+package debug_test
 
 import (
 	"testing"

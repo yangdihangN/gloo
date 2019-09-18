@@ -1399,7 +1399,7 @@
   version = "v0.10.4"
 
 [[projects]]
-  digest = "1:957449f2169cc164f2fd2f73a81aa6bfa80b5a610c3bec8d8ff54d46eb21020b"
+  digest = "1:6bf9bdcdfd28c7a913d5bcbef6717e53fc6f650560f0b4ffe663816b3e2245ec"
   name = "github.com/solo-io/solo-kit"
   packages = [
     "api/external/kubernetes/configmap",
@@ -1452,6 +1452,7 @@
     "pkg/code-generator/model",
     "pkg/code-generator/parser",
     "pkg/errors",
+    "pkg/stats",
     "pkg/utils/fileutils",
     "pkg/utils/kubeutils",
     "pkg/utils/protoutils",
@@ -1460,8 +1461,8 @@
     "test/setup",
   ]
   pruneopts = "UT"
-  revision = "6f7e0f9898235c000129c61484d6546cba7915de"
-  version = "v0.10.17"
+  revision = "60015bef6312a5178344b53743183c846d3cc534"
+  version = "v0.10.20"
 
 [[projects]]
   digest = "1:3e39bafd6c2f4bf3c76c3bfd16a2e09e016510ad5db90dc02b88e2f565d6d595"
@@ -1523,7 +1524,7 @@
   version = "v0.2.1"
 
 [[projects]]
-  digest = "1:0133b905eb1f5f0249f5a209df2c38b2f8f5be59e10261b96e9216535ccdbd89"
+  digest = "1:50c904c2e8728fa293b8c166d78d9ebda0866a056fac84c436a8cd04b7808125"
   name = "go.opencensus.io"
   packages = [
     ".",
@@ -1548,8 +1549,8 @@
     "zpages/internal",
   ]
   pruneopts = "UT"
-  revision = "9c377598961b706d1542bd2d84d538b5094d596e"
-  version = "v0.22.0"
+  revision = "59d1ce35d30f3c25ba762169da2a37eab6ffa041"
+  version = "v0.22.1"
 
 [[projects]]
   digest = "1:3c1a69cdae3501bf75e76d0d86dc6f2b0a7421bc205c0cb7b96b19eed464a34d"
@@ -2792,6 +2793,7 @@
     "github.com/solo-io/solo-kit/pkg/code-generator/cmd",
     "github.com/solo-io/solo-kit/pkg/code-generator/docgen/options",
     "github.com/solo-io/solo-kit/pkg/errors",
+    "github.com/solo-io/solo-kit/pkg/stats",
     "github.com/solo-io/solo-kit/pkg/utils/kubeutils",
     "github.com/solo-io/solo-kit/pkg/utils/protoutils",
     "github.com/solo-io/solo-kit/test/helpers",

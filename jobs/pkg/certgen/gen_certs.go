@@ -10,7 +10,7 @@ import (
 
 func GenCerts(svcName, svcNamespace string) (*certutils.Certificates, error) {
 	return certutils.GenerateSelfSignedCertificate(cert.Config{
-		CommonName:   fmt.Sprintf("%s.%s", svcName, svcNamespace),
+		CommonName:   fmt.Sprintf("%s.%s.svc", svcName, svcNamespace),
 		Organization: []string{"solo.io"},
 		AltNames: cert.AltNames{
 			DNSNames: []string{

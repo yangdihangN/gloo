@@ -4,6 +4,8 @@ import (
 	"context"
 	"os"
 
+	v1 "k8s.io/api/core/v1"
+
 	"github.com/solo-io/gloo/jobs/pkg/run"
 	"github.com/solo-io/gloo/projects/gloo/cli/pkg/constants"
 	"github.com/solo-io/go-utils/contextutils"
@@ -44,11 +46,11 @@ func cmd(ctx context.Context) *cobra.Command {
 		"name of the secret to create which holds the certs")
 	pFlags.StringVar(&opts.SecretNamespace, "secret-namespace", podNamespace,
 		"namespace of the secret to create which holds the certs")
-	pFlags.StringVar(&opts.ServerCertSecretKey, "secret-cert-name", "cert.pem",
+	pFlags.StringVar(&opts.ServerCertSecretKey, "secret-cert-name", v1.TLSCertKey,
 		"name of the server cert as it will be stored in the secret data")
-	pFlags.StringVar(&opts.ServerKeySecretKey, "server-key-name", "key.pem",
+	pFlags.StringVar(&opts.ServerKeySecretKey, "server-key-name", v1.TLSPrivateKeyKey,
 		"name of the server key as it will be stored in the secret data")
-	pFlags.StringVar(&opts.ValidatingWebhookConfigurationName, "vwc-name", "",
+	pFlags.StringVar(&opts.ValidatingWebhookConfigurationName, "validating-webhook-configuration-name", "",
 		"name of the ValidatingWebhookConfiguration to patch with the generated CA bundle. leave empty to skip this step.")
 
 	return cmd

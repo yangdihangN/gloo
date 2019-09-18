@@ -6,11 +6,9 @@ import (
 	"fmt"
 	"io"
 	"strings"
-	"sync"
 
 	"github.com/solo-io/go-utils/tarutils"
 	"github.com/spf13/afero"
-
 	"golang.org/x/sync/errgroup"
 
 	"github.com/solo-io/gloo/projects/gloo/cli/pkg/cmd/options"
@@ -23,7 +21,7 @@ const (
 	Filename = "/tmp/gloo-system-logs.tgz"
 )
 
-func DebugResources(opts *options.Options) error {
+func DebugResources(opts *options.Options, w io.Writer) error {
 	responses, err := setup(opts)
 	if err != nil {
 		return err
@@ -36,63 +34,88 @@ func DebugResources(opts *options.Options) error {
 	}
 	defer fs.RemoveAll(dir)
 	storageClient := debugutils.NewFileStorageClient(fs)
-	if opts.Top.File == "" {
-		opts.Top.File = Filename
-	}
 
+	eg := errgroup.Group{}
 	for _, response := range responses {
 		response := response
-		scanner := bufio.NewScanner(response.Response)
-		logs := ""
-		for scanner.Scan() {
-			line := scanner.Text()
-			if opts.Top.ErrorsOnly {
-				in := []byte(line)
-				var raw map[string]interface{}
-				if err = json.Unmarshal(in, &raw); err != nil {
-					break
+		eg.Go(func() error {
+			defer response.Response.Close()
+			logs := parseLogsFrom(response.Response, opts.Top.ErrorsOnly)
+			if logs.Len() > 0 {
+				if opts.Top.Zip {
+					err = storageClient.Save(dir, &debugutils.StorageObject{
+						Resource: strings.NewReader(logs.String()),
+						Name:     response.ResourceId(),
+					})
+				} else {
+					metadata := fmt.Sprintf("\n\n%s\n", response.ResourceId())
+					err = displayLogs(w, metadata, logs)
+					if err != nil {
+						return err
+					}
 				}
-				if raw["level"] == "error" {
-					logs += line + "\n"
-				}
-			} else {
-				logs += line + "\n"
 			}
-		}
-		if logs != "" {
-			if opts.Top.Zip {
-				err = storageClient.Save(dir, &debugutils.StorageObject{
-					Resource: strings.NewReader(logs),
-					Name:     response.ResourceId(),
-				})
-				if err != nil {
-					return err
-				}
-			} else {
-				fmt.Printf("\n\n\nContainer name: %s\n", response.LogMeta.ContainerName)
-				fmt.Printf("ResourceID: %s\n\n", response.ResourceId())
-				fmt.Print(logs)
-			}
-		}
-
-		response.Response.Close()
+			return nil
+		})
+	}
+	err = eg.Wait()
+	if err != nil {
+		return err
 	}
 
 	if opts.Top.Zip {
-		tarball, err := fs.Create(opts.Top.File)
-		if err != nil {
-			return err
+		if opts.Top.File == "" {
+			opts.Top.File = Filename
 		}
-		if err := tarutils.Tar(dir, fs, tarball); err != nil {
-			return err
-		}
-		_, err = tarball.Seek(0, io.SeekStart)
+		err = zip(fs, dir, opts.Top.File)
 		if err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+func zip(fs afero.Fs, dir string, file string) error {
+	tarball, err := fs.Create(file)
+	if err != nil {
+		return err
+	}
+	if err := tarutils.Tar(dir, fs, tarball); err != nil {
+		return err
+	}
+	_, err = tarball.Seek(0, io.SeekStart)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func displayLogs(w io.Writer, metadata string, logs strings.Builder) error {
+	_, err := fmt.Fprintf(w, metadata+logs.String())
+	return err
+}
+
+func parseLogsFrom(r io.ReadCloser, errorsOnly bool) strings.Builder {
+	scanner := bufio.NewScanner(r)
+	logs := strings.Builder{}
+	for scanner.Scan() {
+		line := scanner.Text()
+		in := []byte(line)
+		var raw map[string]interface{}
+		if err := json.Unmarshal(in, &raw); err != nil {
+			// is an envoy log, ignore for now.
+			return strings.Builder{}
+		}
+		if errorsOnly {
+			if raw["level"] == "error" {
+				logs.WriteString(line + "\n")
+			}
+		} else {
+			logs.WriteString(line + "\n")
+		}
+	}
+	return logs
 }
 
 func setup(opts *options.Options) ([]*debugutils.LogsResponse, error) {
@@ -111,38 +134,9 @@ func setup(opts *options.Options) ([]*debugutils.LogsResponse, error) {
 		return nil, err
 	}
 	logRequests, err := logCollector.GetLogRequests(resources)
-
-	return logCollector.LogRequestBuilder.StreamLogs(logRequests)
-}
-
-//func saveZip(fs afero.Fs)
-
-func StreamLogs(requests []*debugutils.LogsRequest) ([]*debugutils.LogsResponse, error) {
-	result := make([]*debugutils.LogsResponse, 0, len(requests))
-	eg := errgroup.Group{}
-	lock := sync.Mutex{}
-	for _, request := range requests {
-		// necessary to shadow this variable so that it is unique within the goroutine
-		restRequest := request
-		eg.Go(func() error {
-			reader, err := restRequest.Request.Stream()
-			if err != nil {
-				return err
-			}
-			lock.Lock()
-			defer lock.Unlock()
-			result = append(result, &debugutils.LogsResponse{
-				LogMeta: debugutils.LogMeta{
-					PodMeta:       restRequest.PodMeta,
-					ContainerName: restRequest.ContainerName,
-				},
-				Response: reader,
-			})
-			return nil
-		})
-	}
-	if err := eg.Wait(); err != nil {
+	if err != nil {
 		return nil, err
 	}
-	return result, nil
+
+	return logCollector.LogRequestBuilder.StreamLogs(logRequests)
 }

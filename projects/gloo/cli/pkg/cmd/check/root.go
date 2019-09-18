@@ -51,7 +51,22 @@ func DebugCmd(opts *options.Options, optionsFunc ...cliutils.OptionsFunc) *cobra
 		Use:   constants.DEBUG_COMMAND.Use,
 		Short: constants.DEBUG_COMMAND.Short,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			err := DebugResources(opts)
+			return errors.Errorf(constants.SubcommandError)
+		},
+	}
+
+	cmd.AddCommand(DebugLogCmd(opts))
+	cliutils.ApplyOptions(cmd, optionsFunc)
+	return cmd
+}
+
+func DebugLogCmd(opts *options.Options, optionsFunc ...cliutils.OptionsFunc) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     constants.DEBUG_LOG_COMMAND.Use,
+		Aliases: constants.DEBUG_LOG_COMMAND.Aliases,
+		Short:   constants.DEBUG_LOG_COMMAND.Short,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			err := DebugResources(opts, os.Stdout)
 			if err != nil {
 				// Not returning error here because this shouldn't propagate as a standard CLI error, which prints usage.
 				fmt.Printf("Error!\n")
@@ -61,6 +76,7 @@ func DebugCmd(opts *options.Options, optionsFunc ...cliutils.OptionsFunc) *cobra
 			return nil
 		},
 	}
+
 	pflags := cmd.PersistentFlags()
 	flagutils.AddNamespaceFlag(pflags, &opts.Metadata.Namespace)
 	flagutils.AddFileFlag(cmd.PersistentFlags(), &opts.Top.File)

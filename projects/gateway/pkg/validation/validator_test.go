@@ -31,12 +31,10 @@ var _ = Describe("Validator", func() {
 		ns = "my-namespace"
 		v = NewValidator(t, vc, ns)
 	})
-	It("returns ready == false before sync called", func() {
-		Expect(v.Ready()).To(BeFalse())
+	It("returns error before sync called", func() {
 		Expect(v.ValidateVirtualService(nil, nil)).To(MatchError("Gateway validation is yet not available. Waiting for first snapshot"))
 		err := v.Sync(nil, &v2.ApiSnapshot{})
 		Expect(err).NotTo(HaveOccurred())
-		Expect(v.Ready()).To(BeTrue())
 	})
 
 	Context("validating a route table", func() {

@@ -37,7 +37,6 @@ const (
 
 type Validator interface {
 	v2.ApiSyncer
-	Ready() bool
 	ValidateGateway(ctx context.Context, gw *v2.Gateway) error
 	ValidateVirtualService(ctx context.Context, vs *v1.VirtualService) error
 	ValidateDeleteVirtualService(ctx context.Context, vs core.ResourceRef) error
@@ -58,7 +57,7 @@ func NewValidator(translator translator.Translator, validationClient validation.
 	return &validator{translator: translator, validationClient: validationClient, writeNamespace: writeNamespace}
 }
 
-func (v *validator) Ready() bool {
+func (v *validator) ready() bool {
 	return v.latestSnapshot != nil
 }
 
@@ -88,7 +87,7 @@ func (v *validator) Sync(ctx context.Context, snap *v2.ApiSnapshot) error {
 }
 
 func (v *validator) validateSnapshot(ctx context.Context, snap *v2.ApiSnapshot, proxyNames []string) error {
-	if !v.Ready() {
+	if !v.ready() {
 		return NotReadyErr
 	}
 
@@ -129,7 +128,7 @@ func (v *validator) validateSnapshot(ctx context.Context, snap *v2.ApiSnapshot, 
 }
 
 func (v *validator) ValidateVirtualService(ctx context.Context, vs *v1.VirtualService) error {
-	if !v.Ready() {
+	if !v.ready() {
 		return errors.Errorf("Gateway validation is yet not available. Waiting for first snapshot")
 	}
 	v.l.RLock()
@@ -166,7 +165,7 @@ func (v *validator) ValidateVirtualService(ctx context.Context, vs *v1.VirtualSe
 }
 
 func (v *validator) ValidateDeleteVirtualService(ctx context.Context, vsRef core.ResourceRef) error {
-	if !v.Ready() {
+	if !v.ready() {
 		return errors.Errorf("Gateway validation is yet not available. Waiting for first snapshot")
 	}
 	v.l.RLock()
@@ -207,7 +206,7 @@ func (v *validator) ValidateDeleteVirtualService(ctx context.Context, vsRef core
 }
 
 func (v *validator) ValidateRouteTable(ctx context.Context, rt *v1.RouteTable) error {
-	if !v.Ready() {
+	if !v.ready() {
 		return errors.Errorf("Gateway validation is yet not available. Waiting for first snapshot")
 	}
 	v.l.RLock()
@@ -244,7 +243,7 @@ func (v *validator) ValidateRouteTable(ctx context.Context, rt *v1.RouteTable) e
 }
 
 func (v *validator) ValidateDeleteRouteTable(ctx context.Context, rtRef core.ResourceRef) error {
-	if !v.Ready() {
+	if !v.ready() {
 		return errors.Errorf("Gateway validation is yet not available. Waiting for first snapshot")
 	}
 	v.l.RLock()
@@ -285,7 +284,7 @@ func (v *validator) ValidateDeleteRouteTable(ctx context.Context, rtRef core.Res
 }
 
 func (v *validator) ValidateGateway(ctx context.Context, gw *v2.Gateway) error {
-	if !v.Ready() {
+	if !v.ready() {
 		return errors.Errorf("Gateway validation is yet not available. Waiting for first snapshot")
 	}
 	v.l.RLock()

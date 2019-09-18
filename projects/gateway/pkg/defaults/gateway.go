@@ -88,13 +88,3 @@ Delete the '` + name + ` Virtual Service to get started.
 		},
 	}
 }
-
-func LocalUpstream(writeNamespace string) *gloov1.Upstream {
-	return &gloov1.Upstream{
-		Metadata: core.Metadata{
-			Name:      "upstream",
-			Namespace: writeNamespace,
-		},
-		UpstreamSpec: &gloov1.UpstreamSpec{},
-	}
-}

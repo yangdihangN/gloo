@@ -5,6 +5,7 @@ import (
 
 	"github.com/solo-io/gloo/test/samples"
 
+	validationgrpc "github.com/solo-io/gloo/projects/gloo/pkg/api/grpc/validation"
 	"github.com/solo-io/gloo/projects/gloo/pkg/utils/validation"
 
 	. "github.com/onsi/ginkgo"
@@ -66,8 +67,8 @@ var _ = Describe("Validation Server", func() {
 		proxy := params.Snapshot.Proxies[0]
 		s := NewValidationServer(translator)
 		_ = s.Sync(context.TODO(), params.Snapshot)
-		rpt, err := s.ValidateProxy(context.TODO(), proxy)
+		rpt, err := s.ValidateProxy(context.TODO(), &validationgrpc.ProxyValidationServiceRequest{Proxy: proxy})
 		Expect(err).NotTo(HaveOccurred())
-		Expect(rpt).To(Equal(validation.MakeReport(proxy)))
+		Expect(rpt).To(Equal(&validationgrpc.ProxyValidationServiceResponse{ProxyReport: validation.MakeReport(proxy)}))
 	})
 })

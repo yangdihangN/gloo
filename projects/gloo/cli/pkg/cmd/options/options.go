@@ -70,6 +70,7 @@ type Uninstall struct {
 
 type Proxy struct {
 	LocalCluster bool
+	LocalClusterName string
 	Name         string
 	Port         string
 	FollowLogs   bool

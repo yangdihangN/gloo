@@ -32,6 +32,8 @@ func urlCmd(opts *options.Options, optionsFunc ...cliutils.OptionsFunc) *cobra.C
 	cmd.PersistentFlags().BoolVarP(&opts.Proxy.LocalCluster, "local-cluster", "l", false,
 		"use when the target kubernetes cluster is running locally, e.g. in minikube or minishift. this will default "+
 			"to true if LoadBalanced services are not assigned external IPs by your cluster")
+	cmd.PersistentFlags().StringVar(&opts.Proxy.LocalClusterName, "local-cluster-name", "minikube",
+		"name of the locally running minikube cluster. this will default to 'minikube'")
 	cliutils.ApplyOptions(cmd, optionsFunc)
 	return cmd
 }
@@ -51,9 +53,12 @@ func addressCmd(opts *options.Options, optionsFunc ...cliutils.OptionsFunc) *cob
 		},
 	}
 
+
 	cmd.PersistentFlags().BoolVarP(&opts.Proxy.LocalCluster, "local-cluster", "l", false,
 		"use when the target kubernetes cluster is running locally, e.g. in minikube or minishift. this will default "+
 			"to true if LoadBalanced services are not assigned external IPs by your cluster")
+	cmd.PersistentFlags().StringVar(&opts.Proxy.LocalClusterName, "local-cluster-name", "minikube",
+		"name of the locally running minikube cluster. this will default to 'minikube'")
 	cliutils.ApplyOptions(cmd, optionsFunc)
 	return cmd
 }

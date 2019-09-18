@@ -1,4 +1,4 @@
-package syncer_test
+package debug_test
 
 import (
 	"testing"
@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func TestSyncer(t *testing.T) {
+func TestAdd(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Syncer Suite")
+	RunSpecs(t, "Debug Suite")
 }

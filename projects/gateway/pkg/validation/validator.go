@@ -114,13 +114,13 @@ func (v *validator) validateSnapshot(ctx context.Context, snap *v2.ApiSnapshot, 
 		}
 
 		// validate the proxy with gloo
-		proxyReport, err := v.validationClient.ValidateProxy(ctx, proxy)
+		proxyReport, err := v.validationClient.ValidateProxy(ctx, &validation.ProxyValidationServiceRequest{Proxy: proxy})
 		if err != nil {
 			contextutils.LoggerFrom(ctx).Errorw("failed to validate Proxy with Gloo validation server.", zap.Error(err))
 			return errors.Wrapf(err, "failed to validate Proxy with Gloo validation server")
 		}
 
-		if proxyErr := validationutils.GetProxyError(proxyReport); proxyErr != nil {
+		if proxyErr := validationutils.GetProxyError(proxyReport.ProxyReport); proxyErr != nil {
 			return errors.Wrapf(proxyErr, "rendered proxy had errors")
 		}
 	}

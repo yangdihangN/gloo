@@ -12,7 +12,6 @@ import (
 	"github.com/solo-io/gloo/projects/gateway/pkg/translator"
 	. "github.com/solo-io/gloo/projects/gateway/pkg/validation"
 	"github.com/solo-io/gloo/projects/gloo/pkg/api/grpc/validation"
-	v1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
 	validationutils "github.com/solo-io/gloo/projects/gloo/pkg/utils/validation"
 	"github.com/solo-io/gloo/test/samples"
 	"google.golang.org/grpc"
@@ -266,19 +265,20 @@ var _ = Describe("Validator", func() {
 })
 
 type mockValidationClient struct {
-	validateProxy func(ctx context.Context, in *v1.Proxy, opts ...grpc.CallOption) (*validation.ProxyReport, error)
+	validateProxy func(ctx context.Context, in *validation.ProxyValidationServiceRequest, opts ...grpc.CallOption) (*validation.ProxyValidationServiceResponse, error)
 }
 
-func (c *mockValidationClient) ValidateProxy(ctx context.Context, in *v1.Proxy, opts ...grpc.CallOption) (*validation.ProxyReport, error) {
+func (c *mockValidationClient) ValidateProxy(ctx context.Context, in *validation.ProxyValidationServiceRequest, opts ...grpc.CallOption) (*validation.ProxyValidationServiceResponse, error) {
 	return c.validateProxy(ctx, in, opts...)
 }
 
-func acceptProxy(ctx context.Context, in *v1.Proxy, opts ...grpc.CallOption) (report *validation.ProxyReport, e error) {
-	return validationutils.MakeReport(in), nil
+func acceptProxy(ctx context.Context, in *validation.ProxyValidationServiceRequest, opts ...grpc.CallOption) (*validation.ProxyValidationServiceResponse, error) {
+	return &validation.ProxyValidationServiceResponse{ProxyReport: validationutils.MakeReport(in.Proxy)}, nil
 }
 
-func failProxy(ctx context.Context, in *v1.Proxy, opts ...grpc.CallOption) (report *validation.ProxyReport, e error) {
-	rpt := validationutils.MakeReport(in)
+func failProxy(ctx context.Context, in *validation.ProxyValidationServiceRequest, opts ...grpc.CallOption) (*validation.ProxyValidationServiceResponse, error) {
+	rpt := validationutils.MakeReport(in.Proxy)
 	validationutils.AppendListenerError(rpt.ListenerReports[0], validation.ListenerReport_Error_SSLConfigError, "you should try harder next time")
-	return rpt, nil
+	return &validation.ProxyValidationServiceResponse{ProxyReport: rpt}, nil
+
 }

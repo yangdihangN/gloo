@@ -1334,9 +1334,10 @@
   version = "0.1.0"
 
 [[projects]]
-  digest = "1:97a18528525a1a90cb4aa7f73ed7cfa1a14fc1bf00f9b27cdbce35e1d724e090"
+  digest = "1:eb24fd78645358a7b326f8e73f5932b9aaafd092694c32a7bc8699188c2da499"
   name = "github.com/solo-io/go-utils"
   packages = [
+    "certutils",
     "changelogutils",
     "clicore/constants",
     "clidoc",
@@ -1371,8 +1372,8 @@
     "vfsutils",
   ]
   pruneopts = "UT"
-  revision = "acf7af80d72935c89b022e3c98ab68226a52eeda"
-  version = "v0.10.2"
+  revision = "ec34444ea5689495e39c873bed08ac7586473999"
+  version = "v0.10.5"
 
 [[projects]]
   digest = "1:957449f2169cc164f2fd2f73a81aa6bfa80b5a610c3bec8d8ff54d46eb21020b"
@@ -2602,6 +2603,7 @@
     "github.com/prometheus/prometheus/discovery/targetgroup",
     "github.com/solo-io/envoy-operator/pkg/downward",
     "github.com/solo-io/go-checkpoint",
+    "github.com/solo-io/go-utils/certutils",
     "github.com/solo-io/go-utils/clidoc",
     "github.com/solo-io/go-utils/cliutils",
     "github.com/solo-io/go-utils/contextutils",
@@ -2736,6 +2738,7 @@
     "k8s.io/client-go/rest",
     "k8s.io/client-go/tools/cache",
     "k8s.io/client-go/tools/clientcmd",
+    "k8s.io/client-go/util/cert",
     "k8s.io/client-go/util/homedir",
     "k8s.io/helm/pkg/chartutil",
     "k8s.io/helm/pkg/manifest",

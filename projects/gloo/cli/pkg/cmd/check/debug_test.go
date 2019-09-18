@@ -32,7 +32,6 @@ var _ = Describe("Debug", func() {
 
 		err = w.Flush()
 		Expect(err).NotTo(HaveOccurred())
-		//b.String()
 	})
 
 	It("should create a tar file at location specified in --file when --zip is enabled", func() {

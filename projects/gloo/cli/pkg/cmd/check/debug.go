@@ -48,8 +48,7 @@ func DebugResources(opts *options.Options, w io.Writer) error {
 						Name:     response.ResourceId(),
 					})
 				} else {
-					metadata := fmt.Sprintf("\n\n%s\n", response.ResourceId())
-					err = displayLogs(w, metadata, logs)
+					err = displayLogs(w, logs)
 					if err != nil {
 						return err
 					}
@@ -91,8 +90,8 @@ func zip(fs afero.Fs, dir string, file string) error {
 	return nil
 }
 
-func displayLogs(w io.Writer, metadata string, logs strings.Builder) error {
-	_, err := fmt.Fprintf(w, metadata+logs.String())
+func displayLogs(w io.Writer, logs strings.Builder) error {
+	_, err := fmt.Fprintf(w, logs.String())
 	return err
 }
 

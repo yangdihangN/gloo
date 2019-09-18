@@ -43,15 +43,16 @@ func skipValidationCheck(annotations map[string]string) bool {
 	return annotations[skipValidationKey] == "true"
 }
 
-func NewGatewayValidatingWebhook(ctx context.Context, validator validation.Validator, port int, serverCertPath, serverKeyPath string) (*http.Server, error) {
+func NewGatewayValidatingWebhook(ctx context.Context, validator validation.Validator, watchNamespaces []string, port int, serverCertPath, serverKeyPath string) (*http.Server, error) {
 	keyPair, err := tls.LoadX509KeyPair(serverCertPath, serverKeyPath)
 	if err != nil {
 		return nil, errors.Wrapf(err, "loading x509 key pair")
 	}
 
 	handler := &gatewayValidationWebhook{
-		ctx:       contextutils.WithLogger(ctx, "gateway-validation-webhook"),
-		validator: validator,
+		ctx:             contextutils.WithLogger(ctx, "gateway-validation-webhook"),
+		validator:       validator,
+		watchNamespaces: watchNamespaces,
 	}
 
 	mux := http.NewServeMux()
@@ -66,8 +67,9 @@ func NewGatewayValidatingWebhook(ctx context.Context, validator validation.Valid
 }
 
 type gatewayValidationWebhook struct {
-	ctx       context.Context
-	validator validation.Validator
+	ctx             context.Context
+	validator       validation.Validator
+	watchNamespaces []string
 }
 
 func (wh *gatewayValidationWebhook) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -150,6 +152,26 @@ func (wh *gatewayValidationWebhook) validate(ctx context.Context, review *v1beta
 	var valdationErr error
 
 	isDelete := req.Operation == v1beta1.Delete
+
+	// ensure the request applies to a watched namespace, if watchNamespaces is set
+	var validatingForNamespace bool
+	if len(wh.watchNamespaces) > 0 {
+		for _, ns := range wh.watchNamespaces {
+			if ns == metav1.NamespaceAll || ns == req.Namespace {
+				validatingForNamespace = true
+				break
+			}
+		}
+	} else {
+		validatingForNamespace = true
+	}
+
+	// if it's not our namespace, do not validate
+	if !validatingForNamespace {
+		return &v1beta1.AdmissionResponse{
+			Allowed: true,
+		}
+	}
 
 	ref := core.ResourceRef{
 		Namespace: req.Namespace,

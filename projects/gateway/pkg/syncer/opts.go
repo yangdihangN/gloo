@@ -6,15 +6,15 @@ import (
 )
 
 type Opts struct {
-	WriteNamespace          string
-	WatchNamespaces         []string
-	Gateways                factory.ResourceClientFactory
-	VirtualServices         factory.ResourceClientFactory
-	RouteTables             factory.ResourceClientFactory
-	Proxies                 factory.ResourceClientFactory
-	WatchOpts               clients.WatchOpts
-	DevMode                 bool
-	Validation              *ValidationOpts
+	WriteNamespace  string
+	WatchNamespaces []string
+	Gateways        factory.ResourceClientFactory
+	VirtualServices factory.ResourceClientFactory
+	RouteTables     factory.ResourceClientFactory
+	Proxies         factory.ResourceClientFactory
+	WatchOpts       clients.WatchOpts
+	DevMode         bool
+	Validation      *ValidationOpts
 }
 
 type ValidationOpts struct {

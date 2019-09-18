@@ -141,5 +141,37 @@ roleRef:
   kind: {{ include "gloo.roleKind" . }}
   name: gateway-resource-reader
   apiGroup: rbac.authorization.k8s.io
+
+
+
+{{- if .Values.gateway.validation }}
+{{- if .Values.gateway.certGenJob }}
+---
+kind: {{ include "gloo.roleKind" . }}Binding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: gateway-gencert-binding{{ include "gloo.rolebindingsuffix" . }}
+{{- if .Values.global.glooRbac.namespaced }}
+  namespace: {{ .Release.Namespace }}
+{{- end }}
+  labels:
+    app: gloo
+    gloo: rbac
+  annotations:
+    "helm.sh/hook": "pre-install"
+    "helm.sh/hook-weight": "5"
+subjects:
+- kind: ServiceAccount
+  name: gateway-gencerts
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: {{ include "gloo.roleKind" . }}
+  name: gateway-cert-create-vwc-update{{ include "gloo.rolebindingsuffix" . }}
+  apiGroup: rbac.authorization.k8s.io
+
+{{- end -}}
+{{- end -}}
+
+
 {{- end -}}
 {{- end -}}

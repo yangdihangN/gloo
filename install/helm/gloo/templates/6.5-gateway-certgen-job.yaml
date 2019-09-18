@@ -22,7 +22,7 @@ spec:
       labels:
         gloo: gateway
     spec:
-      serviceAccountName: gateway
+      serviceAccountName: gateway-certgen
       containers:
         - image: {{template "gloo.image" $image}}
           imagePullPolicy: {{ $image.pullPolicy }}
@@ -35,7 +35,7 @@ spec:
           args:
             - "--secret-name={{ .Values.gateway.validation.secretName }}"
             - "--svc-name=gateway"
-            - "--validating-webhook-configuration-name=gateway-validation-webhook"
+            - "--validating-webhook-configuration-name=gateway-validation-webhook-{{ .Release.Namespace }}"
       restartPolicy: {{ .Values.gateway.certGenJob.restartPolicy }}
 {{- end }}
 {{- end }}

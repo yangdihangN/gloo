@@ -2,6 +2,7 @@ package syncer
 
 import (
 	"context"
+
 	"go.uber.org/zap"
 
 	"github.com/solo-io/gloo/projects/gateway/pkg/services/k8sadmisssion"
@@ -223,6 +224,7 @@ func RunGateway(opts Opts) error {
 		validationWebhook, err := k8sadmisssion.NewGatewayValidatingWebhook(
 			ctx,
 			validationSyncer,
+			opts.WatchNamespaces,
 			opts.Validation.ValidatingWebhookPort,
 			opts.Validation.ValidatingWebhookCertPath,
 			opts.Validation.ValidatingWebhookKeyPath,

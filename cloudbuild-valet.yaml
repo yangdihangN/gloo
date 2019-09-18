@@ -30,7 +30,7 @@ steps:
   id: 'docker-login'
   waitFor: ['dep']
 
-- name: 'quay.io/solo-io/valet:dev'
+- name: 'quay.io/solo-io/valet:0.0.2'
   args: ['build', '-v', 'test-cloudbuild']
   env:
     - 'DOCKER_CONFIG=/workspace/docker-config'

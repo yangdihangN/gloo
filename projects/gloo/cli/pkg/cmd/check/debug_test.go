@@ -56,4 +56,10 @@ var _ = Describe("Debug", func() {
 		Expect(filteredLogs.String()).To(Equal(testLogLevels + "\n"))
 	})
 
+	It("should be able to parse out error logs", func() {
+		logs := ioutil.NopCloser(strings.NewReader(testLogLevels))
+		filteredLogs := parseLogsFrom(logs, true)
+		Expect(filteredLogs.String()).To(Equal("{\"level\":\"error\",\"ts\":1}\n"))
+	})
+
 })

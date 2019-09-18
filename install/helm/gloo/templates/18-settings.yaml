@@ -32,6 +32,11 @@ spec:
 {{- end }}
 {{- end }}
 
+{{- if .Values.gateway.validation }}
+  gateway:
+    validationServerAddr: gloo:{{ .Values.gloo.deployment.validationPort }}
+{{- end }}
+
 {{- if ne .Values.discovery.fdsMode "" }}
   discovery:
     fdsMode: {{.Values.discovery.fdsMode}}

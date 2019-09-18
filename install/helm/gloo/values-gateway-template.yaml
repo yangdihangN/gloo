@@ -19,6 +19,7 @@ gloo:
     image:
       repository: gloo
     xdsPort: 9977
+    validationPort: 9988
     replicas: 1
     stats: true
     runAsUser: 10101
@@ -34,6 +35,9 @@ discovery:
 
 gateway:
   enabled: true
+  validation:
+    port: 443
+    secretName: gateway-validation-certs
   upgrade: false
   deployment:
     image:
@@ -45,7 +49,12 @@ gateway:
     image:
       repository: gateway-conversion
     restartPolicy: Never
+  certGenJob:
+    image:
+      repository: certgen
+    restartPolicy: OnFailure
   proxyServiceAccount: {}
+
 gatewayProxies:
   gatewayProxyV2:
     stats: true

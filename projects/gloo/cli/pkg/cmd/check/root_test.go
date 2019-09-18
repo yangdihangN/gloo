@@ -1,6 +1,7 @@
 package check_test
 
 import (
+	"github.com/solo-io/gloo/projects/gloo/cli/pkg/constants"
 	"github.com/solo-io/gloo/projects/gloo/cli/pkg/helpers"
 	"github.com/solo-io/gloo/projects/gloo/cli/pkg/testutils"
 
@@ -16,7 +17,7 @@ var _ = Describe("Debug", func() {
 	It("should expect a subcommand after debug", func() {
 		err := testutils.Glooctl("debug")
 		Expect(err).To(HaveOccurred())
-		Expect(err.Error()).To(Equal("please select a subcommand"))
+		Expect(err).To(Equal(constants.SubcommandError))
 	})
 
 	It("should not crash with debug log command", func() {

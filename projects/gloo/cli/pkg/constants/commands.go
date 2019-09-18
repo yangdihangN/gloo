@@ -1,8 +1,13 @@
 package constants
 
-import "github.com/spf13/cobra"
+import (
+	"github.com/solo-io/go-utils/errors"
+	"github.com/spf13/cobra"
+)
 
-const SubcommandError = "please select a subcommand"
+var (
+	SubcommandError = errors.New("please select a subcommand")
+)
 
 var (
 	VIRTUAL_SERVICE_COMMAND = cobra.Command{

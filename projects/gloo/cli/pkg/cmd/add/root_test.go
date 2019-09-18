@@ -19,7 +19,7 @@ var _ = Describe("Root", func() {
 		It("should give clear error message", func() {
 			err := testutils.Glooctl("add")
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(Equal(constants.SubcommandError))
+			Expect(err).To(Equal(constants.SubcommandError))
 		})
 	})
 })

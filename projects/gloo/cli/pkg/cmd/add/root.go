@@ -1,7 +1,6 @@
 package add
 
 import (
-	"github.com/pkg/errors"
 	"github.com/solo-io/gloo/projects/gloo/cli/pkg/cmd/options"
 	"github.com/solo-io/gloo/projects/gloo/cli/pkg/constants"
 	"github.com/solo-io/gloo/projects/gloo/cli/pkg/flagutils"
@@ -28,7 +27,7 @@ func RootCmd(opts *options.Options, optionsFunc ...cliutils.OptionsFunc) *cobra.
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return errors.Errorf(constants.SubcommandError)
+			return constants.SubcommandError
 		},
 	}
 	pflags := cmd.PersistentFlags()

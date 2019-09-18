@@ -51,7 +51,7 @@ func DebugCmd(opts *options.Options, optionsFunc ...cliutils.OptionsFunc) *cobra
 		Use:   constants.DEBUG_COMMAND.Use,
 		Short: constants.DEBUG_COMMAND.Short,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return errors.Errorf(constants.SubcommandError)
+			return constants.SubcommandError
 		},
 	}
 
@@ -68,10 +68,7 @@ func DebugLogCmd(opts *options.Options, optionsFunc ...cliutils.OptionsFunc) *co
 		RunE: func(cmd *cobra.Command, args []string) error {
 			err := DebugResources(opts, os.Stdout)
 			if err != nil {
-				// Not returning error here because this shouldn't propagate as a standard CLI error, which prints usage.
-				fmt.Printf("Error!\n")
-				fmt.Printf("%s\n", err.Error())
-				os.Exit(1)
+				return err
 			}
 			return nil
 		},

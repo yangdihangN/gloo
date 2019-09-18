@@ -28,3 +28,5 @@ steps:
   waitFor: ['dep']
 
 timeout: 6600s
+options:
+  machineType: 'N1_HIGHCPU_32'

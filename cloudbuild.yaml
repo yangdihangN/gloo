@@ -134,6 +134,16 @@ steps:
   secretEnv: ['QUAY_IO_PASSWORD']
   id: 'docker-login'
   waitFor: ['dep']
+
+- name: 'quay.io/solo-io/valet:0.0.2'
+  args: ['build', '-v', '$COMMIT_SHA']
+  env:
+    - 'DOCKER_CONFIG=/workspace/docker-config'
+    - 'GOPATH=/workspace/gopath'
+    - 'HELM_HOME=/root/.helm'
+  dir: './gopath/src/github.com/solo-io/gloo'
+  waitFor: ['docker-login']
+
 - name: 'gcr.io/$PROJECT_ID/go-make:0.1.12'
   args: ['docker']
   env:

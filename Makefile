@@ -325,8 +325,8 @@ envoyinit: $(OUTPUT_DIR)/envoyinit-linux-amd64
 $(OUTPUT_DIR)/Dockerfile.envoyinit: $(ENVOYINIT_DIR)/Dockerfile
 	cp $< $@
 
-.PHONY: certgen-docker
-certgen-docker: $(OUTPUT_DIR)/envoyinit-linux-amd64 $(OUTPUT_DIR)/Dockerfile.envoyinit
+.PHONY: gloo-envoy-wrapper-docker
+gloo-envoy-wrapper-docker: $(OUTPUT_DIR)/envoyinit-linux-amd64 $(OUTPUT_DIR)/Dockerfile.envoyinit
 	docker build $(OUTPUT_DIR) -f $(OUTPUT_DIR)/Dockerfile.envoyinit \
 		-t quay.io/solo-io/certgen:$(VERSION) \
 		$(call get_test_tag,certgen)
@@ -336,7 +336,7 @@ certgen-docker: $(OUTPUT_DIR)/envoyinit-linux-amd64 $(OUTPUT_DIR)/Dockerfile.env
 # Certgen - Job for creating TLS Secrets in Kubernetes
 #----------------------------------------------------------------------------------
 
-CERTGEN_DIR=projects/certgen/cmd
+CERTGEN_DIR=jobs/certgen/cmd
 CERTGEN_SOURCES=$(call get_sources,$(CERTGEN_DIR))
 
 $(OUTPUT_DIR)/certgen-linux-amd64: $(CERTGEN_SOURCES)

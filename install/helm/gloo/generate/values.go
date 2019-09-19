@@ -144,8 +144,9 @@ type ServiceAccount struct {
 }
 
 type GatewayValidation struct {
-	SecretName string `json:"secretName" desc:"Name of the Kubernetes Secret containing TLS certificates used by the validation webhook server. This secret will be created by the certGen Job if the certGen Job is enabled."`
-	Port       int    `json:"port" desc:"the port on which the Gateway will serve [Admission Control Webhooks](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers)"`
+	SecretName    string `json:"secretName" desc:"Name of the Kubernetes Secret containing TLS certificates used by the validation webhook server. This secret will be created by the certGen Job if the certGen Job is enabled."`
+	Port          int    `json:"port" desc:"the port on which the Gateway will serve [Admission Control Webhooks](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers)"`
+	FailurePolicy string `json:"failurePolicy" desc:"failurePolicy defines how unrecognized errors from the Gateway validation endpoint are handled - allowed values are 'Ignore' or 'Fail'. Defaults to Ignore "`
 }
 
 type GatewayDeployment struct {

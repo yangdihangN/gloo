@@ -11,7 +11,7 @@ import (
 
 var (
 	GlooProxyValidationServerAddr = fmt.Sprintf("gloo:%v", defaults.GlooValidationPort)
-	ValidationWebhookBindPort     = 443
+	ValidationWebhookBindPort     = 8443
 	ValidationWebhookTlsCertPath  = filepath.Join("/etc", "gateway", "validation-certs", v1.TLSCertKey)
 	ValidationWebhookTlsKeyPath   = filepath.Join("/etc", "gateway", "validation-certs", v1.TLSPrivateKeyKey)
 )

@@ -23,5 +23,9 @@ webhooks:
         apiGroups: ["gateway.solo.io", "gateway.solo.io.v2"]
         apiVersions: ["v1", "v2"]
         resources: ["*"]
+{{- if .Values.gateway.validation.failurePolicy }}
+    failurePolicy: {{ .Values.gateway.validation.failurePolicy }}
+{{- end }}
+
 {{- end }}
 {{- end }}

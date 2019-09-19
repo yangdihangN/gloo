@@ -2,6 +2,8 @@ package syncer
 
 import (
 	"context"
+	"net/http"
+	"time"
 
 	"go.uber.org/zap"
 
@@ -186,7 +188,9 @@ func RunGateway(opts Opts) error {
 
 	var validationClient validation.ProxyValidationServiceClient
 	if opts.Validation != nil {
-		cc, err := grpc.DialContext(ctx, opts.Validation.ProxyValidationServerAddress, grpc.WithBlock(), grpc.WithInsecure())
+		contextutils.LoggerFrom(ctx).Infow("starting proxy validation client",
+			zap.String("validation_server", opts.Validation.ProxyValidationServerAddress))
+		cc, err := grpc.DialContext(ctx, opts.Validation.ProxyValidationServerAddress, grpc.WithInsecure())
 		if err != nil {
 			return errors.Wrapf(err, "failed to initialize grpc connection to validation server.")
 		}
@@ -220,6 +224,7 @@ func RunGateway(opts Opts) error {
 		}
 	}()
 
+	validationServerErr := make(chan error, 1)
 	if opts.Validation != nil {
 		validationWebhook, err := k8sadmisssion.NewGatewayValidatingWebhook(
 			ctx,
@@ -239,10 +244,26 @@ func RunGateway(opts Opts) error {
 			validationWebhook.Close()
 		}()
 		go func() {
-			if err := validationWebhook.ListenAndServeTLS("", ""); err != nil {
-				logger.DPanicw("failed to start validation webhook server", zap.Error(err))
+			contextutils.LoggerFrom(ctx).Infow("starting gateway validation server",
+				zap.Int("port", opts.Validation.ValidatingWebhookPort),
+				zap.String("cert", opts.Validation.ValidatingWebhookCertPath),
+				zap.String("key", opts.Validation.ValidatingWebhookKeyPath),
+			)
+			if err := validationWebhook.ListenAndServeTLS("", ""); err != nil && err != http.ErrServerClosed {
+				select {
+				case validationServerErr <- err:
+				default:
+					logger.DPanicw("failed to start validation webhook server", zap.Error(err))
+				}
 			}
 		}()
+	}
+
+	// give the validation server 100ms to start
+	select {
+	case err := <-validationServerErr:
+		return errors.Wrapf(err, "failed to start validation webhook server")
+	case <-time.After(time.Millisecond * 100):
 	}
 
 	return nil

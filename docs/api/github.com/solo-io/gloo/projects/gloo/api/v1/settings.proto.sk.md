@@ -431,7 +431,6 @@ options for configuring admission control / validation
 
 ```yaml
 "proxyValidationServerAddr": string
-"validationWebhookBindPort": int
 "validationWebhookTlsCert": string
 "validationWebhookTlsKey": string
 
@@ -440,7 +439,6 @@ options for configuring admission control / validation
 | Field | Type | Description | Default |
 | ----- | ---- | ----------- |----------- | 
 | `proxyValidationServerAddr` | `string` | Address of the `gloo` proxy validation grpc server. Defaults to `gloo:9988` This field is required in order to enable fine-grained admission control. |  |
-| `validationWebhookBindPort` | `int` | Bind Port for the Kubernetes Validating webhook, served by the Gateway. Defaults to `443`. |  |
 | `validationWebhookTlsCert` | `string` | Path to TLS Certificate for Kubernetes Validating webhook. Defaults to `/etc/gateway/validation-certs/tls.crt`. |  |
 | `validationWebhookTlsKey` | `string` | Path to TLS Private Key for Kubernetes Validating webhook. Defaults to `/etc/gateway/validation-certs/tls.key`. |  |
 

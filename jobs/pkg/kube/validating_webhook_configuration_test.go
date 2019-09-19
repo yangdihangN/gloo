@@ -2,7 +2,6 @@ package kube_test
 
 import (
 	"context"
-	"encoding/base64"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -41,7 +40,7 @@ var _ = Describe("ValidatingWebhookConfiguration", func() {
 		})
 		Expect(err).NotTo(HaveOccurred())
 
-		expectedVwc.Webhooks[1].ClientConfig.CABundle = []byte(base64.StdEncoding.EncodeToString(vwcCfg.CaBundle))
+		expectedVwc.Webhooks[1].ClientConfig.CABundle = vwcCfg.CaBundle
 
 		err = PatchValidatingWebhookConfiguration(context.TODO(), kube, vwcName, vwcCfg)
 		Expect(err).NotTo(HaveOccurred())

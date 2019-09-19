@@ -2,7 +2,6 @@ package kube
 
 import (
 	"context"
-	"encoding/base64"
 
 	"github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -56,8 +55,8 @@ func makeTlsSecret(args TlsSecret) *v1.Secret {
 		},
 		Type: v1.SecretTypeTLS,
 		Data: map[string][]byte{
-			args.PrivateKeyKey: []byte(base64.StdEncoding.EncodeToString(args.PrivateKey)),
-			args.CaCertKey:     []byte(base64.StdEncoding.EncodeToString(args.CaCert)),
+			args.PrivateKeyKey: args.PrivateKey,
+			args.CaCertKey:     args.CaCert,
 		},
 	}
 }

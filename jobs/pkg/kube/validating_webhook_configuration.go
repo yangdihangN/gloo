@@ -2,7 +2,6 @@ package kube
 
 import (
 	"context"
-	"encoding/base64"
 
 	"github.com/pkg/errors"
 	"github.com/solo-io/go-utils/contextutils"
@@ -36,7 +35,7 @@ func PatchValidatingWebhookConfiguration(ctx context.Context, kube kubernetes.In
 
 func setCaBundle(ctx context.Context, vwc *v1beta1.ValidatingWebhookConfiguration, cfg WebhookTlsConfig) {
 
-	encodedCaBundle := []byte(base64.StdEncoding.EncodeToString(cfg.CaBundle))
+	encodedCaBundle := cfg.CaBundle
 
 	for i, wh := range vwc.Webhooks {
 		if wh.ClientConfig.Service == nil {

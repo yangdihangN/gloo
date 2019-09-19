@@ -39,8 +39,8 @@ spec:
 
 {{- if .Values.gateway.validation }}
         ports:
-          - containerPort: {{ .Values.gateway.validation.port }}
-            name: http
+          - containerPort: 8443
+            name: https
             protocol: TCP
 {{- end}}
 

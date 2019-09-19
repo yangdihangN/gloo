@@ -30,14 +30,33 @@ steps:
   id: 'docker-login'
   waitFor: ['dep']
 
-- name: 'quay.io/solo-io/valet:0.0.2'
+- name: 'quay.io/solo-io/valet:0.0.4'
   args: ['build', '-v', 'test-cloudbuild']
   env:
     - 'DOCKER_CONFIG=/workspace/docker-config'
     - 'GOPATH=/workspace/gopath'
     - 'HELM_HOME=/root/.helm'
   dir: './gopath/src/github.com/solo-io/gloo'
+  id: 'valet-build'
   waitFor: ['docker-login']
+
+- name: 'quay.io/solo-io/valet:0.0.4'
+  args: ['ensure', '-f', 'valet-cluster.yaml', '--gke-cluster-name', 'gloo-test-cloudbuild']
+  dir: './gopath/src/github.com/solo-io/gloo'
+  id: 'valet-ensure-cluster'
+  waitFor: ['dep']
+
+- name: 'quay.io/solo-io/valet:0.0.4'
+  args: ['ensure', '-f', 'valet.yaml', '--gloo-version', 'test-cloudbuild', '--local-artifacts-dir', '_artifacts']
+  dir: './gopath/src/github.com/solo-io/gloo'
+  id: 'valet-ensure-gloo'
+  waitFor: ['valet-build', 'valet-ensure-cluster']
+
+- name: 'quay.io/solo-io/valet:0.0.4'
+  args: ['teardown', '-f', 'valet-cluster.yaml', '--gke-cluster-name', 'gloo-test-cloudbuild']
+  dir: './gopath/src/github.com/solo-io/gloo'
+  id: 'valet-teardown'
+  waitFor: ['valet-ensure-gloo']
 
 secrets:
   - kmsKeyName: projects/solo-public/locations/global/keyRings/build/cryptoKeys/build-key
@@ -45,5 +64,5 @@ secrets:
       QUAY_IO_PASSWORD: CiQABlzmSRx5TcOqbldXa/d/+bkmAfpNAWa3PTS06WvuloZL+vASaQCCPGSGCogonVZVEUNx4G3YJtWi18gSuNx4PvLe08q8xAflTMFkjsyQirAOK3Y2oCvgYwiw/ITcuydjkpMjxDygFyENXS9FKFJoAXHlPQE5qidKr8xxmxF5ezhmjGB0gjyjXIIkbSEnBg==
 
 timeout: 6600s
-#options:
-#  machineType: 'N1_HIGHCPU_32'
+options:
+  machineType: 'N1_HIGHCPU_32'

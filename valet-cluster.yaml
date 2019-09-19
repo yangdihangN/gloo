@@ -1,0 +1,5 @@
+cluster:
+  type: gke
+  gke:
+    location: us-central1-a
+    project: solo-public

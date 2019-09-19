@@ -133,14 +133,14 @@ func (wh *gatewayValidationWebhook) ServeHTTP(w http.ResponseWriter, r *http.Req
 		http.Error(w, fmt.Sprintf("could not write response: %v", err), http.StatusInternalServerError)
 	}
 
-	logger.Infof("responded with review: %#v", admissionResponse)
+	logger.Infof("responded with review: %#v", admissionReview)
 }
 func (wh *gatewayValidationWebhook) validate(ctx context.Context, review *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 	logger := contextutils.LoggerFrom(ctx)
 
 	req := review.Request
 
-	logger.Infow("AdmissionReview for Kind=%v, Namespace=%v Name=%v UID=%v patchOperation=%v UserInfo=%v",
+	logger.Infof("AdmissionReview for Kind=%v, Namespace=%v Name=%v UID=%v patchOperation=%v UserInfo=%v",
 		req.Kind, req.Namespace, req.Name, req.UID, req.Operation, req.UserInfo)
 
 	gvk := schema.GroupVersionKind{
@@ -203,7 +203,6 @@ func (wh *gatewayValidationWebhook) validate(ctx context.Context, review *v1beta
 		logger.Errorf("Validation failed: %v", valdationErr)
 		return &v1beta1.AdmissionResponse{
 			Result: &metav1.Status{
-				Reason:  metav1.StatusReasonInvalid,
 				Message: valdationErr.Error(),
 			},
 		}

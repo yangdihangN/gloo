@@ -10,7 +10,7 @@ kind: Job
 metadata:
   labels:
     app: gloo
-    gloo: gateway
+    gloo: gateway-certgen
   name: gateway-certgen
   namespace: {{ .Release.Namespace }}
   annotations:
@@ -20,7 +20,7 @@ spec:
   template:
     metadata:
       labels:
-        gloo: gateway
+        gloo: gateway-certgen
     spec:
       serviceAccountName: gateway-certgen
       containers:

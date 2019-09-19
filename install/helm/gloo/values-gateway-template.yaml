@@ -36,7 +36,6 @@ discovery:
 gateway:
   enabled: true
   validation:
-    port: 443
     secretName: gateway-validation-certs
   upgrade: false
   deployment:

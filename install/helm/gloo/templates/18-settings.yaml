@@ -36,7 +36,6 @@ spec:
   gateway:
     validation:
       proxyValidationServerAddr: gloo:{{ .Values.gloo.deployment.validationPort }}
-      validationWebhookBindPort: {{ .Values.gateway.validation.port }}
 {{- end }}
 
 {{- if ne .Values.discovery.fdsMode "" }}

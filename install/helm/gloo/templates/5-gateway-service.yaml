@@ -12,7 +12,7 @@ spec:
 {{- end }}
   ports:
   - name: https
-    port: {{ .Values.gateway.validation.port }}
+    port: 443
     protocol: TCP
     # this should map to projects/gateway/pkg/defaults.ValidationWebhookBindPort
     targetPort: 8443

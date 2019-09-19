@@ -313,14 +313,11 @@ message GatewayOptions {
         // This field is required in order to enable fine-grained admission control
         string proxy_validation_server_addr = 2;
 
-        // Bind Port for the Kubernetes Validating webhook, served by the Gateway. Defaults to `443`
-        uint32 validation_webhook_bind_port = 3;
-
         // Path to TLS Certificate for Kubernetes Validating webhook. Defaults to `/etc/gateway/validation-certs/tls.crt`
-        string validation_webhook_tls_cert = 4;
+        string validation_webhook_tls_cert = 3;
 
         // Path to TLS Private Key for Kubernetes Validating webhook. Defaults to `/etc/gateway/validation-certs/tls.key`
-        string validation_webhook_tls_key = 5;
+        string validation_webhook_tls_key = 4;
     }
 
     // if provided, the Gateway will perform[Dynamic Admission Control](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/)

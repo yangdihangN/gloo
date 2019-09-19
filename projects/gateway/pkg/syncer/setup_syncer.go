@@ -88,15 +88,12 @@ func Setup(ctx context.Context, kubeCache kube.SharedCache, inMemoryCache memory
 	if validationCfg != nil {
 		validation = &ValidationOpts{
 			ProxyValidationServerAddress: validationCfg.GetProxyValidationServerAddr(),
-			ValidatingWebhookPort:        int(validationCfg.GetValidationWebhookBindPort()),
+			ValidatingWebhookPort:        defaults.ValidationWebhookBindPort,
 			ValidatingWebhookCertPath:    validationCfg.GetValidationWebhookTlsCert(),
 			ValidatingWebhookKeyPath:     validationCfg.GetValidationWebhookTlsKey(),
 		}
 		if validation.ProxyValidationServerAddress == "" {
 			validation.ProxyValidationServerAddress = defaults.GlooProxyValidationServerAddr
-		}
-		if validation.ValidatingWebhookPort == 0 {
-			validation.ValidatingWebhookPort = defaults.ValidationWebhookBindPort
 		}
 		if validation.ValidatingWebhookCertPath == "" {
 			validation.ValidatingWebhookCertPath = defaults.ValidationWebhookTlsCertPath

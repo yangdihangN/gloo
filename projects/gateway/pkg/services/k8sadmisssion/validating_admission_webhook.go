@@ -8,6 +8,8 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	validationapi "github.com/solo-io/gloo/projects/gloo/pkg/api/grpc/validation"
+
 	"github.com/pkg/errors"
 	gwv1 "github.com/solo-io/gloo/projects/gateway/pkg/api/v1"
 	v2 "github.com/solo-io/gloo/projects/gateway/pkg/api/v2"
@@ -149,7 +151,7 @@ func (wh *gatewayValidationWebhook) validate(ctx context.Context, review *v1beta
 		Kind:    req.Kind.Kind,
 	}
 
-	var valdationErr error
+	var validationErr error
 
 	isDelete := req.Operation == v1beta1.Delete
 
@@ -178,83 +180,143 @@ func (wh *gatewayValidationWebhook) validate(ctx context.Context, review *v1beta
 		Name:      req.Name,
 	}
 
+	var proxyReports validation.ProxyReports
 	switch gvk {
 	case v2.GatewayGVK:
 		if isDelete {
 			// we don't validate gateway deletion
 			break
 		}
-		valdationErr = wh.validateGateway(ctx, req.Object.Raw)
+		proxyReports, validationErr = wh.validateGateway(ctx, req.Object.Raw)
 	case gwv1.VirtualServiceGVK:
 		if isDelete {
-			valdationErr = wh.validator.ValidateDeleteVirtualService(ctx, ref)
+			validationErr = wh.validator.ValidateDeleteVirtualService(ctx, ref)
 		} else {
-			valdationErr = wh.validateVirtualService(ctx, req.Object.Raw)
+			proxyReports, validationErr = wh.validateVirtualService(ctx, req.Object.Raw)
 		}
 	case gwv1.RouteTableGVK:
 		if isDelete {
-			valdationErr = wh.validator.ValidateDeleteRouteTable(ctx, ref)
+			validationErr = wh.validator.ValidateDeleteRouteTable(ctx, ref)
 		} else {
-			valdationErr = wh.validateRouteTable(ctx, req.Object.Raw)
+			proxyReports, validationErr = wh.validateRouteTable(ctx, req.Object.Raw)
 		}
 	}
 
-	if valdationErr != nil {
-		logger.Errorf("Validation failed: %v", valdationErr)
+	if validationErr == nil {
+		logger.Debug("Succeeded")
+
 		return &v1beta1.AdmissionResponse{
-			Result: &metav1.Status{
-				Message: valdationErr.Error(),
-			},
+			Allowed: true,
 		}
 	}
 
-	logger.Debug("Succeeded")
+	logger.Errorf("Validation failed: %v", validationErr)
+
+	details := &metav1.StatusDetails{
+		Name:  req.Name,
+		Group: gvk.Group,
+		Kind:  gvk.Kind,
+	}
+
+	for _, proxyReport := range proxyReports {
+		for _, listenerReport := range proxyReport.ListenerReports {
+			for _, err := range listenerReport.Errors {
+				details.Causes = append(details.Causes, metav1.StatusCause{
+					Message: fmt.Sprintf("Listener Error %v: %v", err.Type.String(), err.Reason),
+				})
+			}
+			switch listener := listenerReport.ListenerTypeReport.(type) {
+			case *validationapi.ListenerReport_HttpListenerReport:
+				for _, err := range listener.HttpListenerReport.Errors {
+					details.Causes = append(details.Causes, metav1.StatusCause{
+						Message: fmt.Sprintf("HTTPListener Error %v: %v", err.Type.String(), err.Reason),
+					})
+				}
+				for _, vh := range listener.HttpListenerReport.VirtualHostReports {
+					for _, err := range vh.Errors {
+						details.Causes = append(details.Causes, metav1.StatusCause{
+							Message: fmt.Sprintf("VirtualHost Error %v: %v", err.Type.String(), err.Reason),
+						})
+					}
+					for _, r := range vh.RouteReports {
+						for _, err := range r.Errors {
+							details.Causes = append(details.Causes, metav1.StatusCause{
+								Message: fmt.Sprintf("Route Error %v: %v", err.Type.String(), err.Reason),
+							})
+						}
+					}
+				}
+			case *validationapi.ListenerReport_TcpListenerReport:
+				for _, err := range listener.TcpListenerReport.Errors {
+					details.Causes = append(details.Causes, metav1.StatusCause{
+						Message: fmt.Sprintf("TCPListener Error %v: %v", err.Type.String(), err.Reason),
+					})
+				}
+				for _, host := range listener.TcpListenerReport.TcpHostReports {
+					for _, err := range host.Errors {
+						details.Causes = append(details.Causes, metav1.StatusCause{
+							Message: fmt.Sprintf("TcpHost Error %v: %v", err.Type.String(), err.Reason),
+						})
+					}
+				}
+			}
+		}
+	}
+
+	if len(proxyReports) > 0 {
+		// no need to duplicate the error message
+		validationErr = errors.Errorf("resource incompatible with current Gloo snapshot")
+	}
 
 	return &v1beta1.AdmissionResponse{
-		Allowed: true,
+		Result: &metav1.Status{
+			Message: validationErr.Error(),
+			Details: details,
+		},
 	}
+
 }
 
-func (wh *gatewayValidationWebhook) validateGateway(ctx context.Context, rawJson []byte) error {
+func (wh *gatewayValidationWebhook) validateGateway(ctx context.Context, rawJson []byte) (validation.ProxyReports, error) {
 	var gw v2.Gateway
 	if err := unmarshalResource(rawJson, &gw); err != nil {
-		return errors.Wrapf(err, "could not unmarshal raw object")
+		return nil, errors.Wrapf(err, "could not unmarshal raw object")
 	}
 	if skipValidationCheck(gw.Metadata.Annotations) {
-		return nil
+		return nil, nil
 	}
-	if err := wh.validator.ValidateGateway(ctx, &gw); err != nil {
-		return errors.Wrapf(err, "Validating %T failed", gw)
+	if proxyReports, err := wh.validator.ValidateGateway(ctx, &gw); err != nil {
+		return proxyReports, errors.Wrapf(err, "Validating %T failed", gw)
 	}
-	return nil
+	return nil, nil
 }
 
-func (wh *gatewayValidationWebhook) validateVirtualService(ctx context.Context, rawJson []byte) error {
+func (wh *gatewayValidationWebhook) validateVirtualService(ctx context.Context, rawJson []byte) (validation.ProxyReports, error) {
 	var vs gwv1.VirtualService
 	if err := unmarshalResource(rawJson, &vs); err != nil {
-		return errors.Wrapf(err, "could not unmarshal raw object")
+		return nil, errors.Wrapf(err, "could not unmarshal raw object")
 	}
 	if skipValidationCheck(vs.Metadata.Annotations) {
-		return nil
+		return nil, nil
 	}
-	if err := wh.validator.ValidateVirtualService(ctx, &vs); err != nil {
-		return errors.Wrapf(err, "Validating %T failed", vs)
+	if proxyReports, err := wh.validator.ValidateVirtualService(ctx, &vs); err != nil {
+		return proxyReports, errors.Wrapf(err, "Validating %T failed", vs)
 	}
-	return nil
+	return nil, nil
 }
 
-func (wh *gatewayValidationWebhook) validateRouteTable(ctx context.Context, rawJson []byte) error {
+func (wh *gatewayValidationWebhook) validateRouteTable(ctx context.Context, rawJson []byte) (validation.ProxyReports, error) {
 	var rt gwv1.RouteTable
 	if err := unmarshalResource(rawJson, &rt); err != nil {
-		return errors.Wrapf(err, "could not unmarshal raw object")
+		return nil, errors.Wrapf(err, "could not unmarshal raw object")
 	}
 	if skipValidationCheck(rt.Metadata.Annotations) {
-		return nil
+		return nil, nil
 	}
-	if err := wh.validator.ValidateRouteTable(ctx, &rt); err != nil {
-		return errors.Wrapf(err, "Validating %T failed", rt)
+	if proxyReports, err := wh.validator.ValidateRouteTable(ctx, &rt); err != nil {
+		return proxyReports, errors.Wrapf(err, "Validating %T failed", rt)
 	}
-	return nil
+	return nil, nil
 }
 
 func unmarshalResource(kubeJson []byte, resource resources.Resource) error {

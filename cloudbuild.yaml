@@ -148,6 +148,18 @@ steps:
 
 # Run regression tests
 - name: 'gcr.io/$PROJECT_ID/go-make:0.1.12'
+  args: ['glooctl']
+  env:
+    - 'PROJECT_ROOT=github.com/solo-io/gloo'
+    - 'GOPATH=/workspace/gopath'
+    - 'BUILD_ID=$BUILD_ID'
+    - 'GCLOUD_PROJECT_ID=$PROJECT_ID'
+    - 'HELM_HOME=/root/.helm'
+    - 'TAGGED_VERSION=$TAG_NAME'
+  dir: './gopath/src/github.com/solo-io/gloo'
+  waitFor: ['compile', 'docker-login']
+  id: 'glooctl'
+- name: 'gcr.io/$PROJECT_ID/go-make:0.1.12'
   args: ['build-test-assets']
   env:
     - 'PROJECT_ROOT=github.com/solo-io/gloo'
@@ -167,8 +179,15 @@ steps:
     - 'CLOUDSDK_CONTAINER_CLUSTER=test-cluster-roles'
     - 'RUN_KUBE2E_TESTS=1'
   dir: './gopath/src/github.com/solo-io/gloo'
-  args: ['-r', 'test/kube2e', '-failFast', '-trace', '-progress']
-  waitFor: ['build-test-assets', 'set-zone']
+  entrypoint: 'bash'
+  args:
+      - '-c'
+      - |
+        RES="$$(ginkgo -r test/kube2e -failFast -trace -progress)"
+        if [ "$$RES" -ne 0 ] ; then
+          _output/glooctl debug log --errors-only
+        fi
+  waitFor: ['glooctl', 'build-test-assets', 'set-zone']
   id: 'regression-tests'
 - name: gcr.io/cloud-builders/gcloud
   env:
@@ -187,8 +206,15 @@ steps:
     - 'RUN_KUBE2E_TESTS=1'
     - 'CLUSTER_LOCK_TESTS=1'
   dir: './gopath/src/github.com/solo-io/gloo'
-  args: ['-r', 'test/kube2e', '-failFast', '-trace', '-progress']
-  waitFor: ['build-test-assets', 'get-credentials']
+  entrypoint: 'bash'
+  args:
+    - '-c'
+    - |
+      RES="$$(ginkgo -r test/kube2e -failFast -trace -progress)"
+      if [ "$$RES" -ne 0 ] ; then
+        _output/glooctl debug log --errors-only
+      fi
+  waitFor: ['glooctl', 'build-test-assets', 'get-credentials']
   id: 'regression-tests-cluster-lock'
 
 # 1) Run make targets to push docker images, compile manifests, produce release artifacts, deploy docs

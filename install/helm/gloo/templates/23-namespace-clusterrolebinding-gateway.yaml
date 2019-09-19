@@ -150,7 +150,7 @@ roleRef:
 kind: {{ include "gloo.roleKind" . }}Binding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: gateway-gencert-binding{{ include "gloo.rolebindingsuffix" . }}
+  name: gateway-secret-create-vwc-update{{ include "gloo.rolebindingsuffix" . }}
 {{- if .Values.global.glooRbac.namespaced }}
   namespace: {{ .Release.Namespace }}
 {{- end }}
@@ -162,11 +162,11 @@ metadata:
     "helm.sh/hook-weight": "5"
 subjects:
 - kind: ServiceAccount
-  name: gateway-gencerts
+  name: gateway-certgen
   namespace: {{ .Release.Namespace }}
 roleRef:
   kind: {{ include "gloo.roleKind" . }}
-  name: gateway-cert-create-vwc-update{{ include "gloo.rolebindingsuffix" . }}
+  name: gateway-secret-create-vwc-update{{ include "gloo.rolebindingsuffix" . }}
   apiGroup: rbac.authorization.k8s.io
 
 {{- end -}}

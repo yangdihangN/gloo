@@ -4,6 +4,9 @@ import (
 	"context"
 	"encoding/base64"
 
+	"github.com/pkg/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+
 	"github.com/solo-io/go-utils/contextutils"
 	"go.uber.org/zap"
 	v1 "k8s.io/api/core/v1"
@@ -20,10 +23,29 @@ type TlsSecret struct {
 func CreateTlsSecret(ctx context.Context, kube kubernetes.Interface, secretCfg TlsSecret) error {
 	secret := makeTlsSecret(secretCfg)
 
+	secretClient := kube.CoreV1().Secrets(secret.Namespace)
+
 	contextutils.LoggerFrom(ctx).Infow("creating TLS secret", zap.String("secret", secret.Name))
 
-	_, err := kube.CoreV1().Secrets(secretCfg.SecretNamespace).Create(secret)
-	return err
+	if _, err := secretClient.Create(secret); err != nil {
+		if apierrors.IsAlreadyExists(err) {
+			contextutils.LoggerFrom(ctx).Infow("existing TLS secret found, attempting to update", zap.String("secret", secret.Name))
+
+			existing, err := secretClient.Get(secret.Name, metav1.GetOptions{})
+			if err != nil {
+				return errors.Wrapf(err, "failed to retrieve existing secret after receiving AlreadyExists error on Create")
+			}
+			secret.ResourceVersion = existing.ResourceVersion
+
+			if _, err := secretClient.Update(secret); err != nil {
+				return errors.Wrapf(err, "failed updating existing secret")
+			}
+			return nil
+		}
+		return errors.Wrapf(err, "failed creating secret")
+	}
+
+	return nil
 }
 
 func makeTlsSecret(args TlsSecret) *v1.Secret {

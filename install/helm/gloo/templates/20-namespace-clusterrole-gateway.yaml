@@ -147,7 +147,7 @@ rules:
 kind: {{ include "gloo.roleKind" . }}
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-    name: gateway-cert-create-vwc-update{{ include "gloo.rolebindingsuffix" . }}
+    name: gateway-secret-create-vwc-update{{ include "gloo.rolebindingsuffix" . }}
 {{- if .Values.global.glooRbac.namespaced }}
     namespace: {{ .Release.Namespace }}
 {{- end }}
@@ -160,10 +160,10 @@ metadata:
 rules:
 - apiGroups: [""]
   resources: ["secrets"]
-  verbs: ["create"]
+  verbs: ["create", "get", "update"]
 - apiGroups: ["admissionregistration.k8s.io"]
   resources: ["validatingwebhookconfigurations"]
-  verbs: ["get", "list", "update"]
+  verbs: ["get", "update"]
 
 {{- end -}}
 {{- end -}}

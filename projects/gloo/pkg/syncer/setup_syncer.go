@@ -2,6 +2,7 @@ package syncer
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"strconv"
 	"strings"
@@ -136,9 +137,9 @@ func NewValidationServer(grpcServer *grpc.Server, bindAddr net.Addr, start bool)
 	}
 }
 
-const (
-	DefaultXdsBindAddr        = "0.0.0.0:9977"
-	DefaultValidationBindAddr = "0.0.0.0:9988"
+var (
+	DefaultXdsBindAddr        = fmt.Sprintf("0.0.0.0:%v", defaults.GlooXdsPort)
+	DefaultValidationBindAddr = fmt.Sprintf("0.0.0.0:%v", defaults.GlooValidationPort)
 )
 
 func getAddr(addr string) (*net.TCPAddr, error) {

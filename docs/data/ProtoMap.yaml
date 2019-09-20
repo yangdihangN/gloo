@@ -1,0 +1,2 @@
+Rel:
+  cors.plugins.gloo.solo.io: "api/github.com/solo-io/gloo/projects/gloo/api/v1/plugins/cors/cors.proto.sk/"

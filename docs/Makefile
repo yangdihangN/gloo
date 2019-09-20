@@ -4,6 +4,7 @@
 
 site:
 	if [ ! -d themes/hugo-theme-soloio ]; then git clone https://github.com/solo-io/hugo-theme-soloio themes/hugo-theme-soloio && git --git-dir=themes/hugo-theme-soloio/.git checkout b49aed308e7c03edd2640fe52afd745d37fa0cbc; fi
+	cp pending-theme/shortcodes/protobuf.html themes/hugo-theme-soloio/layouts/shortcodes/
 	hugo --config docs.toml
 
 .PHONY: deploy-site

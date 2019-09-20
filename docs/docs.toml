@@ -23,7 +23,7 @@ pygmentsUseClassic = false
 pygmentsStyle = "manni"
 
 # dev only! (useful for viewing site while some links are broken during an update)
-refLinksErrorLevel = "warning"
+# refLinksErrorLevel = "warning"
 
 # For search functionality
 [outputs]

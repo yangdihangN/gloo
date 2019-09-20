@@ -293,7 +293,7 @@
   version = "v1.12.0"
 
 [[projects]]
-  digest = "1:804fc6d7fa7cbe63ab06204ddcd7dc9aa316a246c362ee41f15200e1343fd544"
+  digest = "1:fe9e9f3c3b8fd35b5e1ed990ce28c26709bcc38ed605a2b5a483650c9df3bfd1"
   name = "github.com/envoyproxy/go-control-plane"
   packages = [
     "envoy/api/v2",
@@ -308,6 +308,7 @@
     "envoy/config/filter/accesslog/v2",
     "envoy/config/filter/fault/v2",
     "envoy/config/filter/http/fault/v2",
+    "envoy/config/filter/http/health_check/v2",
     "envoy/config/filter/http/transcoder/v2",
     "envoy/config/filter/network/http_connection_manager/v2",
     "envoy/config/filter/network/tcp_proxy/v2",
@@ -1357,7 +1358,7 @@
   version = "0.1.0"
 
 [[projects]]
-  digest = "1:3de4485b67c973387f2800dc85ab37627f0e6acd21bef62cd2e2b1e869f4ec6a"
+  digest = "1:b0c154f152de558f64289873904ce99909bb0e9200c342ac04e214b73ba95c7a"
   name = "github.com/solo-io/go-utils"
   packages = [
     "certutils",
@@ -1392,12 +1393,14 @@
     "testutils/helper",
     "testutils/kube",
     "versionutils",
+    "versionutils/dep",
+    "versionutils/git",
     "versionutils/kubeapi",
     "vfsutils",
   ]
   pruneopts = "UT"
-  revision = "ec34444ea5689495e39c873bed08ac7586473999"
-  version = "v0.10.5"
+  revision = "5dc802895644ff6f736b11a64e54a06f3ba1dd5e"
+  version = "v0.10.8"
 
 [[projects]]
   digest = "1:6bf9bdcdfd28c7a913d5bcbef6717e53fc6f650560f0b4ffe663816b3e2245ec"
@@ -2683,6 +2686,7 @@
     "github.com/envoyproxy/go-control-plane/envoy/config/filter/accesslog/v2",
     "github.com/envoyproxy/go-control-plane/envoy/config/filter/fault/v2",
     "github.com/envoyproxy/go-control-plane/envoy/config/filter/http/fault/v2",
+    "github.com/envoyproxy/go-control-plane/envoy/config/filter/http/health_check/v2",
     "github.com/envoyproxy/go-control-plane/envoy/config/filter/http/transcoder/v2",
     "github.com/envoyproxy/go-control-plane/envoy/config/filter/network/http_connection_manager/v2",
     "github.com/envoyproxy/go-control-plane/envoy/config/filter/network/tcp_proxy/v2",
@@ -2767,6 +2771,8 @@
     "github.com/solo-io/go-utils/testutils/exec",
     "github.com/solo-io/go-utils/testutils/helper",
     "github.com/solo-io/go-utils/versionutils",
+    "github.com/solo-io/go-utils/versionutils/dep",
+    "github.com/solo-io/go-utils/versionutils/git",
     "github.com/solo-io/solo-kit/api/external/kubernetes/namespace",
     "github.com/solo-io/solo-kit/pkg/api/external/kubernetes/namespace",
     "github.com/solo-io/solo-kit/pkg/api/external/kubernetes/service",

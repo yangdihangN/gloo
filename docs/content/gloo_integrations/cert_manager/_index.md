@@ -19,7 +19,7 @@ Kubernets cluster (this document was test with minikube and linux, other OSes\cl
 ## Setup your DNS
 In this example we used the domain name 'test.solo.io'. We've set an A record for this domain to resolve to the result of `minikube ip` so we can test with minikube.
 
-While you can update your aws dns settings throught the AWS UI, I find performing changes through
+While you can update your aws dns settings through the AWS UI, I find performing changes through
 the command line faster. Update the dns record through the aws command line tool (remember to replace *HOSTED_ZONE* and *RECORD* with your values):
 
 ```shell

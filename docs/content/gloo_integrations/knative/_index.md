@@ -12,7 +12,7 @@ It assumes you've already followed the [installation guide for Gloo and Knative]
 
 ### Before you start
 
-Gloo supports the features and tutorials that can be found in the [Knative documenation](https://knative.dev). 
+Gloo supports the features and tutorials that can be found in the [Knative documentation](https://knative.dev). 
 
 When following tutorials in the Knative documentation, please note that you'll need to use the address of the `knative-external-proxy` service in `gloo-system` for requests to knative services rather than the `knative-ingressgateway` in `istio-system`, which is the default assumed by those tutorials.
 

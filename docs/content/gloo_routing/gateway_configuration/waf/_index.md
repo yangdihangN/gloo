@@ -12,7 +12,7 @@ Gloo now suppports The popular Web Appplication Firewall framework/ruleset [ModS
 Gloo Enterprise now includes the ability to enable the ModSecurity Web Application Firewall for any incoming and outgoing HTTP connections. The OWASP Core Rule Set is included by default and can be toggled on and off easily, as well as the ability to add or create custom rule sets. More information on the rule sets, and the rules language generally can be found [here](https://www.modsecurity.org/rules.html).
 
 ## **Why Mod Security**
-API Gateways act as a control point for the outside world to access the various application services running in your environment. A Web Application Firewall offers a standard way to to inspect and handle all incoming traffic. Mod Security is one such firewall. ModSecurity uses a simple rules language to interpert and process incoming http traffic. There are many rule sets publically available, such as the [OWASP Core Rule Set](https://github.com/SpiderLabs/owasp-modsecurity-crs).
+API Gateways act as a control point for the outside world to access the various application services running in your environment. A Web Application Firewall offers a standard way to to inspect and handle all incoming traffic. Mod Security is one such firewall. ModSecurity uses a simple rules language to interpret and process incoming http traffic. There are many rule sets publically available, such as the [OWASP Core Rule Set](https://github.com/SpiderLabs/owasp-modsecurity-crs).
 
 ### Configuring WAF in Gloo
 ModSecurity rule sets are defined in gloo in one of 3 places:
@@ -118,7 +118,7 @@ curl -v -H user-agent:scammer ${GATEWAY_URL}/sample-route-1
 < server: envoy
 <
 * Connection #0 to host IP_REDACTED left intact
-ModSecurity: intervention occured
+ModSecurity: intervention occurred
 ```
 
 As can be seen above from the curl output, the request was rejected by the waf filter, and the status 403 was returned.
@@ -214,6 +214,6 @@ curl -v  ${GATEWAY_URL}/sample-route-1
 < server: envoy
 <
 * Connection #0 to host IP_REDACTED left intact
-ModSecurity: intervention occured
+ModSecurity: intervention occurred
 ```
 There are a couple important things to note from the config above. The `coreRuleSet` object is the first. By setting this object to non-nil the `coreRuleSet` is automatically applied to the gateway/vhost/route is has been added to. The Core Rule Set can be applied manually as well if a specific version of it is required which we do not mount into the container. The second thing to note is the config string. This config string is an important part of configuring the core rule set, an example of which can be found [here](https://github.com/SpiderLabs/owasp-modsecurity-crs/blob/v3.2/dev/crs-setup.conf.example).

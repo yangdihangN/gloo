@@ -95,7 +95,7 @@ spec:
             duration: "%DURATION%"
 {{< / highlight >}}
 
-The majority is the same as the above, as the gateway has the same config, the differece exists in the formatting of the file sink. Instead of a simple string formatting directive, this config accepts an object value which is transformed by envoy into JSON formatted logs. The object inside of the `jsonFormat` field is interperted as a JSON object. This object consists of nested json objects as well as keys which point to individual formatting directives. More documentation on JSON formatting can be found [here](https://www.envoyproxy.io/docs/envoy/v1.10.0/configuration/access_log#format-dictionaries).
+The majority is the same as the above, as the gateway has the same config, the differece exists in the formatting of the file sink. Instead of a simple string formatting directive, this config accepts an object value which is transformed by envoy into JSON formatted logs. The object inside of the `jsonFormat` field is interpreted as a JSON object. This object consists of nested json objects as well as keys which point to individual formatting directives. More documentation on JSON formatting can be found [here](https://www.envoyproxy.io/docs/envoy/v1.10.0/configuration/access_log#format-dictionaries).
 
 
 ## GRPC Access Logging
@@ -113,7 +113,7 @@ There are only two configuration steps needed to get started:
  * Pass a reference to the cluster into the access logging API
 
 These instructions assume that a service already exists at the predefined location which is listening for access logging grpc connections. In order to make is easier to get up and running, we provide
-a simnple implementation which simply recieves the messages and then logs them. The code for this implementation can be found [here](https://github.com/solo-io/gloo/tree/master/projects/accesslogger/pkg/loggingservice).
+a simnple implementation which simply receives the messages and then logs them. The code for this implementation can be found [here](https://github.com/solo-io/gloo/tree/master/projects/accesslogger/pkg/loggingservice).
 The server itself is extendable, and can be ran with callbacks if different behavior is needed. The implementation referenced above is included in our helm chart, which is included in the manifest when
 the access logger is enabled. In order to use a different service, simply swap the image name in the helm chart.
 

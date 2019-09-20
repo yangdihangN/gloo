@@ -85,7 +85,9 @@ check-spelling:
 clean:
 	rm -rf _output
 	rm -rf _test
-	rm -fr site
+	rm -rf docs/site
+	rm -rf docs/thems
+	rm -rf docs/resources
 	git clean -f -X install
 
 #----------------------------------------------------------------------------------
@@ -100,6 +102,7 @@ generated-code: $(OUTPUT_DIR)/.generated-code verify-enterprise-protos
 # TODO(EItanya): make mockgen work for gloo
 SUBDIRS:=$(shell ls -d -- */ | grep -v vendor)
 $(OUTPUT_DIR)/.generated-code:
+	find . -name *.sk.md | xargs rm
 	go generate ./...
 	gofmt -w $(SUBDIRS)
 	goimports -w $(SUBDIRS)
@@ -149,8 +152,6 @@ generate-client-mocks:
 
 CLI_DIR=projects/gloo/cli
 
-$(OUTPUT_DIR)/glooctl: $(SOURCES)
-	go build -ldflags=$(LDFLAGS) -gcflags=$(GCFLAGS) -o $@ $(CLI_DIR)/cmd/main.go
 
 
 $(OUTPUT_DIR)/glooctl-linux-amd64: $(SOURCES)

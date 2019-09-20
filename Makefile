@@ -328,8 +328,8 @@ $(OUTPUT_DIR)/Dockerfile.envoyinit: $(ENVOYINIT_DIR)/Dockerfile
 .PHONY: gloo-envoy-wrapper-docker
 gloo-envoy-wrapper-docker: $(OUTPUT_DIR)/envoyinit-linux-amd64 $(OUTPUT_DIR)/Dockerfile.envoyinit
 	docker build $(OUTPUT_DIR) -f $(OUTPUT_DIR)/Dockerfile.envoyinit \
-		-t quay.io/solo-io/certgen:$(VERSION) \
-		$(call get_test_tag,certgen)
+		-t quay.io/solo-io/gloo-envoy-wrapper:$(VERSION) \
+		$(call get_test_tag,gloo-envoy-wrapper)
 
 
 #----------------------------------------------------------------------------------

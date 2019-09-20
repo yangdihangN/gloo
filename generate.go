@@ -17,14 +17,16 @@ func main() {
 	log.Printf("starting generate")
 
 	generateOptions := cmd.GenerateOptions{
-		SkipGenMocks:       true,
+		SkipGenMocks: true,
 		CustomCompileProtos: []string{
 			"projects/gloo/api/grpc",
 		},
 		SkipGeneratedTests: true,
-		SkipDirs:           nil,
-		RelativeRoot:       "",
-		CompileProtos:      true,
+		SkipDirs: []string{
+			"docs",
+		},
+		RelativeRoot:  "",
+		CompileProtos: true,
 		GenDocs: &cmd.DocsOptions{
 			Output: options.Hugo,
 		},

@@ -101,7 +101,6 @@ generated-code: $(OUTPUT_DIR)/.generated-code verify-enterprise-protos
 SUBDIRS:=$(shell ls -d -- */ | grep -v vendor)
 $(OUTPUT_DIR)/.generated-code:
 	go generate ./...
-	(rm docs/cli/glooctl*; go run projects/gloo/cli/cmd/docs/main.go)
 	gofmt -w $(SUBDIRS)
 	goimports -w $(SUBDIRS)
 	mkdir -p $(OUTPUT_DIR)

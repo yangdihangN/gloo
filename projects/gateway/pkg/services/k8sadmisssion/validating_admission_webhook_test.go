@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 
+	"github.com/solo-io/gloo/projects/gateway/pkg/validation"
+
 	. "github.com/onsi/ginkgo"
 	"github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
@@ -49,16 +51,16 @@ var _ = Describe("ValidatingAdmissionWebhook", func() {
 		if !valid {
 			switch resource.(type) {
 			case *v2.Gateway:
-				mv.fValidateGateway = func(ctx context.Context, gw *v2.Gateway) error {
-					return fmt.Errorf(errMsg)
+				mv.fValidateGateway = func(ctx context.Context, gw *v2.Gateway) (validation.ProxyReports, error) {
+					return nil, fmt.Errorf(errMsg)
 				}
 			case *v1.VirtualService:
-				mv.fValidateVirtualService = func(ctx context.Context, vs *v1.VirtualService) error {
-					return fmt.Errorf(errMsg)
+				mv.fValidateVirtualService = func(ctx context.Context, vs *v1.VirtualService) (validation.ProxyReports, error) {
+					return nil, fmt.Errorf(errMsg)
 				}
 			case *v1.RouteTable:
-				mv.fValidateRouteTable = func(ctx context.Context, rt *v1.RouteTable) error {
-					return fmt.Errorf(errMsg)
+				mv.fValidateRouteTable = func(ctx context.Context, rt *v1.RouteTable) (validation.ProxyReports, error) {
+					return nil, fmt.Errorf(errMsg)
 				}
 			}
 		}
@@ -138,10 +140,10 @@ func parseReviewResponse(resp *http.Response) (*v1beta1.AdmissionReview, error) 
 
 type mockValidator struct {
 	fSync                         func(context.Context, *v2.ApiSnapshot) error
-	fValidateGateway              func(ctx context.Context, gw *v2.Gateway) error
-	fValidateVirtualService       func(ctx context.Context, vs *v1.VirtualService) error
+	fValidateGateway              func(ctx context.Context, gw *v2.Gateway) (validation.ProxyReports, error)
+	fValidateVirtualService       func(ctx context.Context, vs *v1.VirtualService) (validation.ProxyReports, error)
 	fValidateDeleteVirtualService func(ctx context.Context, vs core.ResourceRef) error
-	fValidateRouteTable           func(ctx context.Context, rt *v1.RouteTable) error
+	fValidateRouteTable           func(ctx context.Context, rt *v1.RouteTable) (validation.ProxyReports, error)
 	fValidateDeleteRouteTable     func(ctx context.Context, rt core.ResourceRef) error
 }
 
@@ -152,16 +154,16 @@ func (v *mockValidator) Sync(ctx context.Context, snap *v2.ApiSnapshot) error {
 	return v.fSync(ctx, snap)
 }
 
-func (v *mockValidator) ValidateGateway(ctx context.Context, gw *v2.Gateway) error {
+func (v *mockValidator) ValidateGateway(ctx context.Context, gw *v2.Gateway) (validation.ProxyReports, error) {
 	if v.fValidateGateway == nil {
-		return nil
+		return nil, nil
 	}
 	return v.fValidateGateway(ctx, gw)
 }
 
-func (v *mockValidator) ValidateVirtualService(ctx context.Context, vs *v1.VirtualService) error {
+func (v *mockValidator) ValidateVirtualService(ctx context.Context, vs *v1.VirtualService) (validation.ProxyReports, error) {
 	if v.fValidateVirtualService == nil {
-		return nil
+		return nil, nil
 	}
 	return v.fValidateVirtualService(ctx, vs)
 }
@@ -173,9 +175,9 @@ func (v *mockValidator) ValidateDeleteVirtualService(ctx context.Context, vs cor
 	return v.fValidateDeleteVirtualService(ctx, vs)
 }
 
-func (v *mockValidator) ValidateRouteTable(ctx context.Context, rt *v1.RouteTable) error {
+func (v *mockValidator) ValidateRouteTable(ctx context.Context, rt *v1.RouteTable) (validation.ProxyReports, error) {
 	if v.fValidateRouteTable == nil {
-		return nil
+		return nil, nil
 	}
 	return v.fValidateRouteTable(ctx, rt)
 }

@@ -5,7 +5,7 @@ kind: ValidatingWebhookConfiguration
 metadata:
   name: gateway-validation-webhook-{{ .Release.Namespace }}
   labels:
-    app: gateway
+    app: gloo
     gloo: gateway
   annotations:
     "helm.sh/hook": pre-install

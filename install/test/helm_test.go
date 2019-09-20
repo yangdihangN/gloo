@@ -3,6 +3,8 @@ package test
 import (
 	"fmt"
 
+	"github.com/gogo/protobuf/proto"
+
 	"k8s.io/utils/pointer"
 
 	. "github.com/onsi/ginkgo"
@@ -37,6 +39,12 @@ func GetPodNameEnvVar() v1.EnvVar {
 }
 
 var _ = Describe("Helm Test", func() {
+	var (
+		glooPorts = []v1.ContainerPort{
+			{Name: "grpc-xds", ContainerPort: 9977, Protocol: "TCP"},
+			{Name: "grpc-validation", ContainerPort: 9988, Protocol: "TCP"},
+		}
+	)
 
 	Describe("gateway proxy extra annotations and crds", func() {
 		var (
@@ -531,10 +539,7 @@ var _ = Describe("Helm Test", func() {
 					}
 					deploy := rb.GetDeploymentAppsv1()
 					updateDeployment(deploy)
-					deploy.Spec.Template.Spec.Containers[0].Ports = []v1.ContainerPort{
-						{Name: "grpc", ContainerPort: 9977, Protocol: "TCP"},
-					}
-
+					deploy.Spec.Template.Spec.Containers[0].Ports = glooPorts
 					deploy.Spec.Template.Spec.Containers[0].Resources = v1.ResourceRequirements{
 						Requests: v1.ResourceList{
 							v1.ResourceMemory: resource.MustParse("256Mi"),
@@ -581,9 +586,7 @@ var _ = Describe("Helm Test", func() {
 					}
 					deploy := rb.GetDeploymentAppsv1()
 					updateDeployment(deploy)
-					deploy.Spec.Template.Spec.Containers[0].Ports = []v1.ContainerPort{
-						{Name: "grpc", ContainerPort: 9977, Protocol: "TCP"},
-					}
+					deploy.Spec.Template.Spec.Containers[0].Ports = glooPorts
 					deploy.Spec.Template.Spec.ServiceAccountName = "gloo"
 
 					glooDeployment = deploy
@@ -617,6 +620,26 @@ var _ = Describe("Helm Test", func() {
 					deploy := rb.GetDeploymentAppsv1()
 					updateDeployment(deploy)
 					deploy.Spec.Template.Spec.ServiceAccountName = "gateway"
+
+					deploy.Spec.Template.Spec.Volumes = []v1.Volume{{
+						Name: "validation-certs",
+						VolumeSource: v1.VolumeSource{
+							Secret: &v1.SecretVolumeSource{
+								SecretName:  "gateway-validation-certs",
+								DefaultMode: proto.Int(420),
+							},
+						},
+					}}
+					deploy.Spec.Template.Spec.Containers[0].VolumeMounts = []v1.VolumeMount{{
+						Name:      "validation-certs",
+						MountPath: "/etc/gateway/validation-certs",
+					}}
+					deploy.Spec.Template.Spec.Containers[0].Ports = []v1.ContainerPort{{
+						Name:          "https",
+						ContainerPort: 8443,
+						Protocol:      "TCP",
+					}}
+
 					gatewayDeployment = deploy
 				})
 
@@ -868,9 +891,7 @@ var _ = Describe("Helm Test", func() {
 										Name: "gloo",
 										// Note: this was NOT overwritten
 										Image: "quay.io/solo-io/gloo:dev",
-										Ports: []v1.ContainerPort{
-											{Name: "grpc", HostPort: 0, ContainerPort: 9977, Protocol: "TCP", HostIP: ""},
-										},
+										Ports: glooPorts,
 										Env: []v1.EnvVar{
 											{
 												Name: "POD_NAMESPACE",

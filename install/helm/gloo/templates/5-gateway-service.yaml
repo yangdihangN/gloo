@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app: gateway
+    app: gloo
     gloo: gateway
   name: gateway
   namespace: {{ .Release.Namespace }}

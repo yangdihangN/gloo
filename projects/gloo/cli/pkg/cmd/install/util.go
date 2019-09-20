@@ -46,6 +46,9 @@ func init() {
 		"ClusterRoleBinding",
 	}
 	GlooPreInstallKinds = append(GlooPreInstallKinds, "ServiceAccount")
+	GlooPreInstallKinds = append(GlooPreInstallKinds, "Job")
+	GlooPreInstallKinds = append(GlooPreInstallKinds, "Settings")
+	GlooPreInstallKinds = append(GlooPreInstallKinds, "ValidatingWebhookConfiguration")
 	GlooPreInstallKinds = append(GlooPreInstallKinds, GlooRbacKinds...)
 	GlooInstallKinds = GlooSystemKinds
 

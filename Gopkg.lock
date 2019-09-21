@@ -1174,7 +1174,7 @@
   version = "v1.7.0"
 
 [[projects]]
-  digest = "1:28ec8420931441ba18ea81668a7c7b52212e00a656a268dd9fa8adaa710bb12e"
+  digest = "1:b5152532915a65c7a56f27315b3b1eecb9daaf48fa69e822e36bed28a9b73498"
   name = "github.com/onsi/gomega"
   packages = [
     ".",
@@ -1195,8 +1195,8 @@
     "types",
   ]
   pruneopts = "UT"
-  revision = "65fb64232476ad9046e57c26cd0bff3d3a8dc6cd"
-  version = "v1.4.3"
+  revision = "bdebf9e0ece900259084cfa4121b97ce1a540939"
+  version = "v1.7.0"
 
 [[projects]]
   digest = "1:ee4d4af67d93cc7644157882329023ce9a7bcfce956a079069a9405521c7cc8d"
@@ -1358,7 +1358,7 @@
   version = "0.1.0"
 
 [[projects]]
-  digest = "1:b0c154f152de558f64289873904ce99909bb0e9200c342ac04e214b73ba95c7a"
+  digest = "1:675e88637f52e60444ff59ffe3b708e4fa74ae9f587dde5eb5d4eaa907d0664a"
   name = "github.com/solo-io/go-utils"
   packages = [
     "certutils",
@@ -1399,8 +1399,8 @@
     "vfsutils",
   ]
   pruneopts = "UT"
-  revision = "5dc802895644ff6f736b11a64e54a06f3ba1dd5e"
-  version = "v0.10.8"
+  revision = "2fff910b5b9a262eba3177f296923ac04887fa53"
+  version = "v0.10.9"
 
 [[projects]]
   digest = "1:6bf9bdcdfd28c7a913d5bcbef6717e53fc6f650560f0b4ffe663816b3e2245ec"

@@ -36,6 +36,7 @@ discovery:
 gateway:
   enabled: true
   validation:
+    failurePolicy: "Ignore"
     secretName: gateway-validation-certs
   upgrade: false
   deployment:

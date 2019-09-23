@@ -143,14 +143,11 @@ rules:
 {{- if .Values.gateway.validation }}
 {{- if .Values.gateway.certGenJob }}
 ---
-
-kind: {{ include "gloo.roleKind" . }}
+# this role requires access to cluster-scoped resources
+kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-    name: gateway-secret-create-vwc-update{{ include "gloo.rolebindingsuffix" . }}
-{{- if .Values.global.glooRbac.namespaced }}
-    namespace: {{ .Release.Namespace }}
-{{- end }}
+    name: gloo-gateway-secret-create-vwc-update{{ include "gloo.rolebindingsuffix" . }}
     labels:
         app: gloo
         gloo: rbac

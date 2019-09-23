@@ -400,9 +400,11 @@ fetch-helm:
 upload-github-release-assets: build-cli render-yaml
 	go run ci/upload_github_release_assets.go
 
-.PHONY: push-docs
-push-docs:
-	go run ci/push_docs.go
+.PHONY: publish-docs
+publish-docs:
+ifeq ($(RELEASE),"true")
+	cd docs && make deploy-site
+endif
 
 #----------------------------------------------------------------------------------
 # Docker

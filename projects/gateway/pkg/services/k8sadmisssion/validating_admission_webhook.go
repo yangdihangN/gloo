@@ -8,6 +8,8 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	validationutil "github.com/solo-io/gloo/projects/gloo/pkg/utils/validation"
+
 	"github.com/solo-io/gloo/pkg/utils/skutils"
 
 	validationapi "github.com/solo-io/gloo/projects/gloo/pkg/api/grpc/validation"
@@ -262,8 +264,14 @@ func (wh *gatewayValidationWebhook) validate(ctx context.Context, review *v1beta
 	}
 
 	if len(proxyReports) > 0 {
-		// no need to duplicate the error message
-		validationErr = errors.Errorf("resource incompatible with current Gloo snapshot")
+		var proxyErrs []error
+		for _, rpt := range proxyReports {
+			err := validationutil.GetProxyError(rpt)
+			if err != nil {
+				proxyErrs = append(proxyErrs, err)
+			}
+		}
+		validationErr = errors.Errorf("resource incompatible with current Gloo snapshot: %v", proxyErrs)
 	}
 
 	return &v1beta1.AdmissionResponse{

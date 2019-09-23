@@ -7,6 +7,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/solo-io/gloo/pkg/cliutil/install"
+
 	"github.com/solo-io/gloo/projects/gloo/pkg/api/v1/plugins/transformation"
 
 	defaults2 "github.com/solo-io/gloo/projects/gloo/pkg/defaults"
@@ -959,6 +961,62 @@ var _ = Describe("Kube2e: gateway", func() {
 				Expect(res).To(ContainSubstring("red-pod"))
 			}
 		})
+	})
+
+	FContext("tests for the validation server", func() {
+		testValidation := func(yam, response string) {
+			out, err := install.KubectlApplyOut([]byte(yam))
+			ExpectWithOffset(1, err).To(HaveOccurred())
+			ExpectWithOffset(1, string(out)).To(ContainSubstring(response))
+		}
+
+		It("rejects bad resources", func() {
+			// specifically avoiding using a DescribeTable here in order to avoid reinstalling
+			// for every test case
+			type testCase struct {
+				resourceYaml, expectedErr string
+			}
+
+			for _, tc := range []testCase{
+				{
+					resourceYaml: `
+apiVersion: gateway.solo.io/v1
+kind: VirtualService
+metadata:
+  name: default
+  namespace: ` + testHelper.InstallNamespace + `
+spec:
+  virtualHoost: {}
+`,
+					expectedErr: `could not unmarshal raw object: parsing resource from crd spec default in namespace ` + testHelper.InstallNamespace + ` into *v1.VirtualService: unknown field "virtualHoost" in v1.VirtualService`,
+				},
+				{
+					resourceYaml: `
+apiVersion: gateway.solo.io/v1
+kind: VirtualService
+metadata:
+  name: default
+  namespace: ` + testHelper.InstallNamespace + `
+spec:
+  virtualHost:
+    routes:
+      - matcher:
+          methods:
+            - GET
+          prefix: /items/
+        routeAction:
+          single:
+            upstream:
+              name: does-not-exist
+              namespace: anywhere
+`,
+					expectedErr: `resource incompatible with current Gloo snapshot: [Route Error: InvalidDestinationError. Reason: list did not find upstream anywhere.does-not-exist]`,
+				},
+			} {
+				testValidation(tc.resourceYaml, tc.expectedErr)
+			}
+		})
+
 	})
 })
 

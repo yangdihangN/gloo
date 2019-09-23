@@ -3,6 +3,7 @@ package validation_test
 import (
 	"context"
 	"fmt"
+	"github.com/solo-io/go-utils/errors"
 
 	"github.com/solo-io/gloo/projects/gateway/pkg/defaults"
 	"github.com/solo-io/solo-kit/pkg/api/v1/resources/core"
@@ -30,7 +31,7 @@ var _ = Describe("Validator", func() {
 		t = translator.NewDefaultTranslator()
 		vc = &mockValidationClient{}
 		ns = "my-namespace"
-		v = NewValidator(t, vc, ns)
+		v = NewValidator(t, vc, ns, false)
 	})
 	It("returns error before sync called", func() {
 		_, err := v.ValidateVirtualService(nil, nil)
@@ -64,6 +65,35 @@ var _ = Describe("Validator", func() {
 				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).To(ContainSubstring("failed to validate Proxy with Gloo validation server"))
 				Expect(proxyReports).To(HaveLen(1))
+			})
+		})
+
+		Context("proxy validation fails (bad connection)", func() {
+			Context("ignoreProxyValidation=false", func() {
+				It("rejects the rt", func() {
+					vc.validateProxy = communicationErr
+					us := samples.SimpleUpstream()
+					snap := samples.GatewaySnapshotWithDelegates(us.Metadata.Ref(), ns)
+					err := v.Sync(context.TODO(), snap)
+					Expect(err).NotTo(HaveOccurred())
+					proxyReports, err := v.ValidateRouteTable(context.TODO(), snap.RouteTables[0])
+					Expect(err).To(HaveOccurred())
+					Expect(err.Error()).To(ContainSubstring("failed to communicate with Gloo Proxy validation server"))
+					Expect(proxyReports).To(BeNil())
+				})
+			})
+			Context("ignoreProxyValidation=true", func() {
+				It("accepts the rt", func() {
+					vc.validateProxy = communicationErr
+					v = NewValidator(t, vc, ns, true)
+					us := samples.SimpleUpstream()
+					snap := samples.GatewaySnapshotWithDelegates(us.Metadata.Ref(), ns)
+					err := v.Sync(context.TODO(), snap)
+					Expect(err).NotTo(HaveOccurred())
+					proxyReports, err := v.ValidateRouteTable(context.TODO(), snap.RouteTables[0])
+					Expect(err).NotTo(HaveOccurred())
+					Expect(proxyReports).To(HaveLen(0))
+				})
 			})
 		})
 
@@ -295,5 +325,8 @@ func failProxy(ctx context.Context, in *validation.ProxyValidationServiceRequest
 	rpt := validationutils.MakeReport(in.Proxy)
 	validationutils.AppendListenerError(rpt.ListenerReports[0], validation.ListenerReport_Error_SSLConfigError, "you should try harder next time")
 	return &validation.ProxyValidationServiceResponse{ProxyReport: rpt}, nil
+}
 
+func communicationErr(ctx context.Context, in *validation.ProxyValidationServiceRequest, opts ...grpc.CallOption) (*validation.ProxyValidationServiceResponse, error) {
+	return nil, errors.Errorf("communication no good")
 }

@@ -328,6 +328,12 @@ message GatewayOptions {
 
         // Path to TLS Private Key for Kubernetes Validating webhook. Defaults to `/etc/gateway/validation-certs/tls.key`
         string validation_webhook_tls_key = 4;
+
+        // When Gateway cannot communicate with Gloo (e.g. Gloo is offline)
+        // resources will be rejected by default.
+        // Enable the `ignoreGlooValidationFailure` to prevent the Validation server from rejecting
+        // resources due to network errors
+        bool ignore_gloo_validation_failure = 5;
     }
 
     // if provided, the Gateway will perform[Dynamic Admission Control](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/)

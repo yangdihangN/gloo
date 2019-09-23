@@ -2,6 +2,7 @@ package bootstrap
 
 import (
 	"context"
+	"github.com/solo-io/gloo/projects/gloo/pkg/validation"
 	"net"
 
 	"github.com/solo-io/gloo/projects/gloo/pkg/upstreams/consul"
@@ -45,6 +46,7 @@ type ControlPlane struct {
 
 type ValidationServer struct {
 	*GrpcService
+	Server validation.ValidationServer
 }
 
 type GrpcService struct {

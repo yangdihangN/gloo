@@ -135,7 +135,7 @@ func (wh *gatewayValidationWebhook) ServeHTTP(w http.ResponseWriter, r *http.Req
 		http.Error(w, fmt.Sprintf("could not write response: %v", err), http.StatusInternalServerError)
 	}
 
-	logger.Infof("responded with review: %#v", admissionReview)
+	logger.Infof("responded with review: %s", resp)
 }
 func (wh *gatewayValidationWebhook) validate(ctx context.Context, review *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 	logger := contextutils.LoggerFrom(ctx)

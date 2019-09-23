@@ -2,8 +2,10 @@ package validation
 
 import (
 	"context"
+	"github.com/avast/retry-go"
 	"sort"
 	"sync"
+	"time"
 
 	"github.com/solo-io/go-utils/protoutils"
 	"github.com/solo-io/solo-kit/pkg/api/v1/resources"
@@ -50,16 +52,17 @@ type Validator interface {
 }
 
 type validator struct {
-	l                 sync.RWMutex
-	latestSnapshot    *v2.ApiSnapshot
-	latestSnapshotErr error
-	translator        translator.Translator
-	validationClient  validation.ProxyValidationServiceClient
-	writeNamespace    string
+	l                            sync.RWMutex
+	latestSnapshot               *v2.ApiSnapshot
+	latestSnapshotErr            error
+	translator                   translator.Translator
+	validationClient             validation.ProxyValidationServiceClient
+	ignoreProxyValidationFailure bool
+	writeNamespace               string
 }
 
-func NewValidator(translator translator.Translator, validationClient validation.ProxyValidationServiceClient, writeNamespace string) *validator {
-	return &validator{translator: translator, validationClient: validationClient, writeNamespace: writeNamespace}
+func NewValidator(translator translator.Translator, validationClient validation.ProxyValidationServiceClient, writeNamespace string, ignoreProxyValidationFailure bool) *validator {
+	return &validator{translator: translator, validationClient: validationClient, writeNamespace: writeNamespace, ignoreProxyValidationFailure: ignoreProxyValidationFailure}
 }
 
 func (v *validator) ready() bool {
@@ -131,9 +134,22 @@ func (v *validator) validateSnapshot(ctx context.Context, apply applyResource) (
 		}
 
 		// validate the proxy with gloo
-		proxyReport, err := v.validationClient.ValidateProxy(ctx, &validation.ProxyValidationServiceRequest{Proxy: proxy})
+		var proxyReport *validation.ProxyValidationServiceResponse
+		err := retry.Do(func() error {
+			rpt, err := v.validationClient.ValidateProxy(ctx, &validation.ProxyValidationServiceRequest{Proxy: proxy})
+			proxyReport = rpt
+			return err
+		},
+			retry.Attempts(4),
+			retry.Delay(250*time.Millisecond),
+		)
 		if err != nil {
-			errs = multierr.Append(errs, errors.Wrapf(err, "failed to validate Proxy with Gloo validation server"))
+			err = errors.Wrapf(err, "failed to communicate with Gloo Proxy validation server")
+			if v.ignoreProxyValidationFailure {
+				contextutils.LoggerFrom(ctx).Error(err)
+			} else {
+				errs = multierr.Append(errs, err)
+			}
 			continue
 		}
 

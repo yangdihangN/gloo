@@ -91,6 +91,7 @@ func Setup(ctx context.Context, kubeCache kube.SharedCache, inMemoryCache memory
 			ValidatingWebhookPort:        defaults.ValidationWebhookBindPort,
 			ValidatingWebhookCertPath:    validationCfg.GetValidationWebhookTlsCert(),
 			ValidatingWebhookKeyPath:     validationCfg.GetValidationWebhookTlsKey(),
+			IgnoreProxyValidationFailure: validationCfg.GetIgnoreProxyValidationFailure(),
 		}
 		if validation.ProxyValidationServerAddress == "" {
 			validation.ProxyValidationServerAddress = defaults.GlooProxyValidationServerAddr
@@ -190,6 +191,7 @@ func RunGateway(opts Opts) error {
 		trans)
 
 	var validationClient validation.ProxyValidationServiceClient
+	var ignoreProxyValidationFailure bool
 	if opts.Validation != nil {
 		contextutils.LoggerFrom(ctx).Infow("starting proxy validation client",
 			zap.String("validation_server", opts.Validation.ProxyValidationServerAddress))
@@ -198,9 +200,10 @@ func RunGateway(opts Opts) error {
 			return errors.Wrapf(err, "failed to initialize grpc connection to validation server.")
 		}
 		validationClient = validation.NewProxyValidationServiceClient(cc)
+		ignoreProxyValidationFailure = opts.Validation.IgnoreProxyValidationFailure
 	}
 
-	validationSyncer := gatewayvalidation.NewValidator(trans, validationClient, opts.WriteNamespace)
+	validationSyncer := gatewayvalidation.NewValidator(trans, validationClient, opts.WriteNamespace, ignoreProxyValidationFailure)
 
 	gatewaySyncers := v2.ApiSyncers{
 		translatorSyncer,

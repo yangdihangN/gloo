@@ -1,15 +1,10 @@
 package validation_test
 
 import (
-	"context"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/solo-io/gloo/projects/gloo/pkg/api/grpc/validation"
 	v1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
-	"github.com/solo-io/gloo/test/samples"
-	"google.golang.org/grpc"
-
 	. "github.com/solo-io/gloo/projects/gloo/pkg/utils/validation"
 )
 
@@ -123,20 +118,5 @@ var _ = Describe("validation utils", func() {
 			err := GetProxyError(rpt)
 			Expect(err).To(MatchError("VirtualHost Error: DomainsNotUniqueError. Reason: domains not unique; Listener Error: BindPortNotUniqueError. Reason: bind port not unique; Route Error: InvalidDestinationError. Reason: bad destination; HTTP Plugin Error: plugin. Reason: bad http plugin"))
 		})
-	})
-})
-
-var _ = Describe("try", func() {
-
-	FIt("do", func() {
-		cc, err := grpc.DialContext(context.TODO(), "localhost:9988", grpc.WithInsecure())
-		Expect(err).NotTo(HaveOccurred())
-		validationClient := validation.NewProxyValidationServiceClient(cc)
-		resp, err := validationClient.ValidateProxy(context.TODO(), &validation.ProxyValidationServiceRequest{
-			Proxy: samples.SimpleGlooSnapshot().Proxies[0],
-		})
-		Expect(err).NotTo(HaveOccurred())
-		Expect(resp).NotTo(HaveOccurred())
-
 	})
 })

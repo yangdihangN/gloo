@@ -2,9 +2,10 @@ package validation
 
 import (
 	"context"
+	"sync"
+
 	"github.com/solo-io/go-utils/contextutils"
 	"go.uber.org/zap"
-	"sync"
 
 	"github.com/solo-io/gloo/projects/gloo/pkg/api/grpc/validation"
 	v1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"

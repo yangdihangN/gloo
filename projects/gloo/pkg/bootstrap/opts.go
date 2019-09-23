@@ -2,8 +2,9 @@ package bootstrap
 
 import (
 	"context"
-	"github.com/solo-io/gloo/projects/gloo/pkg/validation"
 	"net"
+
+	"github.com/solo-io/gloo/projects/gloo/pkg/validation"
 
 	"github.com/solo-io/gloo/projects/gloo/pkg/upstreams/consul"
 

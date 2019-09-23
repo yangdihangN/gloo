@@ -2,10 +2,11 @@ package validation
 
 import (
 	"context"
-	"github.com/avast/retry-go"
 	"sort"
 	"sync"
 	"time"
+
+	"github.com/avast/retry-go"
 
 	"github.com/solo-io/go-utils/protoutils"
 	"github.com/solo-io/solo-kit/pkg/api/v1/resources"

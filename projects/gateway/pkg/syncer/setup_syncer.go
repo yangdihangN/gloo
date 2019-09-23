@@ -91,7 +91,7 @@ func Setup(ctx context.Context, kubeCache kube.SharedCache, inMemoryCache memory
 			ValidatingWebhookPort:        defaults.ValidationWebhookBindPort,
 			ValidatingWebhookCertPath:    validationCfg.GetValidationWebhookTlsCert(),
 			ValidatingWebhookKeyPath:     validationCfg.GetValidationWebhookTlsKey(),
-			IgnoreProxyValidationFailure: validationCfg.GetIgnoreProxyValidationFailure(),
+			IgnoreProxyValidationFailure: validationCfg.GetIgnoreGlooValidationFailure(),
 		}
 		if validation.ProxyValidationServerAddress == "" {
 			validation.ProxyValidationServerAddress = defaults.GlooProxyValidationServerAddr

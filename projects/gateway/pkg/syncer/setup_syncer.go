@@ -125,7 +125,8 @@ func Setup(ctx context.Context, kubeCache kube.SharedCache, inMemoryCache memory
 
 func RunGateway(opts Opts) error {
 	opts.WatchOpts = opts.WatchOpts.WithDefaults()
-	ctx := contextutils.WithLogger(opts.WatchOpts.Ctx, "gateway")
+	opts.WatchOpts.Ctx = contextutils.WithLogger(opts.WatchOpts.Ctx, "gateway")
+	ctx := opts.WatchOpts.Ctx
 
 	gatewayClient, err := v2.NewGatewayClient(opts.Gateways)
 	if err != nil {

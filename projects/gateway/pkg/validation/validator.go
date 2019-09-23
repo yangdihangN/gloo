@@ -53,7 +53,7 @@ type Validator interface {
 }
 
 type validator struct {
-	l                            sync.RWMutex
+	lock                         sync.RWMutex
 	latestSnapshot               *v2.ApiSnapshot
 	latestSnapshotErr            error
 	translator                   translator.Translator
@@ -81,8 +81,8 @@ func (v *validator) Sync(ctx context.Context, snap *v2.ApiSnapshot) error {
 		}
 	}
 
-	v.l.Lock()
-	defer v.l.Unlock()
+	v.lock.Lock()
+	defer v.lock.Unlock()
 
 	v.latestSnapshotErr = errs
 	v.latestSnapshot = &snapCopy
@@ -101,9 +101,9 @@ func (v *validator) validateSnapshot(ctx context.Context, apply applyResource) (
 		return nil, NotReadyErr
 	}
 
-	v.l.RLock()
+	v.lock.RLock()
 	snap := v.latestSnapshot.Clone()
-	v.l.RUnlock()
+	v.lock.RUnlock()
 
 	if v.latestSnapshotErr != nil {
 		contextutils.LoggerFrom(ctx).Errorw(InvalidSnapshotErrMessage, zap.Error(v.latestSnapshotErr))
@@ -204,9 +204,9 @@ func (v *validator) ValidateDeleteVirtualService(ctx context.Context, vsRef core
 	if !v.ready() {
 		return errors.Errorf("Gateway validation is yet not available. Waiting for first snapshot")
 	}
-	v.l.RLock()
+	v.lock.RLock()
 	snap := v.latestSnapshot.Clone()
-	v.l.RUnlock()
+	v.lock.RUnlock()
 
 	_, err := snap.VirtualServices.Find(vsRef.Strings())
 	if err != nil {
@@ -272,9 +272,9 @@ func (v *validator) ValidateDeleteRouteTable(ctx context.Context, rtRef core.Res
 	if !v.ready() {
 		return errors.Errorf("Gateway validation is yet not available. Waiting for first snapshot")
 	}
-	v.l.RLock()
+	v.lock.RLock()
 	snap := v.latestSnapshot.Clone()
-	v.l.RUnlock()
+	v.lock.RUnlock()
 
 	_, err := snap.RouteTables.Find(rtRef.Strings())
 	if err != nil {

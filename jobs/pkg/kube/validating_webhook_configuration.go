@@ -16,7 +16,7 @@ type WebhookTlsConfig struct {
 	CaBundle                      []byte
 }
 
-func PatchValidatingWebhookConfiguration(ctx context.Context, kube kubernetes.Interface, vwcName string, cfg WebhookTlsConfig) error {
+func UpdateValidatingWebhookConfigurationCaBundle(ctx context.Context, kube kubernetes.Interface, vwcName string, cfg WebhookTlsConfig) error {
 	contextutils.LoggerFrom(ctx).Infow("attempting to patch caBundle for ValidatingWebhookConfiguration", zap.String("svc", cfg.ServiceName), zap.String("vwc", vwcName))
 
 	vwc, err := kube.AdmissionregistrationV1beta1().ValidatingWebhookConfigurations().Get(vwcName, metav1.GetOptions{})

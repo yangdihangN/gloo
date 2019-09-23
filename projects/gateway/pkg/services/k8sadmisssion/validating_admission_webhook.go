@@ -8,6 +8,8 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/solo-io/gloo/pkg/utils/skutils"
+
 	validationapi "github.com/solo-io/gloo/projects/gloo/pkg/api/grpc/validation"
 
 	"github.com/pkg/errors"
@@ -15,11 +17,7 @@ import (
 	v2 "github.com/solo-io/gloo/projects/gateway/pkg/api/v2"
 	"github.com/solo-io/gloo/projects/gateway/pkg/validation"
 	"github.com/solo-io/go-utils/contextutils"
-	v1 "github.com/solo-io/solo-kit/pkg/api/v1/clients/kube/crd/solo.io/v1"
-	"github.com/solo-io/solo-kit/pkg/api/v1/resources"
 	"github.com/solo-io/solo-kit/pkg/api/v1/resources/core"
-	"github.com/solo-io/solo-kit/pkg/utils/kubeutils"
-	"github.com/solo-io/solo-kit/pkg/utils/protoutils"
 	"k8s.io/api/admission/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -279,7 +277,7 @@ func (wh *gatewayValidationWebhook) validate(ctx context.Context, review *v1beta
 
 func (wh *gatewayValidationWebhook) validateGateway(ctx context.Context, rawJson []byte) (validation.ProxyReports, error) {
 	var gw v2.Gateway
-	if err := unmarshalResource(rawJson, &gw); err != nil {
+	if err := skutils.UnmarshalResource(rawJson, &gw); err != nil {
 		return nil, errors.Wrapf(err, "could not unmarshal raw object")
 	}
 	if skipValidationCheck(gw.Metadata.Annotations) {
@@ -293,7 +291,7 @@ func (wh *gatewayValidationWebhook) validateGateway(ctx context.Context, rawJson
 
 func (wh *gatewayValidationWebhook) validateVirtualService(ctx context.Context, rawJson []byte) (validation.ProxyReports, error) {
 	var vs gwv1.VirtualService
-	if err := unmarshalResource(rawJson, &vs); err != nil {
+	if err := skutils.UnmarshalResource(rawJson, &vs); err != nil {
 		return nil, errors.Wrapf(err, "could not unmarshal raw object")
 	}
 	if skipValidationCheck(vs.Metadata.Annotations) {
@@ -307,7 +305,7 @@ func (wh *gatewayValidationWebhook) validateVirtualService(ctx context.Context, 
 
 func (wh *gatewayValidationWebhook) validateRouteTable(ctx context.Context, rawJson []byte) (validation.ProxyReports, error) {
 	var rt gwv1.RouteTable
-	if err := unmarshalResource(rawJson, &rt); err != nil {
+	if err := skutils.UnmarshalResource(rawJson, &rt); err != nil {
 		return nil, errors.Wrapf(err, "could not unmarshal raw object")
 	}
 	if skipValidationCheck(rt.Metadata.Annotations) {
@@ -317,25 +315,4 @@ func (wh *gatewayValidationWebhook) validateRouteTable(ctx context.Context, rawJ
 		return proxyReports, errors.Wrapf(err, "Validating %T failed", rt)
 	}
 	return nil, nil
-}
-
-func unmarshalResource(kubeJson []byte, resource resources.Resource) error {
-	var resourceCrd v1.Resource
-	if err := json.Unmarshal(kubeJson, &resourceCrd); err != nil {
-		return errors.Wrapf(err, "unmarshalling from raw json")
-	}
-	resource.SetMetadata(kubeutils.FromKubeMeta(resourceCrd.ObjectMeta))
-	if withStatus, ok := resource.(resources.InputResource); ok {
-		resources.UpdateStatus(withStatus, func(status *core.Status) {
-			*status = resourceCrd.Status
-		})
-	}
-
-	if resourceCrd.Spec != nil {
-		if err := protoutils.UnmarshalMap(*resourceCrd.Spec, resource); err != nil {
-			return errors.Wrapf(err, "parsing resource from crd spec %v in namespace %v into %T", resourceCrd.Name, resourceCrd.Namespace, resource)
-		}
-	}
-
-	return nil
 }

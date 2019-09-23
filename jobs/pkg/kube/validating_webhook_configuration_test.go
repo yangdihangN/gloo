@@ -42,7 +42,7 @@ var _ = Describe("ValidatingWebhookConfiguration", func() {
 
 		expectedVwc.Webhooks[1].ClientConfig.CABundle = vwcCfg.CaBundle
 
-		err = PatchValidatingWebhookConfiguration(context.TODO(), kube, vwcName, vwcCfg)
+		err = UpdateValidatingWebhookConfigurationCaBundle(context.TODO(), kube, vwcName, vwcCfg)
 		Expect(err).NotTo(HaveOccurred())
 
 		patchedVwc, err := kube.AdmissionregistrationV1beta1().ValidatingWebhookConfigurations().Get(vwcName, metav1.GetOptions{})

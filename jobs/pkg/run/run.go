@@ -73,7 +73,7 @@ func Run(ctx context.Context, opts Options) error {
 		CaBundle:         certs.CaCertificate,
 	}
 
-	if err := kube.PatchValidatingWebhookConfiguration(ctx, kubeClient, vwcName, vwcConfig); err != nil {
+	if err := kube.UpdateValidatingWebhookConfigurationCaBundle(ctx, kubeClient, vwcName, vwcConfig); err != nil {
 		return errors.Wrapf(err, "failed patching validating webhook config")
 	}
 

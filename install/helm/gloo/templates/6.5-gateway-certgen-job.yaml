@@ -35,7 +35,7 @@ spec:
           args:
             - "--secret-name={{ .Values.gateway.validation.secretName }}"
             - "--svc-name=gateway"
-            - "--validating-webhook-configuration-name=gateway-validation-webhook-{{ .Release.Namespace }}"
+            - "--validating-webhook-configuration-name=gloo-gateway-validation-webhook-{{ .Release.Namespace }}"
       restartPolicy: {{ .Values.gateway.certGenJob.restartPolicy }}
 {{- end }}
 {{- end }}

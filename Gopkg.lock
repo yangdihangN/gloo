@@ -1361,16 +1361,14 @@
   version = "0.1.0"
 
 [[projects]]
-  digest = "1:2b7ad368df1e8ff8d88f2a73e3504cdcb760213a0d63e0e12a64064c65e4b090"
+  digest = "1:91a2cbbc3a8bbfeaea5847ff79467d1fd51f2d62f87764d504143315d15697ac"
   name = "github.com/solo-io/go-utils"
   packages = [
-    "changelogutils",
     "clicore/constants",
     "clidoc",
     "cliutils",
     "contextutils",
     "debugutils",
-    "docsutils",
     "envutils",
     "errors",
     "errutils",
@@ -1385,7 +1383,6 @@
     "manifesttestutils",
     "pkgmgmtutils",
     "protoutils",
-    "randutils",
     "stats",
     "stringutils",
     "tarutils",
@@ -2753,7 +2750,6 @@
     "github.com/solo-io/go-utils/cliutils",
     "github.com/solo-io/go-utils/contextutils",
     "github.com/solo-io/go-utils/debugutils",
-    "github.com/solo-io/go-utils/docsutils",
     "github.com/solo-io/go-utils/envutils",
     "github.com/solo-io/go-utils/errors",
     "github.com/solo-io/go-utils/errutils",

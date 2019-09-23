@@ -40,19 +40,19 @@ steps:
   id: 'valet-build'
   waitFor: ['docker-login']
 
-- name: 'quay.io/solo-io/valet:dev'
+- name: 'quay.io/solo-io/valet:0.1.2'
   args: ['ensure', '-f', 'valet-cluster.yaml', '--gke-cluster-name', 'gloo-test-cloudbuild']
   dir: './gopath/src/github.com/solo-io/gloo'
   id: 'valet-ensure-cluster'
   waitFor: ['dep']
 
-- name: 'quay.io/solo-io/valet:dev'
+- name: 'quay.io/solo-io/valet:0.1.2'
   args: ['ensure', '-f', 'valet.yaml', '--gloo-version', 'test-cloudbuild', '--local-artifacts-dir', '_artifacts']
   dir: './gopath/src/github.com/solo-io/gloo'
   id: 'valet-ensure-gloo'
   waitFor: ['valet-build', 'valet-ensure-cluster']
 
-- name: 'quay.io/solo-io/valet:dev'
+- name: 'quay.io/solo-io/valet:0.1.2'
   args: ['teardown', '-f', 'valet-cluster.yaml', '--gke-cluster-name', 'gloo-test-cloudbuild']
   dir: './gopath/src/github.com/solo-io/gloo'
   id: 'valet-teardown'

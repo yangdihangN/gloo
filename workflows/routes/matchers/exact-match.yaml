@@ -1,0 +1,15 @@
+name: exact-match
+steps:
+  - apply: https://raw.githubusercontent.com/solo-io/solo-docs/master/gloo/docs/static/content/upstream.yaml
+  - apply: https://raw.githubusercontent.com/solo-io/solo-docs/master/gloo/docs/gloo_routing/virtual_services/routes/matching_rules/path_matching/exact_vs_1.yaml
+  - curl:
+      path: /posts
+      statusCode: 404
+      host: foo
+  - delete: https://raw.githubusercontent.com/solo-io/solo-docs/master/gloo/docs/gloo_routing/virtual_services/routes/matching_rules/path_matching/exact_vs_1.yaml
+  - apply: https://raw.githubusercontent.com/solo-io/solo-docs/master/gloo/docs/gloo_routing/virtual_services/routes/matching_rules/path_matching/exact_vs_2.yaml
+  - curl:
+      path: /posts
+      statusCode: 200
+      host: foo
+  - delete: https://raw.githubusercontent.com/solo-io/solo-docs/master/gloo/docs/gloo_routing/virtual_services/routes/matching_rules/path_matching/exact_vs_2.yaml

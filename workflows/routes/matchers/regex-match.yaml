@@ -1,0 +1,16 @@
+name: exact-match
+steps:
+  - apply: https://raw.githubusercontent.com/solo-io/solo-docs/master/gloo/docs/static/content/upstream.yaml
+  - apply: https://raw.githubusercontent.com/solo-io/solo-docs/master/gloo/docs/gloo_routing/virtual_services/routes/matching_rules/path_matching/regex_vs.yaml
+  - curl:
+      path: /comments
+      statusCode: 404
+      host: foo
+  - curl:
+      path: /posts
+      statusCode: 200
+      host: foo
+  - curl:
+      path: /todos
+      statusCode: 200
+      host: foo

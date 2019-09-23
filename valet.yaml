@@ -1,15 +1,7 @@
 gloo: {}
 workflows:
-  - name: path-match
-    steps:
-      - apply: https://raw.githubusercontent.com/solo-io/solo-docs/master/gloo/docs/static/content/upstream.yaml
-      - apply: https://raw.githubusercontent.com/solo-io/solo-docs/master/gloo/docs/gloo_routing/virtual_services/routes/matching_rules/path_matching/prefix_vs.yaml
-      - curl:
-          path: /posts/1
-          status_code: 200
-          host: foo
-      - curl:
-          path: /posts/1
-          status_code: 404
+  - workflows/routes/matchers/prefix-match.yaml
+  - workflows/routes/matchers/exact-match.yaml
+  - workflows/routes/matchers/regex-match.yaml
 demos:
   petclinic: {}

@@ -4,7 +4,7 @@ import (
 	"context"
 	"sort"
 
-	"github.com/solo-io/gloo/projects/gloo/pkg/api/v1/enterprise/plugins/extauth"
+	extauth "github.com/solo-io/gloo/projects/gloo/pkg/api/v1/enterprise/plugins/extauth/v1"
 	"github.com/solo-io/gloo/projects/gloo/pkg/api/v1/enterprise/plugins/ratelimit"
 
 	"github.com/hashicorp/consul/api"
@@ -48,6 +48,7 @@ type Install struct {
 	HelmChartValues   string
 	Knative           Knative
 	LicenseKey        string
+	WithUi            bool
 }
 
 type Knative struct {

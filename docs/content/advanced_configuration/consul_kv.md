@@ -6,32 +6,6 @@ description: Using Consul as a backing store for Gloo configuration
 
 ## Motivation
 
-{{% protobuf name="Mitch" %}}
-
-{{% protobuf name="cors.plugins.gloo.solo.io" %}}
-
-
-#### aaaa
-
-
-{{< info=ok ".Site.Data.ProtoMap.Rel.Mitch" >}}
-$.Site.Data.ProtoMap.Rel.Mitch
-
-sup .Site.Data.ProtoMap.Rel.Mitch
-{{< /info >}}
-
-{{ markdownify .Site.Data.ProtoMap.Rel.Mitch }}
-
-{{ $.Site.Data.ProtoMap.Rel.Mitch }}
-
-{{ $Site.Data.ProtoMap.Rel.Mitch }}
-
-{{ .Site.Data.ProtoMap.Abc }}
-
-{{ .Site.Data.Abc }}
-
-{{.Data.ProtoMap.Abc}}
-
 While Kubernetes provides APIs for config storage ([CRDs](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/)), credential storage ([Secrets](https://kubernetes.io/docs/concepts/configuration/secret/)), and service discovery ([Services](https://kubernetes.io/docs/concepts/services-networking/service/)), users may wish to run Gloo without using Kubernetes.
 
 Gloo provides alternate mechanisms for configuration, credential storage, and service discovery that do not require Kubernetes, including the use of local `.yaml` files, [Consul Key-Value storage](https://www.consul.io/api/kv.html) and [Vault Key-Value storage](https://www.vaultproject.io/docs/secrets/kv/kv-v2.html).

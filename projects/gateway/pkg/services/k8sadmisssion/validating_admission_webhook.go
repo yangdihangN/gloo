@@ -28,8 +28,9 @@ import (
 )
 
 const (
-	ValidationPath    = "/validation"
-	skipValidationKey = "gateway.solo.io/skip_validation"
+	ValidationPath      = "/validation"
+	SkipValidationKey   = "gateway.solo.io/skip_validation"
+	SkipValidationValue = "true"
 )
 
 var (
@@ -42,7 +43,7 @@ func skipValidationCheck(annotations map[string]string) bool {
 	if annotations == nil {
 		return false
 	}
-	return annotations[skipValidationKey] == "true"
+	return annotations[SkipValidationKey] == SkipValidationValue
 }
 
 func NewGatewayValidatingWebhook(ctx context.Context, validator validation.Validator, watchNamespaces []string, port int, serverCertPath, serverKeyPath string) (*http.Server, error) {

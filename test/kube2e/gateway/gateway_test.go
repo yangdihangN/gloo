@@ -446,11 +446,12 @@ var _ = Describe("Kube2e: gateway", func() {
 			rt1 := getRouteTable("rt1", getRouteWithDelegate(rt2.Metadata.Name, "/rt1"))
 			vs := getVirtualServiceWithRoute(addPrefixRewrite(getRouteWithDelegate(rt1.Metadata.Name, "/root"), "/"), nil)
 
-			_, err := virtualServiceClient.Write(vs, clients.WriteOpts{})
-			Expect(err).NotTo(HaveOccurred())
-			_, err = routeTableClient.Write(rt1, clients.WriteOpts{})
+			_, err := routeTableClient.Write(rt1, clients.WriteOpts{})
 			Expect(err).NotTo(HaveOccurred())
 			_, err = routeTableClient.Write(rt2, clients.WriteOpts{})
+			Expect(err).NotTo(HaveOccurred())
+
+			_, err = virtualServiceClient.Write(vs, clients.WriteOpts{})
 			Expect(err).NotTo(HaveOccurred())
 
 			defaultGateway := defaults.DefaultGateway(testHelper.InstallNamespace)

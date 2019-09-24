@@ -133,7 +133,7 @@ var _ = Describe("Validator", func() {
 				err = v.ValidateDeleteRouteTable(context.TODO(), snap.RouteTables[0].Metadata.Ref())
 				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).To(ContainSubstring("Deletion blocked because active Routes delegate to this Route Table. " +
-					"Remove delegate actions to this route table the virtual services: [] and the route tables: [{node-0 my-namespace}], then try again"))
+					"Remove delegate actions to this route table from the virtual services: [] and the route tables: [{node-0 my-namespace}], then try again"))
 			})
 		})
 		Context("has no parents", func() {

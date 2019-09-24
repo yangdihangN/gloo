@@ -31,7 +31,7 @@ var (
 	NotReadyErr = errors.Errorf("validation is yet not available. Waiting for first snapshot")
 
 	RouteTableDeleteErr = func(parentVirtualServices, parentRouteTables []core.ResourceRef) error {
-		return errors.Errorf("Deletion blocked because active Routes delegate to this Route Table. Remove delegate actions to this route table the virtual services: %v and the route tables: %v, then try again", parentVirtualServices, parentRouteTables)
+		return errors.Errorf("Deletion blocked because active Routes delegate to this Route Table. Remove delegate actions to this route table from the virtual services: %v and the route tables: %v, then try again", parentVirtualServices, parentRouteTables)
 	}
 	VirtualServiceDeleteErr = func(parentGateways []core.ResourceRef) error {
 		return errors.Errorf("Deletion blocked because active Gateways reference this Virtual Service. Remove refs to this virtual service from the gateways: %v, then try again", parentGateways)
@@ -171,6 +171,11 @@ func (v *validator) validateSnapshot(ctx context.Context, apply applyResource) (
 	}
 
 	contextutils.LoggerFrom(ctx).Debugw("Accepted %T %v", resource, ref)
+
+	// update internal snapshot to handle race where a lot of resources may be applied at once, before syncer updates
+	v.lock.Lock()
+	apply(v.latestSnapshot)
+	v.lock.Unlock()
 
 	return nil, nil
 }

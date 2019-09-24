@@ -963,7 +963,7 @@ var _ = Describe("Kube2e: gateway", func() {
 		})
 	})
 
-	FContext("tests for the validation server", func() {
+	Context("tests for the validation server", func() {
 		testValidation := func(yam, response string) {
 			out, err := install.KubectlApplyOut([]byte(yam))
 			ExpectWithOffset(1, err).To(HaveOccurred())

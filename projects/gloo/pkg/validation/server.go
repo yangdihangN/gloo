@@ -20,7 +20,7 @@ type Validator interface {
 }
 
 type validator struct {
-	l              sync.RWMutex
+	lock           sync.RWMutex
 	latestSnapshot *v1.ApiSnapshot
 	translator     translator.Translator
 }
@@ -31,16 +31,16 @@ func NewValidator(translator translator.Translator) *validator {
 
 func (s *validator) Sync(_ context.Context, snap *v1.ApiSnapshot) error {
 	snapCopy := snap.Clone()
-	s.l.Lock()
+	s.lock.Lock()
 	s.latestSnapshot = &snapCopy
-	s.l.Unlock()
+	s.lock.Unlock()
 	return nil
 }
 
 func (s *validator) ValidateProxy(ctx context.Context, req *validation.ProxyValidationServiceRequest) (*validation.ProxyValidationServiceResponse, error) {
-	s.l.RLock()
+	s.lock.RLock()
 	snapCopy := s.latestSnapshot.Clone()
-	s.l.RUnlock()
+	s.lock.RUnlock()
 
 	ctx = contextutils.WithLogger(ctx, "proxy-validation")
 

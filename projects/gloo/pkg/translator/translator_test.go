@@ -679,9 +679,9 @@ var _ = Describe("Translator", func() {
 			Expect(err.Error()).To(ContainSubstring("destination # 1: upstream not found: list did not find upstream gloo-system.notexist"))
 
 			expectedReport := validationutils.MakeReport(proxy)
-			expectedReport.ListenerReports[0].ListenerTypeReport.(*validation.ListenerReport_HttpListenerReport).HttpListenerReport.VirtualHostReports[0].RouteReports[0].Errors = []*validation.RouteReport_Error{
+			expectedReport.ListenerReports[0].ListenerTypeReport.(*validation.ListenerReport_HttpListenerReport).HttpListenerReport.VirtualHostReports[0].RouteReports[0].Warnings = []*validation.RouteReport_Warning{
 				{
-					Type:   validation.RouteReport_Error_InvalidDestinationError,
+					Type:   validation.RouteReport_Warning_InvalidDestinationWarning,
 					Reason: "invalid destination in weighted destination list: list did not find upstream gloo-system.notexist",
 				},
 			}
@@ -870,14 +870,14 @@ var _ = Describe("Translator", func() {
 				}}
 			})
 
-			It("should error a route when subset in route doesnt match subset in upstream", func() {
+			It("should not error a route when subset in route doesnt match subset in upstream, but instead give a warning", func() {
 				_, errs, report, err := translator.Translate(params, proxy)
 				Expect(err).NotTo(HaveOccurred())
-				Expect(errs.Validate()).To(HaveOccurred())
+				Expect(errs.Validate()).NotTo(HaveOccurred())
 				expectedReport := validationutils.MakeReport(proxy)
-				expectedReport.ListenerReports[0].ListenerTypeReport.(*validation.ListenerReport_HttpListenerReport).HttpListenerReport.VirtualHostReports[0].RouteReports[0].Errors = []*validation.RouteReport_Error{
+				expectedReport.ListenerReports[0].ListenerTypeReport.(*validation.ListenerReport_HttpListenerReport).HttpListenerReport.VirtualHostReports[0].RouteReports[0].Warnings = []*validation.RouteReport_Warning{
 					{
-						Type:   validation.RouteReport_Error_InvalidDestinationError,
+						Type:   validation.RouteReport_Warning_InvalidDestinationWarning,
 						Reason: "route has a subset config, but none of the subsets in the upstream match it.",
 					},
 				}

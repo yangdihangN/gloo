@@ -167,8 +167,8 @@ func (t *translator) setAction(params plugins.RouteParams, routeReport *validati
 	switch action := in.Action.(type) {
 	case *v1.Route_RouteAction:
 		if err := ValidateRouteDestinations(params.Snapshot, action.RouteAction); err != nil {
-			validation.AppendRouteError(routeReport,
-				validationapi.RouteReport_Error_InvalidDestinationError,
+			validation.AppendRouteWarning(routeReport,
+				validationapi.RouteReport_Warning_InvalidDestinationWarning,
 				err.Error(),
 			)
 		}
@@ -177,8 +177,8 @@ func (t *translator) setAction(params plugins.RouteParams, routeReport *validati
 			Route: &envoyroute.RouteAction{},
 		}
 		if err := t.setRouteAction(params, action.RouteAction, out.Action.(*envoyroute.Route_Route).Route, routeReport); err != nil {
-			validation.AppendRouteError(routeReport,
-				validationapi.RouteReport_Error_InvalidDestinationError,
+			validation.AppendRouteWarning(routeReport,
+				validationapi.RouteReport_Warning_InvalidDestinationWarning,
 				err.Error(),
 			)
 		}

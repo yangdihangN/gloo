@@ -71,6 +71,7 @@ Represents global settings for all the Gloo components.
 "extensions": .gloo.solo.io.Extensions
 "ratelimitDescriptors": .ratelimit.plugins.gloo.solo.io.EnvoySettings
 "ratelimitServer": .ratelimit.plugins.gloo.solo.io.Settings
+"rbac": .rbac.plugins.gloo.solo.io.Settings
 "metadata": .core.solo.io.Metadata
 "status": .core.solo.io.Status
 
@@ -103,6 +104,7 @@ Represents global settings for all the Gloo components.
 | `extensions` | [.gloo.solo.io.Extensions](../extensions.proto.sk#extensions) | Deprecated: Opaque settings config for Gloo extensions. |  |
 | `ratelimitDescriptors` | [.ratelimit.plugins.gloo.solo.io.EnvoySettings](../enterprise/plugins/ratelimit/ratelimit.proto.sk#envoysettings) | Enterprise-only: Partial config for GlooE's rate-limiting service, based on Envoy's rate-limit service; supports Envoy's rate-limit service API. (reference here: https://github.com/lyft/ratelimit#configuration) Configure rate-limit *descriptors* here, which define the limits for requests based on their descriptors. Configure rate-limit *actions*, which define how request characteristics get translated into descriptors, on the VirtualHost or its routes. |  |
 | `ratelimitServer` | [.ratelimit.plugins.gloo.solo.io.Settings](../enterprise/plugins/ratelimit/ratelimit.proto.sk#settings) | Enterprise-only: Settings for the rate limiting server itself. |  |
+| `rbac` | [.rbac.plugins.gloo.solo.io.Settings](../enterprise/plugins/rbac/rbac.proto.sk#settings) | Enterprise-only: Settings for RBAC across all Gloo resources (VirtualServices, Routes, etc.). |  |
 | `metadata` | [.core.solo.io.Metadata](../../../../../../solo-kit/api/v1/metadata.proto.sk#metadata) | Metadata contains the object metadata for this resource. |  |
 | `status` | [.core.solo.io.Status](../../../../../../solo-kit/api/v1/status.proto.sk#status) | Status indicates the validation status of this resource. Status is read-only by clients, and set by gloo during validation. |  |
 
@@ -470,7 +472,7 @@ options for configuring admission control / validation
 | `validationWebhookTlsCert` | `string` | Path to TLS Certificate for Kubernetes Validating webhook. Defaults to `/etc/gateway/validation-certs/tls.crt`. |  |
 | `validationWebhookTlsKey` | `string` | Path to TLS Private Key for Kubernetes Validating webhook. Defaults to `/etc/gateway/validation-certs/tls.key`. |  |
 | `ignoreGlooValidationFailure` | `bool` | When Gateway cannot communicate with Gloo (e.g. Gloo is offline) resources will be rejected by default. Enable the `ignoreGlooValidationFailure` to prevent the Validation server from rejecting resources due to network errors. |  |
-| `alwaysAccept` | [.google.protobuf.BoolValue](https://developers.google.com/protocol-buffers/docs/reference/csharp/class/google/protobuf/well-known-types/bool-value) | Always accept resources even if validation produced an error Validation will still log the error and increment the validation_error_result stat Currently defaults to true - must be set to `false` to prevent writing invalid resources to storage. |  |
+| `alwaysAccept` | [.google.protobuf.BoolValue](https://developers.google.com/protocol-buffers/docs/reference/csharp/class/google/protobuf/well-known-types/bool-value) | Always accept resources even if validation produced an error Validation will still log the error and increment the validation.gateway.solo.io/resources_rejected stat Currently defaults to true - must be set to `false` to prevent writing invalid resources to storage. |  |
 
 
 

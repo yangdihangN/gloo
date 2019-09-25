@@ -460,7 +460,7 @@ options for configuring admission control / validation
 "validationWebhookTlsCert": string
 "validationWebhookTlsKey": string
 "ignoreGlooValidationFailure": bool
-"ignoreFailures": .google.protobuf.BoolValue
+"alwaysAccept": .google.protobuf.BoolValue
 
 ```
 
@@ -470,7 +470,7 @@ options for configuring admission control / validation
 | `validationWebhookTlsCert` | `string` | Path to TLS Certificate for Kubernetes Validating webhook. Defaults to `/etc/gateway/validation-certs/tls.crt`. |  |
 | `validationWebhookTlsKey` | `string` | Path to TLS Private Key for Kubernetes Validating webhook. Defaults to `/etc/gateway/validation-certs/tls.key`. |  |
 | `ignoreGlooValidationFailure` | `bool` | When Gateway cannot communicate with Gloo (e.g. Gloo is offline) resources will be rejected by default. Enable the `ignoreGlooValidationFailure` to prevent the Validation server from rejecting resources due to network errors. |  |
-| `ignoreFailures` | [.google.protobuf.BoolValue](https://developers.google.com/protocol-buffers/docs/reference/csharp/class/google/protobuf/well-known-types/bool-value) | When Gateway cannot communicate with Gloo (e.g. Gloo is offline) resources will be rejected by default. Enable the `ignoreGlooValidationFailure` to prevent the Validation server from rejecting resources due to network errors. |  |
+| `alwaysAccept` | [.google.protobuf.BoolValue](https://developers.google.com/protocol-buffers/docs/reference/csharp/class/google/protobuf/well-known-types/bool-value) | Always accept resources even if validation produced an error Validation will still log the error and increment the validation_error_result stat Currently defaults to true - must be set to `false` to prevent writing invalid resources to storage. |  |
 
 
 

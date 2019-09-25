@@ -25,4 +25,5 @@ type ValidationOpts struct {
 	ValidatingWebhookCertPath    string
 	ValidatingWebhookKeyPath     string
 	IgnoreProxyValidationFailure bool
+	AlwaysAcceptResources        bool
 }

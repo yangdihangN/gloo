@@ -8,6 +8,10 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"go.opencensus.io/stats"
+	"go.opencensus.io/stats/view"
+	"go.opencensus.io/tag"
+
 	validationutil "github.com/solo-io/gloo/projects/gloo/pkg/utils/validation"
 
 	"github.com/solo-io/gloo/pkg/utils/skutils"
@@ -37,7 +41,46 @@ var (
 	runtimeScheme = runtime.NewScheme()
 	codecs        = serializer.NewCodecFactory(runtimeScheme)
 	deserializer  = codecs.UniversalDeserializer()
+
+	resourceTypeKey, _ = tag.NewKey("resource_type")
+	resourceRefKey, _  = tag.NewKey("resource_ref")
+
+	mGatewayResourcesAccepted = stats.Int64("validation.gateway.solo.io/resources_accepted", "The number of resources accepted", "1")
+	mGatewayResourcesRejected = stats.Int64("validation.gateway.solo.io/resources_rejected", "The number of resources rejected", "1")
 )
+
+func init() {
+	gatewayResourcesAcceptedView := &view.View{
+		Name:        mGatewayResourcesAccepted.Name(),
+		Measure:     mGatewayResourcesAccepted,
+		Description: mGatewayResourcesAccepted.Description(),
+		Aggregation: view.LastValue(),
+		TagKeys:     []tag.Key{resourceTypeKey, resourceRefKey},
+	}
+
+	gatewayResourcesRejectedView := &view.View{
+		Name:        mGatewayResourcesRejected.Name(),
+		Measure:     mGatewayResourcesRejected,
+		Description: mGatewayResourcesRejected.Description(),
+		Aggregation: view.LastValue(),
+		TagKeys:     []tag.Key{resourceTypeKey, resourceRefKey},
+	}
+
+	_ = view.Register(gatewayResourcesAcceptedView, gatewayResourcesRejectedView)
+}
+
+func incrementMetric(ctx context.Context, resource string, ref core.ResourceRef, m *stats.Int64Measure) {
+	if err := stats.RecordWithTags(
+		ctx,
+		[]tag.Mutator{
+			tag.Insert(resourceTypeKey, resource),
+			tag.Insert(resourceRefKey, fmt.Sprintf("%v.%v", ref.Namespace, ref.Name)),
+		},
+		m.M(1),
+	); err != nil {
+		contextutils.LoggerFrom(ctx).Errorf("incrementing resource count: %v", err)
+	}
+}
 
 func skipValidationCheck(annotations map[string]string) bool {
 	if annotations == nil {
@@ -46,7 +89,7 @@ func skipValidationCheck(annotations map[string]string) bool {
 	return annotations[SkipValidationKey] == SkipValidationValue
 }
 
-func NewGatewayValidatingWebhook(ctx context.Context, validator validation.Validator, watchNamespaces []string, port int, serverCertPath, serverKeyPath string) (*http.Server, error) {
+func NewGatewayValidatingWebhook(ctx context.Context, validator validation.Validator, watchNamespaces []string, port int, serverCertPath, serverKeyPath string, alwaysAccept bool) (*http.Server, error) {
 	keyPair, err := tls.LoadX509KeyPair(serverCertPath, serverKeyPath)
 	if err != nil {
 		return nil, errors.Wrapf(err, "loading x509 key pair")
@@ -56,6 +99,7 @@ func NewGatewayValidatingWebhook(ctx context.Context, validator validation.Valid
 		ctx:             contextutils.WithLogger(ctx, "gateway-validation-webhook"),
 		validator:       validator,
 		watchNamespaces: watchNamespaces,
+		alwaysAccept:    alwaysAccept,
 	}
 
 	mux := http.NewServeMux()
@@ -73,6 +117,7 @@ type gatewayValidationWebhook struct {
 	ctx             context.Context
 	validator       validation.Validator
 	watchNamespaces []string
+	alwaysAccept    bool
 }
 
 func (wh *gatewayValidationWebhook) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -203,13 +248,19 @@ func (wh *gatewayValidationWebhook) validate(ctx context.Context, review *v1beta
 		}
 	}
 
+	success := &v1beta1.AdmissionResponse{
+		Allowed: true,
+	}
+
 	if validationErr == nil {
 		logger.Debug("Succeeded")
 
-		return &v1beta1.AdmissionResponse{
-			Allowed: true,
-		}
+		incrementMetric(ctx, gvk.String(), ref, mGatewayResourcesAccepted)
+
+		return success
 	}
+
+	incrementMetric(ctx, gvk.String(), ref, mGatewayResourcesRejected)
 
 	logger.Errorf("Validation failed: %v", validationErr)
 
@@ -273,6 +324,10 @@ func (wh *gatewayValidationWebhook) validate(ctx context.Context, review *v1beta
 			}
 		}
 		validationErr = errors.Errorf("resource incompatible with current Gloo snapshot: %v", proxyErrs)
+	}
+
+	if wh.alwaysAccept {
+		return success
 	}
 
 	return &v1beta1.AdmissionResponse{

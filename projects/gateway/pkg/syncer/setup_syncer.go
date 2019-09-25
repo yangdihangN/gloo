@@ -34,6 +34,9 @@ import (
 	"k8s.io/client-go/rest"
 )
 
+// TODO: switch AcceptAllResourcesByDefault to false after validation has been tested in user environments
+var AcceptAllResourcesByDefault = true
+
 func Setup(ctx context.Context, kubeCache kube.SharedCache, inMemoryCache memory.InMemoryResourceCache, settings *gloov1.Settings) error {
 	var (
 		cfg *rest.Config
@@ -86,12 +89,19 @@ func Setup(ctx context.Context, kubeCache kube.SharedCache, inMemoryCache memory
 	var validation *ValidationOpts
 	validationCfg := settings.GetGateway().GetValidation()
 	if validationCfg != nil {
+		alwaysAcceptResources := AcceptAllResourcesByDefault
+
+		if alwaysAccept := validationCfg.AlwaysAccept; alwaysAccept != nil {
+			alwaysAcceptResources = alwaysAccept.GetValue()
+		}
+
 		validation = &ValidationOpts{
 			ProxyValidationServerAddress: validationCfg.GetProxyValidationServerAddr(),
 			ValidatingWebhookPort:        defaults.ValidationWebhookBindPort,
 			ValidatingWebhookCertPath:    validationCfg.GetValidationWebhookTlsCert(),
 			ValidatingWebhookKeyPath:     validationCfg.GetValidationWebhookTlsKey(),
 			IgnoreProxyValidationFailure: validationCfg.GetIgnoreGlooValidationFailure(),
+			AlwaysAcceptResources:        alwaysAcceptResources,
 		}
 		if validation.ProxyValidationServerAddress == "" {
 			validation.ProxyValidationServerAddress = defaults.GlooProxyValidationServerAddr
@@ -240,6 +250,7 @@ func RunGateway(opts Opts) error {
 			opts.Validation.ValidatingWebhookPort,
 			opts.Validation.ValidatingWebhookCertPath,
 			opts.Validation.ValidatingWebhookKeyPath,
+			opts.Validation.AlwaysAcceptResources,
 		)
 		if err != nil {
 			return errors.Wrapf(err, "creating validating webhook")

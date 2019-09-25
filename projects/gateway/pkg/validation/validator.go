@@ -71,6 +71,10 @@ func (v *validator) ready() bool {
 }
 
 func (v *validator) Sync(ctx context.Context, snap *v2.ApiSnapshot) error {
+	if v.ready() {
+		// only need to sync once, after this we update snapshot internally
+		return nil
+	}
 	snapCopy := snap.Clone()
 	gatewaysByProxy := utils.GatewaysByProxyName(snap.Gateways)
 	var errs error

@@ -1,4 +1,4 @@
-package validation_test
+package validation
 
 import (
 	"context"
@@ -14,7 +14,6 @@ import (
 	gatewayv1 "github.com/solo-io/gloo/projects/gateway/pkg/api/v1"
 	v2 "github.com/solo-io/gloo/projects/gateway/pkg/api/v2"
 	"github.com/solo-io/gloo/projects/gateway/pkg/translator"
-	. "github.com/solo-io/gloo/projects/gateway/pkg/validation"
 	"github.com/solo-io/gloo/projects/gloo/pkg/api/grpc/validation"
 	validationutils "github.com/solo-io/gloo/projects/gloo/pkg/utils/validation"
 	"github.com/solo-io/gloo/test/samples"
@@ -26,7 +25,7 @@ var _ = Describe("Validator", func() {
 		t  translator.Translator
 		vc *mockValidationClient
 		ns string
-		v  Validator
+		v  *validator
 	)
 	BeforeEach(func() {
 		t = translator.NewDefaultTranslator()
@@ -145,8 +144,13 @@ var _ = Describe("Validator", func() {
 				snap.RouteTables[1].Routes = nil
 				err := v.Sync(context.TODO(), snap)
 				Expect(err).NotTo(HaveOccurred())
-				err = v.ValidateDeleteRouteTable(context.TODO(), snap.RouteTables[0].Metadata.Ref())
+				ref := snap.RouteTables[0].Metadata.Ref()
+				err = v.ValidateDeleteRouteTable(context.TODO(), ref)
 				Expect(err).NotTo(HaveOccurred())
+
+				// ensure route table was removed from validator internal snapshot
+				_, err = v.latestSnapshot.RouteTables.Find(ref.Strings())
+				Expect(err).To(HaveOccurred())
 			})
 		})
 	})
@@ -256,6 +260,10 @@ var _ = Describe("Validator", func() {
 				ref := snap.VirtualServices[0].Metadata.Ref()
 				err = v.ValidateDeleteVirtualService(context.TODO(), ref)
 				Expect(err).NotTo(HaveOccurred())
+
+				// ensure vs was removed from validator internal snapshot
+				_, err = v.latestSnapshot.VirtualServices.Find(ref.Strings())
+				Expect(err).To(HaveOccurred())
 			})
 		})
 	})

@@ -96,6 +96,28 @@ func (v *validator) Sync(ctx context.Context, snap *v2.ApiSnapshot) error {
 
 type applyResource func(snap *v2.ApiSnapshot) (proxyNames []string, resource resources.Resource, ref core.ResourceRef)
 
+// update internal snapshot to handle race where a lot of resources may be deleted at once, before syncer updates
+// should be called within a lock
+func (v *validator) deleteFromLocalSnapshot(resource resources.Resource) {
+	ref := resource.GetMetadata().Ref()
+	switch resource.(type) {
+	case *v1.VirtualService:
+		for i, rt := range v.latestSnapshot.VirtualServices {
+			if rt.Metadata.Ref() == ref {
+				v.latestSnapshot.VirtualServices = append(v.latestSnapshot.VirtualServices[:i], v.latestSnapshot.VirtualServices[i+1:]...)
+				break
+			}
+		}
+	case *v1.RouteTable:
+		for i, rt := range v.latestSnapshot.RouteTables {
+			if rt.Metadata.Ref() == ref {
+				v.latestSnapshot.RouteTables = append(v.latestSnapshot.RouteTables[:i], v.latestSnapshot.RouteTables[i+1:]...)
+				break
+			}
+		}
+	}
+}
+
 func (v *validator) validateSnapshot(ctx context.Context, apply applyResource) (ProxyReports, error) {
 	if !v.ready() {
 		return nil, NotReadyErr
@@ -209,11 +231,11 @@ func (v *validator) ValidateDeleteVirtualService(ctx context.Context, vsRef core
 	if !v.ready() {
 		return errors.Errorf("Gateway validation is yet not available. Waiting for first snapshot")
 	}
-	v.lock.RLock()
+	v.lock.Lock()
+	defer v.lock.Unlock()
 	snap := v.latestSnapshot.Clone()
-	v.lock.RUnlock()
 
-	_, err := snap.VirtualServices.Find(vsRef.Strings())
+	vs, err := snap.VirtualServices.Find(vsRef.Strings())
 	if err != nil {
 		// if it's not present in the snapshot, allow deletion
 		return nil
@@ -242,6 +264,8 @@ func (v *validator) ValidateDeleteVirtualService(ctx context.Context, vsRef core
 	}
 
 	contextutils.LoggerFrom(ctx).Debugw("Accepted deletion of Virtual Service %v", vsRef)
+
+	v.deleteFromLocalSnapshot(vs)
 
 	return nil
 }
@@ -277,11 +301,11 @@ func (v *validator) ValidateDeleteRouteTable(ctx context.Context, rtRef core.Res
 	if !v.ready() {
 		return errors.Errorf("Gateway validation is yet not available. Waiting for first snapshot")
 	}
-	v.lock.RLock()
+	v.lock.Lock()
 	snap := v.latestSnapshot.Clone()
-	v.lock.RUnlock()
+	defer v.lock.Unlock()
 
-	_, err := snap.RouteTables.Find(rtRef.Strings())
+	rt, err := snap.RouteTables.Find(rtRef.Strings())
 	if err != nil {
 		// if it's not present in the snapshot, allow deletion
 		return nil
@@ -310,6 +334,8 @@ func (v *validator) ValidateDeleteRouteTable(ctx context.Context, rtRef core.Res
 	}
 
 	contextutils.LoggerFrom(ctx).Debugw("Accepted Route Table deletion %v", rtRef)
+
+	v.deleteFromLocalSnapshot(rt)
 
 	return nil
 }

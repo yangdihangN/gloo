@@ -38,6 +38,7 @@ gateway:
   validation:
     failurePolicy: "Ignore"
     secretName: gateway-validation-certs
+    alwaysAcceptResources: true
   upgrade: false
   deployment:
     image:

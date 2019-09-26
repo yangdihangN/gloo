@@ -36,7 +36,7 @@ install-tools:
 .PHONY: docker-push
 docker-push: site
 	docker build \
-		--build-arg version=$(VERSION) \
+		--build-arg VERSION=$(VERSION) \
 		-t gcr.io/solo-test-236622/gloo-docs:$(VERSION) .
 	docker push gcr.io/solo-test-236622/gloo-docs:$(VERSION)
 
@@ -46,3 +46,7 @@ manifest:
 		--set docsVersion=$(VERSION) \
 		--set image.tag=$(VERSION) \
 		> install/manifest.yaml
+
+.PHONY: pass-version-to-hugo
+pass-version-to-hugo:
+	echo DocsVersion: "/$(VERSION)" > data/Solo.yaml

@@ -35,5 +35,14 @@ install-tools:
 
 .PHONY: docker-push
 docker-push: site
-	docker build -t gcr.io/solo-test-236622/gloo-docs:vabc6 .
-	docker push gcr.io/solo-test-236622/gloo-docs:vabc6
+	docker build \
+		--build-arg version=$(VERSION) \
+		-t gcr.io/solo-test-236622/gloo-docs:$(VERSION) .
+	docker push gcr.io/solo-test-236622/gloo-docs:$(VERSION)
+
+.PHONY: manifest
+manifest:
+	helm template install/helm \
+		--set docsVersion=$(VERSION) \
+		--set image.tag=$(VERSION) \
+		> install/manifest.yaml

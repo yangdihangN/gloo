@@ -128,6 +128,13 @@ ClusterLoop:
 		resourceErrs.AddError(proxy, err)
 	}
 
+	// TODO: add a settings flag to allow accepting proxy on warnings
+	if warnings := validation.GetProxyWarning(proxyRpt); len(warnings) > 0 {
+		for _, warning := range warnings {
+			resourceErrs.AddError(proxy, errors.Errorf("warning: %s", warning))
+		}
+	}
+
 	return xdsSnapshot, resourceErrs, proxyRpt, nil
 }
 

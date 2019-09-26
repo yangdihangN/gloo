@@ -3,7 +3,7 @@ docsVersion: dev
 image:
   repository: gcr.io/solo-test-236622/gloo-docs
   tag: dev
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
 
 imagePullSecrets: []
 

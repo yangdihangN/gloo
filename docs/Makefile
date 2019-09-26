@@ -28,7 +28,12 @@ VERSION ?= $(shell echo $(TAGGED_VERSION) | cut -c 2-)
 #TEST_IMAGE_TAG := test-$(BUILD_ID)
 GCR_REPO_PREFIX := gcr.io/$(GCLOUD_PROJECT_ID)
 
-
+# this allows us to host docs.solo.io/gloo/vX.Y.Z or docs.solo.io/supergloo/vA.B.C
+PRODUCT_SCOPE := gloo
+DOCS_VERSION := latest
+# TODO(mitchdraft) - work out how to best publish pinned versions
+# for now, always push a "latest" and version-tagged image on a release
+# I think it makes sense to auto-publish the latest image and keep the pinned image publish step a manual activity
 
 #----------------------------------------------------------------------------------
 # Docs
@@ -68,15 +73,18 @@ install-tools:
 .PHONY: docker-push
 docker-push: site
 	docker build \
-		--build-arg VERSION=$(VERSION) \
-		-t gcr.io/solo-test-236622/gloo-docs:$(VERSION) .
+		--build-arg VERSION=$(DOCS_VERSION) \
+		--build-arg PRODUCT_SCOPE=$(PRODUCT_SCOPE) \
+		-t $(GCR_REPO_PREFIX)/gloo-docs:$(DOCS_VERSION) \
+		-t $(GCR_REPO_PREFIX)/gloo-docs:$(VERSION) .
+	docker push $(GCR_REPO_PREFIX)/gloo-docs:$(DOCS_VERSION)
 	docker push $(GCR_REPO_PREFIX)/gloo-docs:$(VERSION)
 
 .PHONY: manifest
 manifest:
 	helm template install/helm \
-		--set docsVersion=$(VERSION) \
-		--set image.tag=$(VERSION) \
+		--set docsVersion=$(DOCS_VERSION) \
+		--set image.tag=$(DOCS_VERSION) \
 		> install/manifest.yaml
 
 # do something more sophisticated as needed
@@ -87,5 +95,5 @@ manifest:
 pass-version-to-hugo:
 	echo DocsVersion: > data/Solo.yaml
 ifeq ($(RELEASE),"true")
-	echo DocsVersion: "/$(VERSION)" > data/Solo.yaml
+	echo DocsVersion: "/$(PRODUCT_SCOPE)/$(DOCS_VERSION)" > data/Solo.yaml
 endif

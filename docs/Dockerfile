@@ -5,7 +5,7 @@ RUN rm -rf /etc/nginx/conf.d
 COPY conf /etc/nginx
 
 # Copy over both regular an no_auth bundles
-COPY ./site /usr/share/nginx/html/no_auth
+COPY ./site /usr/share/nginx/html/no_auth/vabc6
 
 EXPOSE 8080
 CMD ["nginx", "-g", "daemon off;"]

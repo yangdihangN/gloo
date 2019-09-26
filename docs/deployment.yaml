@@ -1,0 +1,33 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: docs-demo-vabc6
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: docs-demo-vabc6
+  template:
+    metadata:
+      labels:
+        app: docs-demo-vabc6
+    spec:
+      containers:
+      - name: docs-demo-vabc6
+        image: gcr.io/solo-test-236622/gloo-docs:vabc6
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: docs-demo-vabc6
+spec:
+  selector:
+    app: docs-demo-vabc6
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 8080

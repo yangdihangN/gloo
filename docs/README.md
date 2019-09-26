@@ -9,3 +9,6 @@ make site -B
 docker build -t CONTAINER_REPO/gloo-docs:dev .
 docker push CONTAINER_REPO/gloo-docs:dev
 ```
+
+
+# TODO: make a script to update the dockerfile

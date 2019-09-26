@@ -3,7 +3,7 @@
 #----------------------------------------------------------------------------------
 
 site:
-	if [ ! -d themes/hugo-theme-soloio ]; then git clone https://github.com/solo-io/hugo-theme-soloio themes/hugo-theme-soloio && git --git-dir=themes/hugo-theme-soloio/.git checkout b49aed308e7c03edd2640fe52afd745d37fa0cbc; fi
+	# if [ ! -d themes/hugo-theme-soloio ]; then git clone https://github.com/solo-io/hugo-theme-soloio themes/hugo-theme-soloio && git --git-dir=themes/hugo-theme-soloio/.git checkout b49aed308e7c03edd2640fe52afd745d37fa0cbc; fi
 	cp pending-theme/shortcodes/protobuf.html themes/hugo-theme-soloio/layouts/shortcodes/
 	hugo --config docs.toml
 
@@ -34,6 +34,6 @@ install-tools:
 	gem install html-proofer
 
 .PHONY: docker-push
-docker-push:
-	docker build -t gcr.io/solo-test-236622/gloo-docs:dev .
-	docker push gcr.io/solo-test-236622/gloo-docs:dev
+docker-push: site
+	docker build -t gcr.io/solo-test-236622/gloo-docs:vabc6 .
+	docker push gcr.io/solo-test-236622/gloo-docs:vabc6

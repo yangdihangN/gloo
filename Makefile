@@ -402,9 +402,10 @@ upload-github-release-assets: build-cli render-yaml
 
 .PHONY: publish-docs
 publish-docs:
-ifeq ($(RELEASE),"true")
-	cd docs && make deploy-site
-endif
+	echo "TODO - this will be enabled when docs flow finalized"
+# ifeq ($(RELEASE),"true")
+# 	cd docs && make deploy-site
+# endif
 
 #----------------------------------------------------------------------------------
 # Docker

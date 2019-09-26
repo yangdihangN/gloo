@@ -42,7 +42,7 @@ func (s *validator) ValidateProxy(ctx context.Context, req *validation.ProxyVali
 	snapCopy := s.latestSnapshot.Clone()
 	s.lock.RUnlock()
 
-	ctx = contextutils.WithLogger(ctx, "proxy-validation")
+	ctx = contextutils.WithLogger(ctx, "proxy-validator")
 
 	params := plugins.Params{Ctx: ctx, Snapshot: &snapCopy}
 

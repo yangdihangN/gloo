@@ -127,6 +127,8 @@ func (v *validator) validateSnapshot(ctx context.Context, apply applyResource) (
 		return nil, NotReadyErr
 	}
 
+	ctx = contextutils.WithLogger(ctx, "gateway-validator")
+
 	v.lock.RLock()
 	snap := v.latestSnapshot.Clone()
 	v.lock.RUnlock()

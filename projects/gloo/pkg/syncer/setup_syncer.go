@@ -435,6 +435,9 @@ func RunGlooWithExtensions(opts bootstrap.Opts, extensions Extensions) error {
 	t := translator.NewTranslator(sslutils.NewSslConfigTranslator(), opts.Settings, allPlugins...)
 
 	validator := validation.NewValidator(t)
+	if opts.ValidationServer.Server != nil {
+		opts.ValidationServer.Server.SetValidator(validator)
+	}
 
 	translationSync := NewTranslatorSyncer(t, opts.ControlPlane.SnapshotCache, xdsHasher, rpt, opts.DevMode, syncerExtensions)
 
@@ -486,7 +489,6 @@ func RunGlooWithExtensions(opts bootstrap.Opts, extensions Extensions) error {
 		if err != nil {
 			return err
 		}
-		validationServer.Server.SetValidator(validator)
 		validationServer.Server.Register(validationServer.GrpcServer)
 
 		go func() {

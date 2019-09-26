@@ -582,6 +582,263 @@ var _ = Describe("Helm Test", func() {
 					testManifest.ExpectDeploymentAppsV1(gatewayProxyDeployment)
 				})
 			})
+
+			Context("gateway validation resources", func() {
+				var (
+					job *batchv1.Job
+				)
+				BeforeEach(func() {
+					job = &batchv1.Job{
+						TypeMeta: metav1.TypeMeta{
+							Kind:       "Job",
+							APIVersion: "batch/v1",
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Labels: map[string]string{
+								"app":  "gloo",
+								"gloo": "gateway",
+							},
+							Name:      "gateway-conversion",
+							Namespace: namespace,
+						},
+						Spec: batchv1.JobSpec{
+							Template: v1.PodTemplateSpec{
+								ObjectMeta: metav1.ObjectMeta{
+									Labels: map[string]string{
+										"gloo": "gateway",
+									},
+								},
+								Spec: v1.PodSpec{
+									RestartPolicy:      v1.RestartPolicyNever,
+									ServiceAccountName: "gateway",
+									Containers: []v1.Container{
+										{
+											Name:            "gateway-conversion",
+											Image:           "quay.io/solo-io/gateway-conversion:" + version,
+											ImagePullPolicy: v1.PullAlways,
+											Env: []v1.EnvVar{
+												GetPodNamespaceEnvVar(),
+											},
+										},
+									},
+								},
+							},
+						},
+					}
+				})
+
+				It("creates a service for the gateway validation port", func() {
+					_ = `
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: gloo
+    gloo: gateway
+  name: gateway
+  namespace: {{ .Release.Namespace }}
+spec:
+{{ if .Values.gateway.deployment.externalTrafficPolicy }}
+  externalTrafficPolicy: {{ .Values.gateway.deployment.externalTrafficPolicy }}
+{{- end }}
+  ports:
+  - name: https
+    port: 443
+    protocol: TCP
+    # this should map to projects/gateway/pkg/defaults.ValidationWebhookBindPort
+    targetPort: 8443
+  selector:
+    gloo: gateway
+`
+				})
+
+				It("creates settings with the gateway config", func() {
+					_ = `
+{{- if .Values.gateway.validation }}
+  gateway:
+    validation:
+      proxyValidationServerAddr: gloo:{{ .Values.gloo.deployment.validationPort }}
+{{- if .Values.gateway.validation.alwaysAcceptResources }}
+      alwaysAccept: {{ .Values.gateway.validation.alwaysAcceptResources }}
+{{- end }}
+{{- end }}
+`
+				})
+
+				It("creates the validating webhook configuration", func() {
+					_ = `
+{{- if .Values.gateway.enabled }}
+{{- if .Values.gateway.validation }}
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: gloo-gateway-validation-webhook-{{ .Release.Namespace }}
+  labels:
+    app: gloo
+    gloo: gateway
+  annotations:
+    "helm.sh/hook": pre-install
+    "helm.sh/hook-weight": "5" # should come before cert-gen job
+webhooks:
+  - name: gateway.{{ .Release.Namespace }}.svc  # must be a domain with at least three segments separated by dots
+    clientConfig:
+      service:
+        name: gateway
+        namespace: {{ .Release.Namespace }}
+        path: "/validation"
+      caBundle: "" # update manually or use certgen job
+    rules:
+      - operations: [ "CREATE", "UPDATE", "DELETE" ]
+        apiGroups: ["gateway.solo.io", "gateway.solo.io.v2"]
+        apiVersions: ["v1", "v2"]
+        resources: ["*"]
+{{- if .Values.gateway.validation.failurePolicy }}
+    failurePolicy: {{ .Values.gateway.validation.failurePolicy }}
+{{- end }}
+
+{{- end }}
+{{- end }}
+`
+				})
+
+				It("adds the validation port to the gateway", func() {
+
+				})
+
+				It("adds the validation port and mounts the certgen secret to the gateway deployment", func() {
+
+				})
+
+				It("creates the certgen job, rbac, and service account", func() {
+					_ = `
+
+{{- if .Values.gateway.enabled }}
+{{- if .Values.gateway.validation }}
+{{- if .Values.gateway.certGenJob }}
+{{- $image := .Values.gateway.certGenJob.image }}
+{{- if .Values.global  }}
+{{- $image = merge .Values.gateway.certGenJob.image .Values.global.image }}
+{{- end }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  labels:
+    app: gloo
+    gloo: gateway-certgen
+  name: gateway-certgen
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    "helm.sh/hook": pre-install
+    "helm.sh/hook-weight": "10"
+spec:
+  template:
+    metadata:
+      labels:
+        gloo: gateway-certgen
+    spec:
+      serviceAccountName: gateway-certgen
+      containers:
+        - image: {{template "gloo.image" $image}}
+          imagePullPolicy: {{ $image.pullPolicy }}
+          name: certgen
+          env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          args:
+            - "--secret-name={{ .Values.gateway.validation.secretName }}"
+            - "--svc-name=gateway"
+            - "--validating-webhook-configuration-name=gloo-gateway-validation-webhook-{{ .Release.Namespace }}"
+      restartPolicy: {{ .Values.gateway.certGenJob.restartPolicy }}
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{- if .Values.gateway.validation }}
+{{- if .Values.gateway.certGenJob }}
+---
+# this role requires access to cluster-scoped resources
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+    name: gloo-gateway-secret-create-vwc-update{{ include "gloo.rolebindingsuffix" . }}
+    labels:
+        app: gloo
+        gloo: rbac
+    annotations:
+      "helm.sh/hook": "pre-install"
+      "helm.sh/hook-weight": "5"
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["create", "get", "update"]
+- apiGroups: ["admissionregistration.k8s.io"]
+  resources: ["validatingwebhookconfigurations"]
+  verbs: ["get", "update"]
+
+{{- end -}}
+{{- end -}}
+
+
+
+{{- if .Values.gateway.validation }}
+{{- if .Values.gateway.certGenJob }}
+---
+# this role requires access to cluster-scoped resources
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: gloo-gateway-secret-create-vwc-update{{ include "gloo.rolebindingsuffix" . }}
+  labels:
+    app: gloo
+    gloo: rbac
+  annotations:
+    "helm.sh/hook": "pre-install"
+    "helm.sh/hook-weight": "5"
+subjects:
+- kind: ServiceAccount
+  name: gateway-certgen
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: ClusterRole
+  name: gloo-gateway-secret-create-vwc-update{{ include "gloo.rolebindingsuffix" . }}
+  apiGroup: rbac.authorization.k8s.io
+
+{{- end -}}
+{{- end -}}
+
+
+{{- if .Values.gateway.validation }}
+{{- if .Values.gateway.certGenJob }}
+---
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app: gloo
+    gloo: gateway
+  annotations:
+    "helm.sh/hook": "pre-install"
+    "helm.sh/hook-weight": "5"
+  name: gateway-certgen
+  namespace: {{ $.Release.Namespace }}
+{{ end }}
+{{ end }}
+`
+				})
+
+				It("doesn't creates a deployment", func() {
+					prepareMakefile("--namespace " + namespace + " --set gateway.upgrade=false")
+					testManifest.Expect(job.Kind, job.Namespace, job.Name).To(BeNil())
+				})
+
+				It("creates a deployment", func() {
+					prepareMakefile("--namespace " + namespace + " --set gateway.upgrade=true")
+					testManifest.Expect(job.Kind, job.Namespace, job.Name).To(BeEquivalentTo(job))
+				})
+			})
 		})
 		Context("control plane deployments", func() {
 			updateDeployment := func(deploy *appsv1.Deployment) {

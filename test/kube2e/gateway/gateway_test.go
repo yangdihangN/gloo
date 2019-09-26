@@ -971,10 +971,14 @@ var _ = Describe("Kube2e: gateway", func() {
 	})
 
 	Context("tests for the validation server", func() {
-		testValidation := func(yam, response string) {
+		testValidation := func(yam, expectedErr string) {
 			out, err := install.KubectlApplyOut([]byte(yam))
+			if expectedErr == "" {
+				ExpectWithOffset(1, err).NotTo(HaveOccurred())
+				return
+			}
 			ExpectWithOffset(1, err).To(HaveOccurred())
-			ExpectWithOffset(1, string(out)).To(ContainSubstring(response))
+			ExpectWithOffset(1, string(out)).To(ContainSubstring(expectedErr))
 		}
 
 		It("rejects bad resources", func() {
@@ -1002,7 +1006,7 @@ spec:
 apiVersion: gateway.solo.io/v1
 kind: VirtualService
 metadata:
-  name: default
+  name: missing-upstream
   namespace: ` + testHelper.InstallNamespace + `
 spec:
   virtualHost:
@@ -1017,7 +1021,27 @@ spec:
               name: does-not-exist
               namespace: anywhere
 `,
-					expectedErr: `resource incompatible with current Gloo snapshot: [Route Error: InvalidDestinationError. Reason: list did not find upstream anywhere.does-not-exist]`,
+					expectedErr: "", // should not fail
+				},
+				{
+					resourceYaml: `
+apiVersion: gateway.solo.io/v1
+kind: VirtualService
+metadata:
+  name: method-matcher
+  namespace: ` + testHelper.InstallNamespace + `
+spec:
+  virtualHost:
+    routes:
+      - matcher:
+          methods:
+            - GET # not allowed
+          prefix: /delegated-prefix
+        delegateAction:
+          name: does-not-exist # also not allowed, but caught later
+          namespace: anywhere
+`,
+					expectedErr: "routes with delegate actions cannot use method matchers", // should not fail
 				},
 			} {
 				testValidation(tc.resourceYaml, tc.expectedErr)

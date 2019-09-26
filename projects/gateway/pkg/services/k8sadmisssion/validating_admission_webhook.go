@@ -5,9 +5,10 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"github.com/solo-io/gloo/pkg/utils"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/solo-io/gloo/pkg/utils"
 
 	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"

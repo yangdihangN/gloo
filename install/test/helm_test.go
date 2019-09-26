@@ -4,6 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/yaml"
+
 	"github.com/gogo/protobuf/proto"
 	"github.com/gogo/protobuf/types"
 	v2 "github.com/solo-io/gloo/projects/gateway/pkg/api/v2"
@@ -584,51 +587,8 @@ var _ = Describe("Helm Test", func() {
 			})
 
 			Context("gateway validation resources", func() {
-				var (
-					job *batchv1.Job
-				)
-				BeforeEach(func() {
-					job = &batchv1.Job{
-						TypeMeta: metav1.TypeMeta{
-							Kind:       "Job",
-							APIVersion: "batch/v1",
-						},
-						ObjectMeta: metav1.ObjectMeta{
-							Labels: map[string]string{
-								"app":  "gloo",
-								"gloo": "gateway",
-							},
-							Name:      "gateway-conversion",
-							Namespace: namespace,
-						},
-						Spec: batchv1.JobSpec{
-							Template: v1.PodTemplateSpec{
-								ObjectMeta: metav1.ObjectMeta{
-									Labels: map[string]string{
-										"gloo": "gateway",
-									},
-								},
-								Spec: v1.PodSpec{
-									RestartPolicy:      v1.RestartPolicyNever,
-									ServiceAccountName: "gateway",
-									Containers: []v1.Container{
-										{
-											Name:            "gateway-conversion",
-											Image:           "quay.io/solo-io/gateway-conversion:" + version,
-											ImagePullPolicy: v1.PullAlways,
-											Env: []v1.EnvVar{
-												GetPodNamespaceEnvVar(),
-											},
-										},
-									},
-								},
-							},
-						},
-					}
-				})
-
 				It("creates a service for the gateway validation port", func() {
-					_ = `
+					gwService := makeUnstructured(`
 apiVersion: v1
 kind: Service
 metadata:
@@ -636,43 +596,59 @@ metadata:
     app: gloo
     gloo: gateway
   name: gateway
-  namespace: {{ .Release.Namespace }}
+  namespace: ` + namespace + `
 spec:
-{{ if .Values.gateway.deployment.externalTrafficPolicy }}
-  externalTrafficPolicy: {{ .Values.gateway.deployment.externalTrafficPolicy }}
-{{- end }}
   ports:
   - name: https
     port: 443
     protocol: TCP
-    # this should map to projects/gateway/pkg/defaults.ValidationWebhookBindPort
     targetPort: 8443
   selector:
     gloo: gateway
-`
+`)
+
+					prepareMakefile("--namespace " + namespace)
+					testManifest.ExpectUnstructured(gwService.GetKind(), gwService.GetNamespace(), gwService.GetName()).To(BeEquivalentTo(gwService))
+
 				})
 
 				It("creates settings with the gateway config", func() {
-					_ = `
-{{- if .Values.gateway.validation }}
+					settings := makeUnstructured(`
+apiVersion: gloo.solo.io/v1
+kind: Settings
+metadata:
+  annotations:
+    helm.sh/hook: pre-install
+    helm.sh/hook-weight: "5"
+  labels:
+    app: gloo
+  name: default
+  namespace: ` + namespace + `
+spec:
   gateway:
     validation:
-      proxyValidationServerAddr: gloo:{{ .Values.gloo.deployment.validationPort }}
-{{- if .Values.gateway.validation.alwaysAcceptResources }}
-      alwaysAccept: {{ .Values.gateway.validation.alwaysAcceptResources }}
-{{- end }}
-{{- end }}
-`
+      alwaysAccept: true
+      proxyValidationServerAddr: gloo:9988
+  gloo:
+    xdsBindAddr: 0.0.0.0:9977
+  kubernetesArtifactSource: {}
+  kubernetesConfigSource: {}
+  kubernetesSecretSource: {}
+  refreshRate: 60s
+  discoveryNamespace: ` + namespace + `
+`)
+
+					prepareMakefile("--namespace " + namespace)
+					testManifest.ExpectUnstructured(settings.GetKind(), settings.GetNamespace(), settings.GetName()).To(BeEquivalentTo(settings))
 				})
 
 				It("creates the validating webhook configuration", func() {
-					_ = `
-{{- if .Values.gateway.enabled }}
-{{- if .Values.gateway.validation }}
+					vwc := makeUnstructured(`
+
 apiVersion: admissionregistration.k8s.io/v1beta1
 kind: ValidatingWebhookConfiguration
 metadata:
-  name: gloo-gateway-validation-webhook-{{ .Release.Namespace }}
+  name: gloo-gateway-validation-webhook-` + namespace + `
   labels:
     app: gloo
     gloo: gateway
@@ -680,11 +656,11 @@ metadata:
     "helm.sh/hook": pre-install
     "helm.sh/hook-weight": "5" # should come before cert-gen job
 webhooks:
-  - name: gateway.{{ .Release.Namespace }}.svc  # must be a domain with at least three segments separated by dots
+  - name: gateway.` + namespace + `.svc  # must be a domain with at least three segments separated by dots
     clientConfig:
       service:
         name: gateway
-        namespace: {{ .Release.Namespace }}
+        namespace: ` + namespace + `
         path: "/validation"
       caBundle: "" # update manually or use certgen job
     rules:
@@ -692,33 +668,80 @@ webhooks:
         apiGroups: ["gateway.solo.io", "gateway.solo.io.v2"]
         apiVersions: ["v1", "v2"]
         resources: ["*"]
-{{- if .Values.gateway.validation.failurePolicy }}
-    failurePolicy: {{ .Values.gateway.validation.failurePolicy }}
-{{- end }}
+    failurePolicy: Ignore
 
-{{- end }}
-{{- end }}
-`
-				})
-
-				It("adds the validation port to the gateway", func() {
-
+`)
+					prepareMakefile("--namespace " + namespace)
+					testManifest.ExpectUnstructured(vwc.GetKind(), vwc.GetNamespace(), vwc.GetName()).To(BeEquivalentTo(vwc))
 				})
 
 				It("adds the validation port and mounts the certgen secret to the gateway deployment", func() {
 
+					gwDeployment := makeUnstructured(`
+# Source: gloo/templates/5-gateway-deployment.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: gloo
+    gloo: gateway
+  name: gateway-v2
+  namespace: ` + namespace + `
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      gloo: gateway
+  template:
+    metadata:
+      labels:
+        gloo: gateway
+      annotations:
+        prometheus.io/path: /metrics
+        prometheus.io/port: "9091"
+        prometheus.io/scrape: "true"
+    spec:
+      serviceAccountName: gateway
+      containers:
+      - image: quay.io/solo-io/gateway:` + version + `
+        imagePullPolicy: Always
+        name: gateway
+        ports:
+          - containerPort: 8443
+            name: https
+            protocol: TCP
+
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 10101
+          capabilities:
+            drop:
+            - ALL
+        env:
+          - name: POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: START_STATS_SERVER
+            value: "true"
+        volumeMounts:
+          - mountPath: /etc/gateway/validation-certs
+            name: validation-certs
+      volumes:
+        - name: validation-certs
+          secret:
+            defaultMode: 420
+            secretName: gateway-validation-certs
+`)
+					prepareMakefile("--namespace " + namespace)
+					testManifest.ExpectUnstructured(gwDeployment.GetKind(), gwDeployment.GetNamespace(), gwDeployment.GetName()).To(BeEquivalentTo(gwDeployment))
 				})
 
 				It("creates the certgen job, rbac, and service account", func() {
-					_ = `
-
-{{- if .Values.gateway.enabled }}
-{{- if .Values.gateway.validation }}
-{{- if .Values.gateway.certGenJob }}
-{{- $image := .Values.gateway.certGenJob.image }}
-{{- if .Values.global  }}
-{{- $image = merge .Values.gateway.certGenJob.image .Values.global.image }}
-{{- end }}
+					job := makeUnstructured(`
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -726,7 +749,7 @@ metadata:
     app: gloo
     gloo: gateway-certgen
   name: gateway-certgen
-  namespace: {{ .Release.Namespace }}
+  namespace: ` + namespace + `
   annotations:
     "helm.sh/hook": pre-install
     "helm.sh/hook-weight": "10"
@@ -738,8 +761,8 @@ spec:
     spec:
       serviceAccountName: gateway-certgen
       containers:
-        - image: {{template "gloo.image" $image}}
-          imagePullPolicy: {{ $image.pullPolicy }}
+        - image: quay.io/solo-io/certgen:` + version + `
+          imagePullPolicy: Always
           name: certgen
           env:
             - name: POD_NAMESPACE
@@ -747,22 +770,21 @@ spec:
                 fieldRef:
                   fieldPath: metadata.namespace
           args:
-            - "--secret-name={{ .Values.gateway.validation.secretName }}"
+            - "--secret-name=gateway-validation-certs"
             - "--svc-name=gateway"
-            - "--validating-webhook-configuration-name=gloo-gateway-validation-webhook-{{ .Release.Namespace }}"
-      restartPolicy: {{ .Values.gateway.certGenJob.restartPolicy }}
-{{- end }}
-{{- end }}
-{{- end }}
+            - "--validating-webhook-configuration-name=gloo-gateway-validation-webhook-` + namespace + `"
+      restartPolicy: OnFailure
 
-{{- if .Values.gateway.validation }}
-{{- if .Values.gateway.certGenJob }}
----
+`)
+					testManifest.ExpectUnstructured(job.GetKind(), job.GetNamespace(), job.GetName()).To(BeEquivalentTo(job))
+
+					clusterRole := makeUnstructured(`
+
 # this role requires access to cluster-scoped resources
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-    name: gloo-gateway-secret-create-vwc-update{{ include "gloo.rolebindingsuffix" . }}
+    name: gloo-gateway-secret-create-vwc-update-` + namespace + `
     labels:
         app: gloo
         gloo: rbac
@@ -776,20 +798,15 @@ rules:
 - apiGroups: ["admissionregistration.k8s.io"]
   resources: ["validatingwebhookconfigurations"]
   verbs: ["get", "update"]
+`)
+					testManifest.ExpectUnstructured(clusterRole.GetKind(), clusterRole.GetNamespace(), clusterRole.GetName()).To(BeEquivalentTo(clusterRole))
 
-{{- end -}}
-{{- end -}}
-
-
-
-{{- if .Values.gateway.validation }}
-{{- if .Values.gateway.certGenJob }}
----
+					clusterRoleBinding := makeUnstructured(`
 # this role requires access to cluster-scoped resources
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: gloo-gateway-secret-create-vwc-update{{ include "gloo.rolebindingsuffix" . }}
+  name: gloo-gateway-secret-create-vwc-update-` + namespace + `
   labels:
     app: gloo
     gloo: rbac
@@ -799,19 +816,16 @@ metadata:
 subjects:
 - kind: ServiceAccount
   name: gateway-certgen
-  namespace: {{ .Release.Namespace }}
+  namespace: ` + namespace + `
 roleRef:
   kind: ClusterRole
-  name: gloo-gateway-secret-create-vwc-update{{ include "gloo.rolebindingsuffix" . }}
+  name: gloo-gateway-secret-create-vwc-update-` + namespace + `
   apiGroup: rbac.authorization.k8s.io
-
-{{- end -}}
-{{- end -}}
-
-
-{{- if .Values.gateway.validation }}
-{{- if .Values.gateway.certGenJob }}
 ---
+`)
+					testManifest.ExpectUnstructured(clusterRoleBinding.GetKind(), clusterRoleBinding.GetNamespace(), clusterRoleBinding.GetName()).To(BeEquivalentTo(clusterRoleBinding))
+
+					serviceAccount := makeUnstructured(`
 
 apiVersion: v1
 kind: ServiceAccount
@@ -823,20 +837,11 @@ metadata:
     "helm.sh/hook": "pre-install"
     "helm.sh/hook-weight": "5"
   name: gateway-certgen
-  namespace: {{ $.Release.Namespace }}
-{{ end }}
-{{ end }}
-`
-				})
+  namespace: ` + namespace + `
 
-				It("doesn't creates a deployment", func() {
-					prepareMakefile("--namespace " + namespace + " --set gateway.upgrade=false")
-					testManifest.Expect(job.Kind, job.Namespace, job.Name).To(BeNil())
-				})
+`)
+					testManifest.ExpectUnstructured(serviceAccount.GetKind(), serviceAccount.GetNamespace(), serviceAccount.GetName()).To(BeEquivalentTo(serviceAccount))
 
-				It("creates a deployment", func() {
-					prepareMakefile("--namespace " + namespace + " --set gateway.upgrade=true")
-					testManifest.Expect(job.Kind, job.Namespace, job.Name).To(BeEquivalentTo(job))
 				})
 			})
 		})
@@ -1336,3 +1341,11 @@ metadata:
 
 	})
 })
+
+func makeUnstructured(yam string) *unstructured.Unstructured {
+	jsn, err := yaml.YAMLToJSON([]byte(yam))
+	Expect(err).NotTo(HaveOccurred())
+	runtimeObj, err := runtime.Decode(unstructured.UnstructuredJSONScheme, jsn)
+	Expect(err).NotTo(HaveOccurred())
+	return runtimeObj.(*unstructured.Unstructured)
+}

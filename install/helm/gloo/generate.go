@@ -126,6 +126,9 @@ func generateGatewayValuesYaml(version, repositoryPrefix, globalPullPolicy strin
 		for _, v := range cfg.GatewayProxies {
 			v.PodTemplate.Image.PullPolicy = always
 		}
+		if cfg.Gateway.CertGenJob != nil {
+			cfg.Gateway.CertGenJob.Image.PullPolicy = always
+		}
 	}
 
 	if repositoryPrefix != "" {

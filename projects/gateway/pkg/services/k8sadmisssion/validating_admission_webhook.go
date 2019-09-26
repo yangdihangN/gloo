@@ -5,11 +5,11 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"github.com/solo-io/gloo/pkg/utils"
 	"io/ioutil"
 	"net/http"
 
 	"go.opencensus.io/stats"
-	"go.opencensus.io/stats/view"
 	"go.opencensus.io/tag"
 
 	validationutil "github.com/solo-io/gloo/projects/gloo/pkg/utils/validation"
@@ -45,41 +45,17 @@ var (
 	resourceTypeKey, _ = tag.NewKey("resource_type")
 	resourceRefKey, _  = tag.NewKey("resource_ref")
 
-	mGatewayResourcesAccepted = stats.Int64("validation.gateway.solo.io/resources_accepted", "The number of resources accepted", "1")
-	mGatewayResourcesRejected = stats.Int64("validation.gateway.solo.io/resources_rejected", "The number of resources rejected", "1")
+	mGatewayResourcesAccepted = utils.MakeCounter("validation.gateway.solo.io/resources_accepted", "The number of resources accepted")
+	mGatewayResourcesRejected = utils.MakeCounter("validation.gateway.solo.io/resources_rejected", "The number of resources rejected")
 )
 
-func init() {
-	gatewayResourcesAcceptedView := &view.View{
-		Name:        mGatewayResourcesAccepted.Name(),
-		Measure:     mGatewayResourcesAccepted,
-		Description: mGatewayResourcesAccepted.Description(),
-		Aggregation: view.LastValue(),
-		TagKeys:     []tag.Key{resourceTypeKey, resourceRefKey},
-	}
-
-	gatewayResourcesRejectedView := &view.View{
-		Name:        mGatewayResourcesRejected.Name(),
-		Measure:     mGatewayResourcesRejected,
-		Description: mGatewayResourcesRejected.Description(),
-		Aggregation: view.LastValue(),
-		TagKeys:     []tag.Key{resourceTypeKey, resourceRefKey},
-	}
-
-	_ = view.Register(gatewayResourcesAcceptedView, gatewayResourcesRejectedView)
-}
-
 func incrementMetric(ctx context.Context, resource string, ref core.ResourceRef, m *stats.Int64Measure) {
-	if err := stats.RecordWithTags(
+	utils.Increment(
 		ctx,
-		[]tag.Mutator{
-			tag.Insert(resourceTypeKey, resource),
-			tag.Insert(resourceRefKey, fmt.Sprintf("%v.%v", ref.Namespace, ref.Name)),
-		},
-		m.M(1),
-	); err != nil {
-		contextutils.LoggerFrom(ctx).Errorf("incrementing resource count: %v", err)
-	}
+		m,
+		tag.Insert(resourceTypeKey, resource),
+		tag.Insert(resourceRefKey, fmt.Sprintf("%v.%v", ref.Namespace, ref.Name)),
+	)
 }
 
 func skipValidationCheck(annotations map[string]string) bool {

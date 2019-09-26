@@ -286,7 +286,7 @@ var _ = Describe("Kube2e: gateway", func() {
 
 				// give Gloo a chance to pick up the secret
 				// required to allow validation to pass
-				time.Sleep(time.Second  * 2)
+				time.Sleep(time.Second * 2)
 
 				dest := &gloov1.Destination{
 					DestinationType: &gloov1.Destination_Upstream{

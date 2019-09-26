@@ -5,6 +5,7 @@ metadata:
   labels:
     app: gloo-docs
     version: {{ .Values.docsVersion }}
+spec:
   ports:
     - port: {{ .Values.service.port }}
       targetPort: 8080

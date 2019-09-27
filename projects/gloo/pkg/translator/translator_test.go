@@ -870,10 +870,11 @@ var _ = Describe("Translator", func() {
 				}}
 			})
 
-			It("should not error a route when subset in route doesnt match subset in upstream, but instead give a warning", func() {
+			It("should error a route when subset in route doesnt match subset in upstream", func() {
 				_, errs, report, err := translator.Translate(params, proxy)
 				Expect(err).NotTo(HaveOccurred())
-				Expect(errs.Validate()).NotTo(HaveOccurred())
+				Expect(errs.Validate()).To(HaveOccurred())
+				Expect(errs.Validate().Error()).To(ContainSubstring("route has a subset config, but none of the subsets in the upstream match it"))
 				expectedReport := validationutils.MakeReport(proxy)
 				expectedReport.ListenerReports[0].ListenerTypeReport.(*validation.ListenerReport_HttpListenerReport).HttpListenerReport.VirtualHostReports[0].RouteReports[0].Warnings = []*validation.RouteReport_Warning{
 					{

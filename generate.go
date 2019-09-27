@@ -29,6 +29,10 @@ func main() {
 		CompileProtos: true,
 		GenDocs: &cmd.DocsOptions{
 			Output: options.Hugo,
+			HugoOptions: &options.HugoOptions{
+				DataDir: "/docs/data",
+				ApiDir:  "api",
+			},
 		},
 	}
 	if err := cmd.Generate(generateOptions); err != nil {

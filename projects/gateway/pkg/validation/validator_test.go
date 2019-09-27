@@ -31,7 +31,7 @@ var _ = Describe("Validator", func() {
 		t = translator.NewDefaultTranslator()
 		vc = &mockValidationClient{}
 		ns = "my-namespace"
-		v = NewValidator(t, vc, ns, false)
+		v = NewValidator(NewValidatorConfig(t, vc, ns, false, false))
 	})
 	It("returns error before sync called", func() {
 		_, err := v.ValidateVirtualService(nil, nil)
@@ -85,7 +85,7 @@ var _ = Describe("Validator", func() {
 			Context("ignoreProxyValidation=true", func() {
 				It("accepts the rt", func() {
 					vc.validateProxy = communicationErr
-					v = NewValidator(t, vc, ns, true)
+					v = NewValidator(NewValidatorConfig(t, vc, ns, true, false))
 					us := samples.SimpleUpstream()
 					snap := samples.GatewaySnapshotWithDelegates(us.Metadata.Ref(), ns)
 					err := v.Sync(context.TODO(), snap)
@@ -93,6 +93,41 @@ var _ = Describe("Validator", func() {
 					proxyReports, err := v.ValidateRouteTable(context.TODO(), snap.RouteTables[0])
 					Expect(err).NotTo(HaveOccurred())
 					Expect(proxyReports).To(HaveLen(0))
+				})
+			})
+			Context("allowBrokenLinks=true", func() {
+				BeforeEach(func() {
+					v = NewValidator(NewValidatorConfig(t, vc, ns, true, false))
+				})
+				It("accepts a vs with missing route table ref", func() {
+					vc.validateProxy = communicationErr
+					err := v.Sync(context.TODO(), &v2.ApiSnapshot{})
+					Expect(err).NotTo(HaveOccurred())
+					vs, _ := samples.LinkedRouteTablesWithVirtualService("vs", "ns")
+					proxyReports, err := v.ValidateVirtualService(context.TODO(), vs)
+					Expect(err).NotTo(HaveOccurred())
+					Expect(proxyReports).To(HaveLen(0))
+				})
+				It("accepts a rt with missing route table ref", func() {
+					vc.validateProxy = communicationErr
+					err := v.Sync(context.TODO(), &v2.ApiSnapshot{})
+					Expect(err).NotTo(HaveOccurred())
+					_, rts := samples.LinkedRouteTablesWithVirtualService("vs", "ns")
+					proxyReports, err := v.ValidateRouteTable(context.TODO(), rts[1])
+					Expect(err).NotTo(HaveOccurred())
+					Expect(proxyReports).To(HaveLen(0))
+				})
+				It("accepts delete leaf route table", func() {
+					vc.validateProxy = communicationErr
+					us := samples.SimpleUpstream()
+					snap := samples.GatewaySnapshotWithDelegates(us.Metadata.Ref(), ns)
+					err := v.Sync(context.TODO(), snap)
+					Expect(err).NotTo(HaveOccurred())
+
+					ref := 	snap.RouteTables[len(snap.RouteTables)-1].Metadata.Ref()
+
+					err = v.ValidateDeleteRouteTable(context.TODO(), ref)
+					Expect(err).NotTo(HaveOccurred())
 				})
 			})
 		})

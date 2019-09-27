@@ -93,7 +93,8 @@ func StartTestHelper() {
 	}, "20s", "4s").Should(BeNil())
 
 	// enable strict validation
-	// this can be removed once projects/gateway/pkg/syncer.AcceptAllResourcesByDefault is set to false
+	// this can be removed once we enable validation by default
+	// set projects/gateway/pkg/syncer.AcceptAllResourcesByDefault is set to false
 	settingsClient := clienthelpers.MustSettingsClient()
 	settings, err := settingsClient.Read(testHelper.InstallNamespace, "default", clients.ReadOpts{})
 	Expect(err).NotTo(HaveOccurred())

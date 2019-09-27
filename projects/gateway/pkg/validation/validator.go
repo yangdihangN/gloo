@@ -62,8 +62,20 @@ type validator struct {
 	writeNamespace               string
 }
 
-func NewValidator(translator translator.Translator, validationClient validation.ProxyValidationServiceClient, writeNamespace string, ignoreProxyValidationFailure bool) *validator {
-	return &validator{translator: translator, validationClient: validationClient, writeNamespace: writeNamespace, ignoreProxyValidationFailure: ignoreProxyValidationFailure}
+type ValidatorConfig struct {
+	translator                   translator.Translator
+	validationClient             validation.ProxyValidationServiceClient
+	writeNamespace               string
+	ignoreProxyValidationFailure bool
+	allowBrokenLinks             bool
+}
+
+func NewValidatorConfig(translator translator.Translator, validationClient validation.ProxyValidationServiceClient, writeNamespace string, ignoreProxyValidationFailure, allowBrokenLinks bool) ValidatorConfig {
+	return ValidatorConfig{translator: translator, validationClient: validationClient, writeNamespace: writeNamespace, ignoreProxyValidationFailure: ignoreProxyValidationFailure, allowBrokenLinks: allowBrokenLinks}
+}
+
+func NewValidator(cfg ValidatorConfig) *validator {
+	return &validator{translator: cfg.translator, validationClient: cfg.validationClient, writeNamespace: cfg.writeNamespace, ignoreProxyValidationFailure: cfg.ignoreProxyValidationFailure}
 }
 
 func (v *validator) ready() bool {
@@ -71,10 +83,6 @@ func (v *validator) ready() bool {
 }
 
 func (v *validator) Sync(ctx context.Context, snap *v2.ApiSnapshot) error {
-	if v.ready() {
-		// only need to sync once, after this we update snapshot internally
-		return nil
-	}
 	snapCopy := snap.Clone()
 	gatewaysByProxy := utils.GatewaysByProxyName(snap.Gateways)
 	var errs error

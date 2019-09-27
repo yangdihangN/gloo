@@ -29,13 +29,15 @@ import (
 	"github.com/solo-io/solo-kit/pkg/api/v1/clients"
 	"github.com/solo-io/solo-kit/pkg/api/v1/clients/kube"
 	"github.com/solo-io/solo-kit/pkg/api/v1/clients/memory"
-	"github.com/solo-io/solo-kit/pkg/api/v1/reporter"
+	"github.com/solo-io/solo-kit/pkg/api/v2/reporter"
 	"github.com/solo-io/solo-kit/pkg/errors"
 	"k8s.io/client-go/rest"
 )
 
 // TODO: switch AcceptAllResourcesByDefault to false after validation has been tested in user environments
 var AcceptAllResourcesByDefault = true
+// TODO: expose AllowMissingLinks as a setting
+var AllowMissingLinks = true
 
 func Setup(ctx context.Context, kubeCache kube.SharedCache, inMemoryCache memory.InMemoryResourceCache, settings *gloov1.Settings) error {
 	var (
@@ -95,6 +97,8 @@ func Setup(ctx context.Context, kubeCache kube.SharedCache, inMemoryCache memory
 			alwaysAcceptResources = alwaysAccept.GetValue()
 		}
 
+		allowMissingLinks := AllowMissingLinks
+
 		validation = &ValidationOpts{
 			ProxyValidationServerAddress: validationCfg.GetProxyValidationServerAddr(),
 			ValidatingWebhookPort:        defaults.ValidationWebhookBindPort,
@@ -102,6 +106,7 @@ func Setup(ctx context.Context, kubeCache kube.SharedCache, inMemoryCache memory
 			ValidatingWebhookKeyPath:     validationCfg.GetValidationWebhookTlsKey(),
 			IgnoreProxyValidationFailure: validationCfg.GetIgnoreGlooValidationFailure(),
 			AlwaysAcceptResources:        alwaysAcceptResources,
+			AllowMissingLinks:            allowMissingLinks,
 		}
 		if validation.ProxyValidationServerAddress == "" {
 			validation.ProxyValidationServerAddress = defaults.GlooProxyValidationServerAddr
@@ -190,7 +195,7 @@ func RunGateway(opts Opts) error {
 
 	prop := propagator.NewPropagator("gateway", gatewayClient, virtualServiceClient, proxyClient, writeErrs)
 
-	trans := translator.NewDefaultTranslator()
+	txlator := translator.NewDefaultTranslator()
 
 	translatorSyncer := NewTranslatorSyncer(
 		opts.WriteNamespace,
@@ -199,10 +204,11 @@ func RunGateway(opts Opts) error {
 		virtualServiceClient,
 		rpt,
 		prop,
-		trans)
+		txlator)
 
 	var validationClient validation.ProxyValidationServiceClient
 	var ignoreProxyValidationFailure bool
+	var allowMissingLinks bool
 	if opts.Validation != nil {
 		contextutils.LoggerFrom(ctx).Infow("starting proxy validation client",
 			zap.String("validation_server", opts.Validation.ProxyValidationServerAddress))
@@ -212,9 +218,16 @@ func RunGateway(opts Opts) error {
 		}
 		validationClient = validation.NewProxyValidationServiceClient(cc)
 		ignoreProxyValidationFailure = opts.Validation.IgnoreProxyValidationFailure
+		allowMissingLinks = opts.Validation.AllowMissingLinks
 	}
 
-	validationSyncer := gatewayvalidation.NewValidator(trans, validationClient, opts.WriteNamespace, ignoreProxyValidationFailure)
+	validationSyncer := gatewayvalidation.NewValidator(gatewayvalidation.NewValidatorConfig(
+		txlator,
+		validationClient,
+		opts.WriteNamespace,
+		ignoreProxyValidationFailure,
+		allowMissingLinks,
+	))
 
 	gatewaySyncers := v2.ApiSyncers{
 		translatorSyncer,
@@ -244,13 +257,15 @@ func RunGateway(opts Opts) error {
 	validationServerErr := make(chan error, 1)
 	if opts.Validation != nil {
 		validationWebhook, err := k8sadmisssion.NewGatewayValidatingWebhook(
-			ctx,
-			validationSyncer,
-			opts.WatchNamespaces,
-			opts.Validation.ValidatingWebhookPort,
-			opts.Validation.ValidatingWebhookCertPath,
-			opts.Validation.ValidatingWebhookKeyPath,
-			opts.Validation.AlwaysAcceptResources,
+			k8sadmisssion.NewWebhookConfig(
+				ctx,
+				validationSyncer,
+				opts.WatchNamespaces,
+				opts.Validation.ValidatingWebhookPort,
+				opts.Validation.ValidatingWebhookCertPath,
+				opts.Validation.ValidatingWebhookKeyPath,
+				opts.Validation.AlwaysAcceptResources,
+			),
 		)
 		if err != nil {
 			return errors.Wrapf(err, "creating validating webhook")

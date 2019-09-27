@@ -124,7 +124,7 @@ var _ = Describe("Validator", func() {
 					err := v.Sync(context.TODO(), snap)
 					Expect(err).NotTo(HaveOccurred())
 
-					ref := 	snap.RouteTables[len(snap.RouteTables)-1].Metadata.Ref()
+					ref := snap.RouteTables[len(snap.RouteTables)-1].Metadata.Ref()
 
 					err = v.ValidateDeleteRouteTable(context.TODO(), ref)
 					Expect(err).NotTo(HaveOccurred())

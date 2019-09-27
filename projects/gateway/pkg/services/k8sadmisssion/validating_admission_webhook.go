@@ -5,9 +5,10 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"github.com/solo-io/solo-kit/pkg/utils/protoutils"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/solo-io/solo-kit/pkg/utils/protoutils"
 
 	"github.com/solo-io/gloo/pkg/utils"
 
@@ -93,10 +94,10 @@ func NewGatewayValidatingWebhook(cfg WebhookConfig) (*http.Server, error) {
 	}
 
 	handler := &gatewayValidationWebhook{
-		ctx:                  contextutils.WithLogger(ctx, "gateway-validation-webhook"),
-		validator:            validator,
-		watchNamespaces:      watchNamespaces,
-		alwaysAccept:         alwaysAccept,
+		ctx:             contextutils.WithLogger(ctx, "gateway-validation-webhook"),
+		validator:       validator,
+		watchNamespaces: watchNamespaces,
+		alwaysAccept:    alwaysAccept,
 	}
 
 	mux := http.NewServeMux()

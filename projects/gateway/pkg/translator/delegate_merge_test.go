@@ -5,7 +5,7 @@ import (
 	. "github.com/onsi/gomega"
 	v1 "github.com/solo-io/gloo/projects/gateway/pkg/api/v1"
 	gloov1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
-	"github.com/solo-io/solo-kit/pkg/api/v1/reporter"
+	"github.com/solo-io/solo-kit/pkg/api/v2/reporter"
 	"github.com/solo-io/solo-kit/pkg/api/v1/resources/core"
 )
 
@@ -97,7 +97,7 @@ var _ = Describe("route merge util", func() {
 				},
 			} {
 				rv := &routeVisitor{}
-				_, err := rv.convertDelegateAction(&v1.VirtualService{}, badRoute.route, reporter.ResourceErrors{})
+				_, err := rv.convertDelegateAction(&v1.VirtualService{}, badRoute.route, reporter.ResourceReports{})
 				Expect(err).To(Equal(badRoute.expectedErr))
 			}
 		})

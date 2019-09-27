@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"github.com/solo-io/solo-kit/pkg/utils/protoutils"
 	"io/ioutil"
 	"net/http"
 
@@ -14,8 +15,6 @@ import (
 	"go.opencensus.io/tag"
 
 	validationutil "github.com/solo-io/gloo/projects/gloo/pkg/utils/validation"
-
-	"github.com/solo-io/gloo/pkg/utils/skutils"
 
 	validationapi "github.com/solo-io/gloo/projects/gloo/pkg/api/grpc/validation"
 
@@ -66,17 +65,38 @@ func skipValidationCheck(annotations map[string]string) bool {
 	return annotations[SkipValidationKey] == SkipValidationValue
 }
 
-func NewGatewayValidatingWebhook(ctx context.Context, validator validation.Validator, watchNamespaces []string, port int, serverCertPath, serverKeyPath string, alwaysAccept bool) (*http.Server, error) {
+type WebhookConfig struct {
+	ctx                           context.Context
+	validator                     validation.Validator
+	watchNamespaces               []string
+	port                          int
+	serverCertPath, serverKeyPath string
+	alwaysAccept                  bool // accept all resources
+}
+
+func NewWebhookConfig(ctx context.Context, validator validation.Validator, watchNamespaces []string, port int, serverCertPath string, serverKeyPath string, alwaysAccept bool) WebhookConfig {
+	return WebhookConfig{ctx: ctx, validator: validator, watchNamespaces: watchNamespaces, port: port, serverCertPath: serverCertPath, serverKeyPath: serverKeyPath, alwaysAccept: alwaysAccept}
+}
+
+func NewGatewayValidatingWebhook(cfg WebhookConfig) (*http.Server, error) {
+	ctx := cfg.ctx
+	validator := cfg.validator
+	watchNamespaces := cfg.watchNamespaces
+	port := cfg.port
+	serverCertPath := cfg.serverCertPath
+	serverKeyPath := cfg.serverKeyPath
+	alwaysAccept := cfg.alwaysAccept
+
 	keyPair, err := tls.LoadX509KeyPair(serverCertPath, serverKeyPath)
 	if err != nil {
 		return nil, errors.Wrapf(err, "loading x509 key pair")
 	}
 
 	handler := &gatewayValidationWebhook{
-		ctx:             contextutils.WithLogger(ctx, "gateway-validation-webhook"),
-		validator:       validator,
-		watchNamespaces: watchNamespaces,
-		alwaysAccept:    alwaysAccept,
+		ctx:                  contextutils.WithLogger(ctx, "gateway-validation-webhook"),
+		validator:            validator,
+		watchNamespaces:      watchNamespaces,
+		alwaysAccept:         alwaysAccept,
 	}
 
 	mux := http.NewServeMux()
@@ -174,8 +194,6 @@ func (wh *gatewayValidationWebhook) validate(ctx context.Context, review *v1beta
 		Kind:    req.Kind.Kind,
 	}
 
-	var validationErr error
-
 	isDelete := req.Operation == v1beta1.Delete
 
 	// ensure the request applies to a watched namespace, if watchNamespaces is set
@@ -204,6 +222,7 @@ func (wh *gatewayValidationWebhook) validate(ctx context.Context, review *v1beta
 	}
 
 	var proxyReports validation.ProxyReports
+	var validationErr error
 	switch gvk {
 	case v2.GatewayGVK:
 		if isDelete {
@@ -318,7 +337,7 @@ func (wh *gatewayValidationWebhook) validate(ctx context.Context, review *v1beta
 
 func (wh *gatewayValidationWebhook) validateGateway(ctx context.Context, rawJson []byte) (validation.ProxyReports, error) {
 	var gw v2.Gateway
-	if err := skutils.UnmarshalResource(rawJson, &gw); err != nil {
+	if err := protoutils.UnmarshalResource(rawJson, &gw); err != nil {
 		return nil, errors.Wrapf(err, "could not unmarshal raw object")
 	}
 	if skipValidationCheck(gw.Metadata.Annotations) {
@@ -332,7 +351,7 @@ func (wh *gatewayValidationWebhook) validateGateway(ctx context.Context, rawJson
 
 func (wh *gatewayValidationWebhook) validateVirtualService(ctx context.Context, rawJson []byte) (validation.ProxyReports, error) {
 	var vs gwv1.VirtualService
-	if err := skutils.UnmarshalResource(rawJson, &vs); err != nil {
+	if err := protoutils.UnmarshalResource(rawJson, &vs); err != nil {
 		return nil, errors.Wrapf(err, "could not unmarshal raw object")
 	}
 	if skipValidationCheck(vs.Metadata.Annotations) {
@@ -346,7 +365,7 @@ func (wh *gatewayValidationWebhook) validateVirtualService(ctx context.Context, 
 
 func (wh *gatewayValidationWebhook) validateRouteTable(ctx context.Context, rawJson []byte) (validation.ProxyReports, error) {
 	var rt gwv1.RouteTable
-	if err := skutils.UnmarshalResource(rawJson, &rt); err != nil {
+	if err := protoutils.UnmarshalResource(rawJson, &rt); err != nil {
 		return nil, errors.Wrapf(err, "could not unmarshal raw object")
 	}
 	if skipValidationCheck(rt.Metadata.Annotations) {

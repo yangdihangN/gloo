@@ -39,6 +39,7 @@ func init() {
 		"Service",
 		"ServiceAccount",
 		"ConfigMap",
+		"Job",
 	}
 
 	GlooRbacKinds = []string{

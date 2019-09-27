@@ -97,7 +97,7 @@ var _ = Describe("Validator", func() {
 			})
 			Context("allowBrokenLinks=true", func() {
 				BeforeEach(func() {
-					v = NewValidator(NewValidatorConfig(t, vc, ns, true, false))
+					v = NewValidator(NewValidatorConfig(t, vc, ns, true, true))
 				})
 				It("accepts a vs with missing route table ref", func() {
 					vc.validateProxy = communicationErr

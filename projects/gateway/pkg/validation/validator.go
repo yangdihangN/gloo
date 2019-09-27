@@ -59,6 +59,7 @@ type validator struct {
 	translator                   translator.Translator
 	validationClient             validation.ProxyValidationServiceClient
 	ignoreProxyValidationFailure bool
+	allowBrokenLinks             bool
 	writeNamespace               string
 }
 
@@ -75,7 +76,7 @@ func NewValidatorConfig(translator translator.Translator, validationClient valid
 }
 
 func NewValidator(cfg ValidatorConfig) *validator {
-	return &validator{translator: cfg.translator, validationClient: cfg.validationClient, writeNamespace: cfg.writeNamespace, ignoreProxyValidationFailure: cfg.ignoreProxyValidationFailure}
+	return &validator{translator: cfg.translator, validationClient: cfg.validationClient, writeNamespace: cfg.writeNamespace, ignoreProxyValidationFailure: cfg.ignoreProxyValidationFailure, allowBrokenLinks: cfg.allowBrokenLinks}
 }
 
 func (v *validator) ready() bool {
@@ -87,8 +88,8 @@ func (v *validator) Sync(ctx context.Context, snap *v2.ApiSnapshot) error {
 	gatewaysByProxy := utils.GatewaysByProxyName(snap.Gateways)
 	var errs error
 	for proxyName, gatewayList := range gatewaysByProxy {
-		_, resourceErrs := v.translator.Translate(ctx, proxyName, v.writeNamespace, snap, gatewayList)
-		if err := resourceErrs.Validate(); err != nil {
+		_, reports := v.translator.Translate(ctx, proxyName, v.writeNamespace, snap, gatewayList)
+		if err := reports.Validate(); err != nil {
 			errs = multierr.Append(errs, err)
 		}
 	}
@@ -157,8 +158,12 @@ func (v *validator) validateSnapshot(ctx context.Context, apply applyResource) (
 	)
 	for _, proxyName := range proxyNames {
 		gatewayList := gatewaysByProxy[proxyName]
-		proxy, resourceErrs := v.translator.Translate(ctx, proxyName, v.writeNamespace, &snap, gatewayList)
-		if err := resourceErrs.Validate(); err != nil {
+		proxy, reports := v.translator.Translate(ctx, proxyName, v.writeNamespace, &snap, gatewayList)
+		validate := reports.ValidateStrict
+		if v.allowBrokenLinks {
+			validate = reports.Validate
+		}
+		if err := validate(); err != nil {
 			errs = multierr.Append(errs, errors.Wrapf(err, "could not render proxy"))
 			continue
 		}
@@ -273,11 +278,14 @@ func (v *validator) ValidateDeleteVirtualService(ctx context.Context, vsRef core
 
 	if len(parentGateways) > 0 {
 		err := VirtualServiceDeleteErr(parentGateways)
-		contextutils.LoggerFrom(ctx).Debugw("Rejected deletion of Virtual Service %v: %v", vsRef, err)
-		return err
+		if !v.allowBrokenLinks {
+			contextutils.LoggerFrom(ctx).Infof("Rejected deletion of Virtual Service %v: %v", vsRef, err)
+			return err
+		}
+		contextutils.LoggerFrom(ctx).Warn("Allowed deletion of Virtual Service %v with warning: %v", vsRef, err)
+	} else {
+		contextutils.LoggerFrom(ctx).Debugw("Accepted deletion of Virtual Service %v", vsRef)
 	}
-
-	contextutils.LoggerFrom(ctx).Debugw("Accepted deletion of Virtual Service %v", vsRef)
 
 	v.deleteFromLocalSnapshot(vs)
 
@@ -343,11 +351,14 @@ func (v *validator) ValidateDeleteRouteTable(ctx context.Context, rtRef core.Res
 
 	if len(parentVirtualServices) > 0 || len(parentRouteTables) > 0 {
 		err := RouteTableDeleteErr(parentVirtualServices, parentRouteTables)
-		contextutils.LoggerFrom(ctx).Debugw("Rejected deletion of Route Table %v: %v", rtRef, err)
-		return err
+		if !v.allowBrokenLinks {
+			contextutils.LoggerFrom(ctx).Debugw("Rejected deletion of Route Table %v: %v", rtRef, err)
+			return err
+		}
+		contextutils.LoggerFrom(ctx).Warn("Allowed deletion of Route Table %v with warning: %v", rtRef, err)
+	} else {
+		contextutils.LoggerFrom(ctx).Debugw("Accepted Route Table deletion %v", rtRef)
 	}
-
-	contextutils.LoggerFrom(ctx).Debugw("Accepted Route Table deletion %v", rtRef)
 
 	v.deleteFromLocalSnapshot(rt)
 

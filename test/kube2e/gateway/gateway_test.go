@@ -206,8 +206,11 @@ var _ = Describe("Kube2e: gateway", func() {
 					},
 				},
 			}
-			_, err := virtualServiceClient.Write(getVirtualService(dest, nil), clients.WriteOpts{})
-			Expect(err).NotTo(HaveOccurred())
+			// give proxy validation a chance to start
+			Eventually(func() error {
+				_, err := virtualServiceClient.Write(getVirtualService(dest, nil), clients.WriteOpts{})
+				return err
+			}).ShouldNot(HaveOccurred())
 
 			defaultGateway := defaults.DefaultGateway(testHelper.InstallNamespace)
 			// wait for default gateway to be created

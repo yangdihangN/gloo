@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/http/httputil"
 
 	"github.com/solo-io/solo-kit/pkg/utils/protoutils"
 
@@ -118,10 +119,17 @@ type gatewayValidationWebhook struct {
 	alwaysAccept    bool
 }
 
+func NewGatewayValidationHandler(ctx context.Context, validator validation.Validator, watchNamespaces []string, alwaysAccept bool) *gatewayValidationWebhook {
+	return &gatewayValidationWebhook{ctx: ctx, validator: validator, watchNamespaces: watchNamespaces, alwaysAccept: alwaysAccept}
+}
+
 func (wh *gatewayValidationWebhook) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	logger := contextutils.LoggerFrom(wh.ctx)
 
 	logger.Infow("received validation request")
+
+	b, _ := httputil.DumpRequest(r, true)
+	logger.Debugf("validation request dump:\n %s", string(b))
 
 	// Verify the content type is accurate
 	contentType := r.Header.Get("Content-Type")
@@ -148,15 +156,15 @@ func (wh *gatewayValidationWebhook) ServeHTTP(w http.ResponseWriter, r *http.Req
 		admissionResponse *v1beta1.AdmissionResponse
 		review            v1beta1.AdmissionReview
 	)
-	if _, _, err := deserializer.Decode(body, nil, &review); err != nil {
+	if _, _, err := deserializer.Decode(body, nil, &review); err == nil {
+		admissionResponse = wh.validate(wh.ctx, &review)
+	} else {
 		logger.Errorf("Can't decode body: %v", err)
 		admissionResponse = &v1beta1.AdmissionResponse{
 			Result: &metav1.Status{
 				Message: err.Error(),
 			},
 		}
-	} else {
-		admissionResponse = wh.validate(wh.ctx, &review)
 	}
 
 	admissionReview := v1beta1.AdmissionReview{}

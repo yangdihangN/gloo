@@ -35,6 +35,7 @@ func (t *HttpTranslator) GenerateListeners(ctx context.Context, snap *v2.ApiSnap
 		}
 
 		virtualServices := getVirtualServicesForGateway(gateway, snap.VirtualServices)
+		reports.Accept(snap.VirtualServices.AsInputResources()...)
 		mergedVirtualServices := validateAndMergeVirtualServices(gateway, virtualServices, reports)
 		listener := desiredListenerForHttp(gateway, mergedVirtualServices, snap.RouteTables, reports)
 		result = append(result, listener)
@@ -337,10 +338,11 @@ func (rv *routeVisitor) convertDelegateAction(routingResource resources.InputRes
 
 	routeTable, err := rv.tables.Find(action.Strings())
 	if err != nil {
-		err = errors.Wrapf(err, "invalid delegate action")
-		reports.AddError(routingResource, err)
+		reports.AddWarning(routingResource, err.Error())
 		return nil, err
 	}
+
+	reports.Accept(routeTable)
 
 	for _, visited := range rv.visited {
 		if routeTable == visited {
@@ -376,7 +378,7 @@ func (rv *routeVisitor) convertDelegateAction(routingResource resources.InputRes
 		// ensure all subroutes in the delegated route table match the parent prefix
 		if pathString := glooutils.PathAsString(match); !strings.HasPrefix(pathString, prefix) {
 			err = errors.Wrapf(invalidPrefixErr, "required prefix: %v, path: %v", prefix, pathString)
-			reports.AddWarning(routingResource, err.Error())
+			reports.AddError(routingResource, err)
 			continue
 		}
 

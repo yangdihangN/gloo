@@ -88,8 +88,8 @@ var _ = Describe("Translator", func() {
 		It("should translate proxy with default name", func() {
 			proxy, errs := translator.Translate(context.Background(), GatewayProxyName, ns, snap, snap.Gateways)
 
-			Expect(errs).To(HaveLen(3))
-			Expect(errs.Validate()).NotTo(HaveOccurred())
+			Expect(errs).To(HaveLen(4))
+			Expect(errs.ValidateStrict()).NotTo(HaveOccurred())
 			Expect(proxy.Metadata.Name).To(Equal(GatewayProxyName))
 			Expect(proxy.Metadata.Namespace).To(Equal(ns))
 		})
@@ -113,8 +113,8 @@ var _ = Describe("Translator", func() {
 
 			proxy, errs := translator.Translate(context.Background(), GatewayProxyName, ns, snap, snap.Gateways)
 
-			Expect(errs).To(HaveLen(3))
-			Expect(errs.Validate()).NotTo(HaveOccurred())
+			Expect(errs).To(HaveLen(4))
+			Expect(errs.ValidateStrict()).NotTo(HaveOccurred())
 			Expect(proxy.Metadata.Name).To(Equal(GatewayProxyName))
 			Expect(proxy.Metadata.Namespace).To(Equal(ns))
 			Expect(proxy.Listeners).To(HaveLen(1))
@@ -139,7 +139,7 @@ var _ = Describe("Translator", func() {
 
 			proxy, errs := translator.Translate(context.Background(), GatewayProxyName, ns, snap, snap.Gateways)
 
-			Expect(errs.Validate()).NotTo(HaveOccurred())
+			Expect(errs.ValidateStrict()).NotTo(HaveOccurred())
 			Expect(proxy.Metadata.Name).To(Equal(GatewayProxyName))
 			Expect(proxy.Metadata.Namespace).To(Equal(ns))
 			Expect(proxy.Listeners).To(HaveLen(2))
@@ -158,7 +158,7 @@ var _ = Describe("Translator", func() {
 
 			proxy, errs := translator.Translate(context.Background(), GatewayProxyName, ns, snap, snap.Gateways)
 
-			Expect(errs.Validate()).NotTo(HaveOccurred())
+			Expect(errs.ValidateStrict()).NotTo(HaveOccurred())
 			Expect(proxy.Metadata.Name).To(Equal(GatewayProxyName))
 			Expect(proxy.Metadata.Namespace).To(Equal(ns))
 			Expect(proxy.Listeners).To(HaveLen(2))
@@ -172,7 +172,7 @@ var _ = Describe("Translator", func() {
 			snap.Gateways = append(snap.Gateways, &dupeGateway)
 
 			_, errs := translator.Translate(context.Background(), GatewayProxyName, ns, snap, snap.Gateways)
-			err := errs.Validate()
+			err := errs.ValidateStrict()
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("bind-address :2 is not unique in a proxy. gateways: gloo-system.name,gloo-system.name2"))
 		})
@@ -267,7 +267,7 @@ var _ = Describe("Translator", func() {
 
 					proxy, errs := translator.Translate(context.Background(), GatewayProxyName, ns, snap, snap.Gateways)
 
-					Expect(errs.Validate()).NotTo(HaveOccurred())
+					Expect(errs.ValidateStrict()).NotTo(HaveOccurred())
 					Expect(proxy).NotTo(BeNil())
 					Expect(proxy.Listeners).To(HaveLen(1))
 					listener := proxy.Listeners[0].ListenerType.(*gloov1.Listener_HttpListener).HttpListener
@@ -285,7 +285,7 @@ var _ = Describe("Translator", func() {
 
 					proxy, errs := translator.Translate(context.Background(), GatewayProxyName, ns, snap, snap.Gateways)
 
-					Expect(errs.Validate()).NotTo(HaveOccurred())
+					Expect(errs.ValidateStrict()).NotTo(HaveOccurred())
 					Expect(proxy).NotTo(BeNil())
 					Expect(proxy.Listeners).To(HaveLen(1))
 					listener := proxy.Listeners[0].ListenerType.(*gloov1.Listener_HttpListener).HttpListener
@@ -298,7 +298,7 @@ var _ = Describe("Translator", func() {
 
 				proxy, errs := translator.Translate(context.Background(), GatewayProxyName, ns, snap, snap.Gateways)
 
-				Expect(errs.Validate()).NotTo(HaveOccurred())
+				Expect(errs.ValidateStrict()).NotTo(HaveOccurred())
 
 				Expect(proxy.Listeners).To(HaveLen(1))
 				listener := proxy.Listeners[0].ListenerType.(*gloov1.Listener_HttpListener).HttpListener
@@ -312,7 +312,7 @@ var _ = Describe("Translator", func() {
 
 				proxy, errs := translator.Translate(context.Background(), GatewayProxyName, ns, snap, snap.Gateways)
 
-				Expect(errs.Validate()).NotTo(HaveOccurred())
+				Expect(errs.ValidateStrict()).NotTo(HaveOccurred())
 
 				Expect(proxy.Listeners).To(HaveLen(1))
 				listener := proxy.Listeners[0].ListenerType.(*gloov1.Listener_HttpListener).HttpListener
@@ -329,7 +329,7 @@ var _ = Describe("Translator", func() {
 
 					proxy, errs := translator.Translate(context.Background(), GatewayProxyName, ns, snap, snap.Gateways)
 
-					Expect(errs.Validate()).NotTo(HaveOccurred())
+					Expect(errs.ValidateStrict()).NotTo(HaveOccurred())
 					Expect(proxy.Metadata.Name).To(Equal(GatewayProxyName))
 					Expect(proxy.Metadata.Namespace).To(Equal(ns))
 					Expect(proxy.Listeners).To(HaveLen(1))
@@ -343,7 +343,7 @@ var _ = Describe("Translator", func() {
 
 					proxy, errs := translator.Translate(context.Background(), GatewayProxyName, ns, snap, snap.Gateways)
 
-					Expect(errs.Validate()).NotTo(HaveOccurred())
+					Expect(errs.ValidateStrict()).NotTo(HaveOccurred())
 					Expect(proxy.Listeners).To(HaveLen(1))
 					listener := proxy.Listeners[0].ListenerType.(*gloov1.Listener_HttpListener).HttpListener
 					Expect(listener.VirtualHosts).To(HaveLen(1))
@@ -356,7 +356,7 @@ var _ = Describe("Translator", func() {
 
 					_, errs := translator.Translate(context.Background(), GatewayProxyName, ns, snap, snap.Gateways)
 
-					Expect(errs.Validate()).NotTo(HaveOccurred())
+					Expect(errs.ValidateStrict()).NotTo(HaveOccurred())
 				})
 
 				It("should error with both having plugins", func() {
@@ -365,7 +365,7 @@ var _ = Describe("Translator", func() {
 
 					_, errs := translator.Translate(context.Background(), GatewayProxyName, ns, snap, snap.Gateways)
 
-					Expect(errs.Validate()).To(HaveOccurred())
+					Expect(errs.ValidateStrict()).To(HaveOccurred())
 				})
 
 				It("should not error with one contains ssl config", func() {
@@ -373,7 +373,7 @@ var _ = Describe("Translator", func() {
 
 					proxy, errs := translator.Translate(context.Background(), GatewayProxyName, ns, snap, snap.Gateways)
 
-					Expect(errs.Validate()).NotTo(HaveOccurred())
+					Expect(errs.ValidateStrict()).NotTo(HaveOccurred())
 					listener := proxy.Listeners[0].ListenerType.(*gloov1.Listener_HttpListener).HttpListener
 					Expect(listener.VirtualHosts).To(HaveLen(1))
 				})
@@ -384,7 +384,7 @@ var _ = Describe("Translator", func() {
 
 					proxy, errs := translator.Translate(context.Background(), GatewayProxyName, ns, snap, snap.Gateways)
 
-					Expect(errs.Validate()).NotTo(HaveOccurred())
+					Expect(errs.ValidateStrict()).NotTo(HaveOccurred())
 					listener := proxy.Listeners[0].ListenerType.(*gloov1.Listener_HttpListener).HttpListener
 					Expect(listener.VirtualHosts).To(HaveLen(1))
 					Expect(listener.VirtualHosts[0].Routes).To(HaveLen(1))
@@ -399,7 +399,7 @@ var _ = Describe("Translator", func() {
 
 					_, errs := translator.Translate(context.Background(), GatewayProxyName, ns, snap, snap.Gateways)
 
-					Expect(errs.Validate()).To(HaveOccurred())
+					Expect(errs.ValidateStrict()).To(HaveOccurred())
 				})
 
 				It("should error when two virtual services conflict", func() {
@@ -411,7 +411,7 @@ var _ = Describe("Translator", func() {
 
 					_, errs := translator.Translate(context.Background(), GatewayProxyName, ns, snap, snap.Gateways)
 
-					Expect(errs.Validate()).To(HaveOccurred())
+					Expect(errs.ValidateStrict()).To(HaveOccurred())
 				})
 
 				It("should error when two virtual services conflict", func() {
@@ -423,7 +423,7 @@ var _ = Describe("Translator", func() {
 
 					_, errs := translator.Translate(context.Background(), GatewayProxyName, ns, snap, snap.Gateways)
 
-					Expect(errs.Validate()).NotTo(HaveOccurred())
+					Expect(errs.ValidateStrict()).NotTo(HaveOccurred())
 				})
 			})
 		})
@@ -647,7 +647,7 @@ var _ = Describe("Translator", func() {
 				})
 				It("merges the vs and route tables to a single gloov1.VirtualHost", func() {
 					proxy, errs := translator.Translate(context.TODO(), "", ns, snap, snap.Gateways)
-					Expect(errs.Validate()).NotTo(HaveOccurred())
+					Expect(errs.ValidateStrict()).NotTo(HaveOccurred())
 					Expect(proxy.Listeners).To(HaveLen(1))
 					listener := proxy.Listeners[0].ListenerType.(*gloov1.Listener_HttpListener).HttpListener
 					Expect(listener.VirtualHosts).To(HaveLen(2))
@@ -865,7 +865,7 @@ var _ = Describe("Translator", func() {
 				})
 				It("detects cycle and returns error", func() {
 					_, errs := translator.Translate(context.TODO(), "", ns, snap, snap.Gateways)
-					err := errs.Validate()
+					err := errs.ValidateStrict()
 					Expect(err).To(HaveOccurred())
 					Expect(err.Error()).To(ContainSubstring("cycle detected"))
 				})

@@ -35,7 +35,6 @@ func (t *HttpTranslator) GenerateListeners(ctx context.Context, snap *v2.ApiSnap
 		}
 
 		virtualServices := getVirtualServicesForGateway(gateway, snap.VirtualServices)
-		reports.Accept(snap.VirtualServices.AsInputResources()...)
 		mergedVirtualServices := validateAndMergeVirtualServices(gateway, virtualServices, reports)
 		listener := desiredListenerForHttp(gateway, mergedVirtualServices, snap.RouteTables, reports)
 		result = append(result, listener)
@@ -341,8 +340,6 @@ func (rv *routeVisitor) convertDelegateAction(routingResource resources.InputRes
 		reports.AddWarning(routingResource, err.Error())
 		return nil, err
 	}
-
-	reports.Accept(routeTable)
 
 	for _, visited := range rv.visited {
 		if routeTable == visited {

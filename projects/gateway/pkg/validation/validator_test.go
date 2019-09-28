@@ -179,7 +179,7 @@ var _ = Describe("Validator", func() {
 				snap.RouteTables[1].Routes = nil
 				err := v.Sync(context.TODO(), snap)
 				Expect(err).NotTo(HaveOccurred())
-				ref := snap.RouteTables[len(snap.RouteTables)-1].Metadata.Ref()
+				ref := snap.RouteTables[2].Metadata.Ref()
 				err = v.ValidateDeleteRouteTable(context.TODO(), ref)
 				Expect(err).NotTo(HaveOccurred())
 
@@ -252,6 +252,7 @@ var _ = Describe("Validator", func() {
 				snap := samples.SimpleGatewaySnapshot(us.Metadata.Ref(), ns)
 				vs := snap.VirtualServices[0].DeepCopyObject().(*gatewayv1.VirtualService)
 				vs.VirtualHost.Routes = append(vs.VirtualHost.Routes, badRoute)
+
 				err := v.Sync(context.TODO(), snap)
 				Expect(err).NotTo(HaveOccurred())
 				proxyReports, err := v.ValidateVirtualService(context.TODO(), vs)
@@ -358,6 +359,9 @@ type mockValidationClient struct {
 }
 
 func (c *mockValidationClient) ValidateProxy(ctx context.Context, in *validation.ProxyValidationServiceRequest, opts ...grpc.CallOption) (*validation.ProxyValidationServiceResponse, error) {
+	if c.validateProxy == nil {
+		Fail("validateProxy was called unexpectedly")
+	}
 	return c.validateProxy(ctx, in, opts...)
 }
 

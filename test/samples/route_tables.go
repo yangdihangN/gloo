@@ -13,7 +13,6 @@ func LinkedRouteTablesWithVirtualService(vsName, namespace string) (*v1.VirtualS
 	return LenLinkedRouteTablesWithVirtualService(3, vsName, namespace)
 }
 
-
 func LenLinkedRouteTablesWithVirtualService(lengthOfChain int, vsName, namespace string) (*v1.VirtualService, v1.RouteTableList) {
 	root := "/root"
 	prefix := root + "/0"

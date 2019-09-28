@@ -94,12 +94,12 @@ func NewGatewayValidatingWebhook(cfg WebhookConfig) (*http.Server, error) {
 		return nil, errors.Wrapf(err, "loading x509 key pair")
 	}
 
-	handler := &gatewayValidationWebhook{
-		ctx:             contextutils.WithLogger(ctx, "gateway-validation-webhook"),
-		validator:       validator,
-		watchNamespaces: watchNamespaces,
-		alwaysAccept:    alwaysAccept,
-	}
+	handler := NewGatewayValidationHandler(
+		contextutils.WithLogger(ctx, "gateway-validation-webhook"),
+		validator,
+		watchNamespaces,
+		alwaysAccept,
+	)
 
 	mux := http.NewServeMux()
 	mux.Handle(ValidationPath, handler)

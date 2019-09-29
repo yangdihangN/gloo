@@ -155,7 +155,7 @@ func RunGateway(opts Opts) error {
 
 	emitter := v2.NewApiEmitter(virtualServiceClient, routeTableClient, gatewayClient)
 
-	rpt := reporter.NewReporter("gateway", gatewayClient.BaseClient(), virtualServiceClient.BaseClient())
+	rpt := reporter.NewReporter("gateway", gatewayClient.BaseClient(), virtualServiceClient.BaseClient(), routeTableClient.BaseClient())
 	writeErrs := make(chan error)
 
 	prop := propagator.NewPropagator("gateway", gatewayClient, virtualServiceClient, proxyClient, writeErrs)

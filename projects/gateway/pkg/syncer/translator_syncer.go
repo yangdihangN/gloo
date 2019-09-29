@@ -3,6 +3,8 @@ package syncer
 import (
 	"context"
 
+	"go.uber.org/zap"
+
 	v1 "github.com/solo-io/gloo/projects/gateway/pkg/api/v1"
 	v2 "github.com/solo-io/gloo/projects/gateway/pkg/api/v2"
 	"github.com/solo-io/gloo/projects/gateway/pkg/propagator"
@@ -51,8 +53,9 @@ func (s *translatorSyncer) Sync(ctx context.Context, snap *v2.ApiSnapshot) error
 	ctx = contextutils.WithLogger(ctx, "translatorSyncer")
 
 	logger := contextutils.LoggerFrom(ctx)
-	logger.Infof("begin sync %v (%v virtual services, %v gateways)", snap.Hash(),
-		len(snap.VirtualServices), len(snap.Gateways))
+	logger.Debugw("begin sync", zap.Any("snapshot", snap.Stringer()))
+	logger.Infof("begin sync %v (%v virtual services, %v gateways, %v route tables)", snap.Hash(),
+		len(snap.VirtualServices), len(snap.Gateways), len(snap.RouteTables))
 	defer logger.Infof("end sync %v", snap.Hash())
 	logger.Debugf("%v", snap)
 
@@ -64,12 +67,13 @@ func (s *translatorSyncer) Sync(ctx context.Context, snap *v2.ApiSnapshot) error
 	tuples := make([]*proxyErrorTuple, 0, len(byProxy))
 	for key, val := range byProxy {
 		proxy, reports := s.translator.Translate(ctx, key, s.writeNamespace, snap, val)
-		if err := reports.Validate(); err != nil {
+		if err := reports.ValidateStrict(); err != nil {
 			if err := s.reporter.WriteReports(ctx, reports, nil); err != nil {
 				contextutils.LoggerFrom(ctx).Errorf("failed to write reports: %v", err)
 			}
-			logger.Warnf("snapshot %v was rejected due to invalid config: %v\nxDS cache will not be updated.", snap.Hash(), err)
-			return err
+			logger.Warnf("snapshot %v was rejected due to invalid config: %v\n"+
+				"proxy will not be updated.", snap.Hash(), err)
+			continue
 		}
 
 		if proxy != nil {

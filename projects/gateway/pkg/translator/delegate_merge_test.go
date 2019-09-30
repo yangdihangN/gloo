@@ -1,90 +1,15 @@
 package translator
 
 import (
-	"github.com/solo-io/gloo/test/samples"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	v1 "github.com/solo-io/gloo/projects/gateway/pkg/api/v1"
-	"github.com/solo-io/gloo/projects/gateway/pkg/defaults"
 	gloov1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
-	"github.com/solo-io/solo-kit/pkg/api/v1/reporter"
 	"github.com/solo-io/solo-kit/pkg/api/v1/resources/core"
+	"github.com/solo-io/solo-kit/pkg/api/v2/reporter"
 )
 
 var _ = Describe("route merge util", func() {
-	Context("delegating with path prefix /", func() {
-		var (
-			routeTables v1.RouteTableList
-			vs          *v1.VirtualService
-		)
-
-		BeforeEach(func() {
-			routeTables = samples.LinkedRouteTables("", "/", "/exact")
-			ref := routeTables[len(routeTables)-1].Metadata.Ref()
-
-			// create a vs to point to the last route table
-			vs = defaults.DefaultVirtualService("a", "b")
-			vs.VirtualHost.Routes = []*v1.Route{{
-				Matcher: &gloov1.Matcher{
-					PathSpecifier: &gloov1.Matcher_Prefix{
-						Prefix: "/",
-					},
-				},
-				Action: &v1.Route_DelegateAction{
-					DelegateAction: &ref,
-				},
-			}}
-
-		})
-
-		It("handles /paths-with-slashes/ correctly", func() {
-			routeTables[2].Routes[0].Matcher.PathSpecifier.(*gloov1.Matcher_Prefix).Prefix = "/some/thing/"
-
-			resourceErrs := reporter.ResourceErrors{}
-
-			routes, err := convertRoutes(vs, routeTables, resourceErrs)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(resourceErrs.Validate()).NotTo(HaveOccurred())
-			Expect(routes).To(HaveLen(1))
-			Expect(routes[0].Matcher).To(Equal(&gloov1.Matcher{
-				PathSpecifier: &gloov1.Matcher_Exact{
-					Exact: "/some/thing/exact",
-				},
-			}))
-		})
-		It("handles /paths-with-slash correctly", func() {
-			routeTables[2].Routes[0].Matcher.PathSpecifier.(*gloov1.Matcher_Prefix).Prefix = "/some/thing"
-
-			resourceErrs := reporter.ResourceErrors{}
-
-			routes, err := convertRoutes(vs, routeTables, resourceErrs)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(resourceErrs.Validate()).NotTo(HaveOccurred())
-			Expect(routes).To(HaveLen(1))
-			Expect(routes[0].Matcher).To(Equal(&gloov1.Matcher{
-				PathSpecifier: &gloov1.Matcher_Exact{
-					Exact: "/some/thing/exact",
-				},
-			}))
-		})
-
-		It("prepends nothing", func() {
-
-			resourceErrs := reporter.ResourceErrors{}
-
-			routes, err := convertRoutes(vs, routeTables, resourceErrs)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(resourceErrs.Validate()).NotTo(HaveOccurred())
-			Expect(routes).To(HaveLen(1))
-			Expect(routes[0].Matcher).To(Equal(&gloov1.Matcher{
-				PathSpecifier: &gloov1.Matcher_Exact{
-					Exact: "/exact",
-				},
-			}))
-		})
-	})
-
 	Context("bad config on a delegate route", func() {
 		It("returns the correct error", func() {
 			type routeErr struct {
@@ -172,9 +97,38 @@ var _ = Describe("route merge util", func() {
 				},
 			} {
 				rv := &routeVisitor{}
-				_, err := rv.convertDelegateAction(&v1.VirtualService{}, badRoute.route, reporter.ResourceErrors{})
+				_, err := rv.convertDelegateAction(&v1.VirtualService{}, badRoute.route, reporter.ResourceReports{})
 				Expect(err).To(Equal(badRoute.expectedErr))
 			}
+		})
+	})
+	Context("missing ref on a delegate route", func() {
+		It("returns nil and adds a warning", func() {
+			ref := core.ResourceRef{
+				Name: "any",
+			}
+			route := &v1.Route{
+				Matcher: &gloov1.Matcher{
+					PathSpecifier: &gloov1.Matcher_Prefix{
+						Prefix: "/any",
+					},
+				},
+				Action: &v1.Route_DelegateAction{
+					DelegateAction: &ref,
+				},
+			}
+
+			rpt := reporter.ResourceReports{}
+			vs := &v1.VirtualService{}
+			rv := &routeVisitor{}
+			converted, err := rv.convertDelegateAction(vs, route, rpt)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(converted).To(HaveLen(0)) // nothing to return, no error
+
+			// missing ref should result in a warning
+			Expect(rpt).To(Equal(reporter.ResourceReports{vs: reporter.Report{
+				Warnings: []string{routeTableMissingWarning(ref)},
+			}}))
 		})
 	})
 })

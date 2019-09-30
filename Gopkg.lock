@@ -1361,14 +1361,16 @@
   version = "0.1.0"
 
 [[projects]]
-  digest = "1:91a2cbbc3a8bbfeaea5847ff79467d1fd51f2d62f87764d504143315d15697ac"
+  digest = "1:2b7ad368df1e8ff8d88f2a73e3504cdcb760213a0d63e0e12a64064c65e4b090"
   name = "github.com/solo-io/go-utils"
   packages = [
+    "changelogutils",
     "clicore/constants",
     "clidoc",
     "cliutils",
     "contextutils",
     "debugutils",
+    "docsutils",
     "envutils",
     "errors",
     "errutils",
@@ -1383,6 +1385,7 @@
     "manifesttestutils",
     "pkgmgmtutils",
     "protoutils",
+    "randutils",
     "stats",
     "stringutils",
     "tarutils",
@@ -1402,7 +1405,7 @@
   version = "v0.10.9"
 
 [[projects]]
-  digest = "1:7ddb073759c32fdc610ae6c897c208dc8df97c3848d91201035b64dffc3264b8"
+  digest = "1:74ef591481b05a71280bb21afda272bbf7ef6abc2374ce52d36e181b699e4ce0"
   name = "github.com/solo-io/solo-kit"
   packages = [
     "api/external/kubernetes/configmap",
@@ -1439,10 +1442,10 @@
     "pkg/api/v1/eventloop",
     "pkg/api/v1/propagator",
     "pkg/api/v1/reconcile",
-    "pkg/api/v1/reporter",
     "pkg/api/v1/resources",
     "pkg/api/v1/resources/common/kubernetes",
     "pkg/api/v1/resources/core",
+    "pkg/api/v2/reporter",
     "pkg/code-generator",
     "pkg/code-generator/cmd",
     "pkg/code-generator/codegen",
@@ -1465,8 +1468,8 @@
     "test/setup",
   ]
   pruneopts = "UT"
-  revision = "099d830c66798b4148d9a430fae1d2624b5fbc66"
-  version = "v0.10.22"
+  revision = "43b06f6a734ec0ae67e2943976bf3a6f55418733"
+  version = "v0.10.23"
 
 [[projects]]
   digest = "1:3e39bafd6c2f4bf3c76c3bfd16a2e09e016510ad5db90dc02b88e2f565d6d595"
@@ -1772,10 +1775,9 @@
   revision = "a985d3407aa71f30cf86696ee0a2f409709f22e1"
 
 [[projects]]
-  digest = "1:bb533ccc3d271b79ca611125beaff2ec3f06c003174849531be262a64a58953e"
+  digest = "1:deedfa6fd63a3ab08bcdb6b84de7342a1dbcdb02150c5f6cdb50d2098ecb8e75"
   name = "google.golang.org/api"
   packages = [
-    "compute/v1",
     "gensupport",
     "googleapi",
     "googleapi/internal/uritemplates",
@@ -2751,6 +2753,7 @@
     "github.com/solo-io/go-utils/cliutils",
     "github.com/solo-io/go-utils/contextutils",
     "github.com/solo-io/go-utils/debugutils",
+    "github.com/solo-io/go-utils/docsutils",
     "github.com/solo-io/go-utils/envutils",
     "github.com/solo-io/go-utils/errors",
     "github.com/solo-io/go-utils/errutils",
@@ -2795,10 +2798,10 @@
     "github.com/solo-io/solo-kit/pkg/api/v1/eventloop",
     "github.com/solo-io/solo-kit/pkg/api/v1/propagator",
     "github.com/solo-io/solo-kit/pkg/api/v1/reconcile",
-    "github.com/solo-io/solo-kit/pkg/api/v1/reporter",
     "github.com/solo-io/solo-kit/pkg/api/v1/resources",
     "github.com/solo-io/solo-kit/pkg/api/v1/resources/common/kubernetes",
     "github.com/solo-io/solo-kit/pkg/api/v1/resources/core",
+    "github.com/solo-io/solo-kit/pkg/api/v2/reporter",
     "github.com/solo-io/solo-kit/pkg/code-generator/cmd",
     "github.com/solo-io/solo-kit/pkg/code-generator/docgen/options",
     "github.com/solo-io/solo-kit/pkg/errors",
@@ -2817,10 +2820,7 @@
     "go.opencensus.io/trace",
     "go.uber.org/multierr",
     "go.uber.org/zap",
-    "golang.org/x/oauth2/google",
     "golang.org/x/sync/errgroup",
-    "google.golang.org/api/compute/v1",
-    "google.golang.org/api/option",
     "google.golang.org/genproto/googleapis/api/annotations",
     "google.golang.org/grpc",
     "google.golang.org/grpc/codes",

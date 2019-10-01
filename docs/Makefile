@@ -42,6 +42,8 @@ DOCS_VERSION := latest
 site: clean pass-version-to-hugo
 	# if [ ! -d themes/hugo-theme-soloio ]; then git clone https://github.com/solo-io/hugo-theme-soloio themes/hugo-theme-soloio && git --git-dir=themes/hugo-theme-soloio/.git checkout b49aed308e7c03edd2640fe52afd745d37fa0cbc; fi
 	cp pending-theme/shortcodes/protobuf.html themes/hugo-theme-soloio/layouts/shortcodes/
+	go run cmd/generate_changelog_doc.go gloo > content/changelog/gloo-changelog.sk.md
+	go run cmd/generate_changelog_doc.go glooe > content/changelog/glooe-changelog.sk.md
 	hugo --config docs.toml
 
 .PHONY: deploy-site

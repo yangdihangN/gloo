@@ -9,7 +9,7 @@ weight: 8
 - [Gloo Enterprise](#gloo-enterprise)
 
 ## Open Source Gloo
-{{< readfile file="changelog/gloo-changelog" markdown="true" >}}
+{{< readfile file="changelog/gloo-changelog.sk.md" markdown="true" >}}
 
 ## Gloo Enterprise
-{{< readfile file="changelog/glooe-changelog" markdown="true" >}}
+{{< readfile file="changelog/glooe-changelog.sk.md" markdown="true" >}}

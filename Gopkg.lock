@@ -1361,9 +1361,10 @@
   version = "0.1.0"
 
 [[projects]]
-  digest = "1:1843fd9ab50dce07fb9525f4e4365295132c35960530400155996e805baa8186"
+  digest = "1:40836dcad7d74e9118f0d2c56d4adc17933429240e2e01e668cb21fd49d7ebbf"
   name = "github.com/solo-io/go-utils"
   packages = [
+    "changelogutils",
     "clicore/constants",
     "clidoc",
     "cliutils",
@@ -2747,6 +2748,7 @@
     "github.com/prometheus/prometheus/discovery/targetgroup",
     "github.com/solo-io/envoy-operator/pkg/downward",
     "github.com/solo-io/go-checkpoint",
+    "github.com/solo-io/go-utils/changelogutils",
     "github.com/solo-io/go-utils/clidoc",
     "github.com/solo-io/go-utils/cliutils",
     "github.com/solo-io/go-utils/contextutils",

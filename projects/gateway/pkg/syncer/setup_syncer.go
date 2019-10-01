@@ -217,9 +217,9 @@ func RunGateway(opts Opts) error {
 	var ignoreProxyValidationFailure bool
 	var allowMissingLinks bool
 	if opts.Validation != nil {
-		contextutils.LoggerFrom(ctx).Infow("starting proxy validation client",
+		contextutils.LoggerFrom(ctx).Infow("starting proxy validation client... this may take a moment",
 			zap.String("validation_server", opts.Validation.ProxyValidationServerAddress))
-		cc, err := grpc.DialContext(ctx, opts.Validation.ProxyValidationServerAddress, grpc.WithInsecure())
+		cc, err := grpc.DialContext(ctx, opts.Validation.ProxyValidationServerAddress, grpc.WithInsecure(), grpc.WithBlock())
 		if err != nil {
 			return errors.Wrapf(err, "failed to initialize grpc connection to validation server.")
 		}

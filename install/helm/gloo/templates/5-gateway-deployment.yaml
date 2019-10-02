@@ -75,6 +75,9 @@ spec:
         readinessProbe:
           tcpSocket:
             port: 8443
+          initialDelaySeconds: 1
+          periodSeconds: 2
+          failureThreshold: 10
       volumes:
         - name: validation-certs
           secret:

@@ -735,6 +735,9 @@ spec:
         readinessProbe:
           tcpSocket:
             port: 8443
+          initialDelaySeconds: 1
+          periodSeconds: 2
+          failureThreshold: 10
       volumes:
         - name: validation-certs
           secret:
@@ -907,6 +910,9 @@ metadata:
 								Port: intstr.FromInt(9977),
 							},
 						},
+						InitialDelaySeconds: 1,
+						PeriodSeconds:       2,
+						FailureThreshold:    10,
 					}
 					deploy.Spec.Template.Spec.ServiceAccountName = "gloo"
 					glooDeployment = deploy
@@ -1012,6 +1018,9 @@ metadata:
 								Port: intstr.FromInt(8443),
 							},
 						},
+						InitialDelaySeconds: 1,
+						PeriodSeconds:       2,
+						FailureThreshold:    10,
 					}
 
 					gatewayDeployment = deploy
@@ -1291,6 +1300,9 @@ metadata:
 													Port: intstr.FromInt(9977),
 												},
 											},
+											InitialDelaySeconds: 1,
+											PeriodSeconds:       2,
+											FailureThreshold:    10,
 										},
 									},
 								},

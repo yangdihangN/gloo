@@ -732,6 +732,9 @@ spec:
         volumeMounts:
           - mountPath: /etc/gateway/validation-certs
             name: validation-certs
+        readinessProbe:
+          tcpSocket:
+            port: 8443
       volumes:
         - name: validation-certs
           secret:
@@ -898,6 +901,13 @@ metadata:
 							v1.ResourceCPU:    resource.MustParse("500m"),
 						},
 					}
+					deploy.Spec.Template.Spec.Containers[0].ReadinessProbe = &v1.Probe{
+						Handler: v1.Handler{
+							TCPSocket: &v1.TCPSocketAction{
+								Port: intstr.FromInt(9977),
+							},
+						},
+					}
 					deploy.Spec.Template.Spec.ServiceAccountName = "gloo"
 					glooDeployment = deploy
 				})
@@ -996,20 +1006,20 @@ metadata:
 						Value: "true",
 					})
 
+					deploy.Spec.Template.Spec.Containers[0].ReadinessProbe = &v1.Probe{
+						Handler: v1.Handler{
+							TCPSocket: &v1.TCPSocketAction{
+								Port: intstr.FromInt(8443),
+							},
+						},
+					}
+
 					gatewayDeployment = deploy
 				})
 
 				It("has a creates a deployment", func() {
 					helmFlags := "--namespace " + namespace + " --set namespace.create=true"
 					prepareMakefile(helmFlags)
-					testManifest.ExpectDeploymentAppsV1(gatewayDeployment)
-				})
-
-				It("disables probes", func() {
-					helmFlags := "--namespace " + namespace + " --set namespace.create=true --set gateway.deployment.probes=false"
-					prepareMakefile(helmFlags)
-					gatewayDeployment.Spec.Template.Spec.Containers[0].ReadinessProbe = nil
-					gatewayDeployment.Spec.Template.Spec.Containers[0].LivenessProbe = nil
 					testManifest.ExpectDeploymentAppsV1(gatewayDeployment)
 				})
 
@@ -1274,6 +1284,13 @@ metadata:
 											RunAsNonRoot:             pointer.BoolPtr(true),
 											ReadOnlyRootFilesystem:   pointer.BoolPtr(true),
 											AllowPrivilegeEscalation: pointer.BoolPtr(false),
+										},
+										ReadinessProbe: &v1.Probe{
+											Handler: v1.Handler{
+												TCPSocket: &v1.TCPSocketAction{
+													Port: intstr.FromInt(9977),
+												},
+											},
 										},
 									},
 								},

@@ -90,7 +90,7 @@ func StartTestHelper() {
 			return nil
 		}
 		return errors.New("glooctl check detected a problem with the installation")
-	}, "20s", "4s").Should(BeNil())
+	}, "40s", "4s").Should(BeNil())
 
 	// enable strict validation
 	// this can be removed once we enable validation by default

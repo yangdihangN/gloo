@@ -12,51 +12,62 @@ GCLOUD_PROJECT_ID ?= solo-test-236622
 # Base
 #----------------------------------------------------------------------------------
 # determine if we are doing a release (same logic as with repo root Makefile)
-RELEASE := "true"
-ifeq ($(TAGGED_VERSION),)
-	TAGGED_VERSION := v
-	RELEASE := "false"
-endif
+# RELEASE := "true"
+# ifeq ($(TAGGED_VERSION),)
+# 	TAGGED_VERSION := v
+# 	RELEASE := "false"
+# endif
 
 # remove the "v" prefix
 VERSION ?= $(shell echo $(TAGGED_VERSION) | cut -c 2-)
 
-## Passed by cloudbuild
-#GCLOUD_PROJECT_ID := $(GCLOUD_PROJECT_ID)
-#BUILD_ID := $(BUILD_ID)
-#
-#TEST_IMAGE_TAG := test-$(BUILD_ID)
+# Passed by cloudbuild
+GCLOUD_PROJECT_ID := $(GCLOUD_PROJECT_ID)
+BUILD_ID := $(BUILD_ID)
+
+TEST_IMAGE_TAG := test-$(BUILD_ID)
 GCR_REPO_PREFIX := gcr.io/$(GCLOUD_PROJECT_ID)
 
 # this allows us to host docs.solo.io/gloo/vX.Y.Z or docs.solo.io/supergloo/vA.B.C
 PRODUCT_SCOPE := gloo
 DOCS_VERSION := latest
-# TODO(mitchdraft) - work out how to best publish pinned versions
-# for now, always push a "latest" and version-tagged image on a release
-# I think it makes sense to auto-publish the latest image and keep the pinned image publish step a manual activity
 
 #----------------------------------------------------------------------------------
 # Docs
 #----------------------------------------------------------------------------------
 
-site: clean pass-version-to-hugo
+.PHONY: site-common
+site-common: clean
 	# if [ ! -d themes/hugo-theme-soloio ]; then git clone https://github.com/solo-io/hugo-theme-soloio themes/hugo-theme-soloio && git --git-dir=themes/hugo-theme-soloio/.git checkout b49aed308e7c03edd2640fe52afd745d37fa0cbc; fi
 	cp pending-theme/shortcodes/protobuf.html themes/hugo-theme-soloio/layouts/shortcodes/
-	go run cmd/generate_changelog_doc.go gloo > content/changelog/gloo-changelog.sk.md
-	go run cmd/generate_changelog_doc.go glooe > content/changelog/glooe-changelog.sk.md
+	go run cmd/generate_changelog_doc.go gen-changelog-md gloo > content/changelog/gloo-changelog.sk.md
+	go run cmd/generate_changelog_doc.go gen-changelog-md glooe > content/changelog/glooe-changelog.sk.md
+
+.PHONY: site-test
+site-test: site-common
+	go run cmd/generate_changelog_doc.go gen-version-scope-data --no-scope
 	hugo --config docs.toml
 
-.PHONY: deploy-site
-deploy-site: site
-	firebase deploy --only hosting:gloo-docs
+.PHONY: site-release
+site-release: site-common
+	go run cmd/generate_changelog_doc.go gen-version-scope-data --product gloo --call-latest
+	hugo --config docs.toml
+	mv site site-latest
+	go run cmd/generate_changelog_doc.go gen-version-scope-data --product gloo --version $(VERSION)
+	hugo --config docs.toml
+	mv site site-versioned
+
+# .PHONY: deploy-site
+# deploy-site: site
+# 	firebase deploy --only hosting:gloo-docs
 
 .PHONY: serve-site
-serve-site: site
+serve-site: site-test
 	hugo --config docs.toml server -D
 
 .PHONY: clean
 clean:
-	rm -fr ./site ./resources
+	rm -fr ./site ./resources ./site-latest ./site-versioned
 
 # Uses https://github.com/gjtorikian/html-proofer
 # Does not require running site; just make sure you generate the site and then run it
@@ -72,30 +83,29 @@ check-links:
 install-tools:
 	gem install html-proofer
 
-.PHONY: docker-push
-docker-push: site
+.PHONY: docker-push-docs
+docker-push-docs: site-release manifest
 	docker build \
-		--build-arg VERSION=$(DOCS_VERSION) \
+		--build-arg VERSION=latest \
 		--build-arg PRODUCT_SCOPE=$(PRODUCT_SCOPE) \
-		-t $(GCR_REPO_PREFIX)/gloo-docs:$(DOCS_VERSION) \
+		--build-arg FROM_DIR=./site-latest \
+		-t $(GCR_REPO_PREFIX)/gloo-docs:latest .
+	docker push $(GCR_REPO_PREFIX)/gloo-docs:latest
+	docker build \
+		--build-arg VERSION=$(VERSION) \
+		--build-arg PRODUCT_SCOPE=$(PRODUCT_SCOPE) \
+		--build-arg FROM_DIR=./site-versioned \
 		-t $(GCR_REPO_PREFIX)/gloo-docs:$(VERSION) .
-	docker push $(GCR_REPO_PREFIX)/gloo-docs:$(DOCS_VERSION)
 	docker push $(GCR_REPO_PREFIX)/gloo-docs:$(VERSION)
 
 .PHONY: manifest
 manifest:
 	helm template install/helm \
-		--set docsVersion=$(DOCS_VERSION) \
-		--set image.tag=$(DOCS_VERSION) \
-		> install/manifest.yaml
+		--set docsVersion=$(VERSION) \
+		--set image.tag=$(VERSION) \
+		> install/manifest-versioned.yaml
+	helm template install/helm \
+		--set docsVersion=latest \
+		--set image.tag=latest \
+		> install/manifest-latest.yaml
 
-# do something more sophisticated as needed
-# for now, we only use a single value in the Solo.yaml file
-# during local development, the value must be an empty string to correctly resolve the relative links
-# during a release or other version-scoped deployment, the version must be prefixed with a "/" to correctly match the nginx path
-.PHONY: pass-version-to-hugo
-pass-version-to-hugo:
-	echo DocsVersion: > data/Solo.yaml
-ifeq ($(RELEASE),"true")
-	echo DocsVersion: "/$(PRODUCT_SCOPE)/$(DOCS_VERSION)" > data/Solo.yaml
-endif

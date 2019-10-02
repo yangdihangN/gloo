@@ -402,8 +402,13 @@ upload-github-release-assets: build-cli render-yaml
 
 .PHONY: publish-docs
 publish-docs:
+	cd docs && make docker-push-docs \
+		VERSION=$(VERSION) \
+		TAGGED_VERSION=$(TAGGED_VERSION) \
+		RELEASE=$(RELEASE)
+	# VERSION=$(VERSION) TAGGED_VERSION=temp cd docs && make docker-push-docs # TODO(mitchdraft) Temporary - remove
 ifeq ($(RELEASE),"true")
-	cd docs && make deploy-site
+	# cd docs && make docker-push-docs
 endif
 
 #----------------------------------------------------------------------------------

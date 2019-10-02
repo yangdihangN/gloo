@@ -1,2 +1,10 @@
-install/manifest.yaml
+install/manifest-versioned.yaml
+install/manifest-latest.yaml
 *.sk.md
+
+site/*
+site-latest/*
+site-versioned/*
+
+
+data/Solo.yaml

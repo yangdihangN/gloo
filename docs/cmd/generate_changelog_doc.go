@@ -49,6 +49,12 @@ func rootApp(ctx context.Context) *cobra.Command {
 	}
 	app.AddCommand(writeVersionScopeDataForHugo(opts))
 	app.AddCommand(changelogMdCmd(opts))
+
+	app.PersistentFlags().StringVar(&opts.HugoDataSoloOpts.version, "version", "", "version of docs and code")
+	app.PersistentFlags().StringVar(&opts.HugoDataSoloOpts.product, "product", "gloo", "product to which the docs refer (defaults to gloo)")
+	app.PersistentFlags().BoolVar(&opts.HugoDataSoloOpts.noScope, "no-scope", false, "if set, will not nest the served docs by product or version")
+	app.PersistentFlags().BoolVar(&opts.HugoDataSoloOpts.callLatest, "call-latest", false, "if set, will use the string 'latest' in the scope, rather than the particular release version")
+
 	return app
 }
 func changelogMdCmd(opts *options) *cobra.Command {
@@ -61,10 +67,6 @@ func changelogMdCmd(opts *options) *cobra.Command {
 			return nil
 		},
 	}
-	app.PersistentFlags().StringVar(&opts.HugoDataSoloOpts.version, "version", "", "version of docs and code")
-	app.PersistentFlags().StringVar(&opts.HugoDataSoloOpts.product, "product", "gloo", "product to which the docs refer (defaults to gloo)")
-	app.PersistentFlags().BoolVar(&opts.HugoDataSoloOpts.noScope, "no-scope", false, "if set, will not nest the served docs by product or version")
-	app.PersistentFlags().BoolVar(&opts.HugoDataSoloOpts.callLatest, "call-latest", false, "if set, will use the string 'latest' in the scope, rather than the particular release version")
 	return app
 }
 
@@ -95,14 +97,25 @@ func writeVersionScopeDataForHugo(opts *options) *cobra.Command {
 	return app
 }
 
+const (
+	latestVersionPath = "latest"
+)
+
 func getDocsVersionFromOpts(hugoOpts HugoDataSoloOpts) (string, error) {
 	if hugoOpts.noScope {
 		return "", nil
 	}
-	if hugoOpts.version == "" || hugoOpts.product == "" {
-		return "", errors.New("must provide a version and product for scoped docs generation")
+	version := hugoOpts.version
+	if hugoOpts.callLatest {
+		version = latestVersionPath
 	}
-	return fmt.Sprintf("/%v/%v", hugoOpts.product, hugoOpts.version), nil
+	if version == "" {
+		return "", errors.New("must provide a version or specify that 'latest' should be used as the version for scoped docs generation")
+	}
+	if hugoOpts.product == "" {
+		return "", errors.New("must provide a product for scoped docs generation")
+	}
+	return fmt.Sprintf("/%v/%v", hugoOpts.product, version), nil
 }
 
 const (
@@ -120,10 +133,10 @@ var (
 )
 
 func generateChangelogMd(opts *options, args []string) error {
-	if len(args) != 2 {
+	if len(args) != 1 {
 		return InvalidInputError(fmt.Sprintf("%v", len(args)-1))
 	}
-	target := args[1]
+	target := args[0]
 
 	var repoRootPath, repo, changelogDirPath string
 	switch target {

@@ -442,7 +442,7 @@ var _ = Describe("Kube2e: gateway", func() {
 					upstreamName := fmt.Sprintf("%s-%s-%v", testHelper.InstallNamespace, helper.HttpEchoName, helper.HttpEchoPort)
 					us, err = upstreams.Find(testHelper.InstallNamespace, upstreamName)
 					return err
-				}, time.Second * 10, time.Second).ShouldNot(HaveOccurred())
+				}, time.Second*10, time.Second).ShouldNot(HaveOccurred())
 
 				dest := &gloov1.Destination{
 					DestinationType: &gloov1.Destination_Upstream{

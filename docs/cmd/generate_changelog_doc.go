@@ -91,7 +91,7 @@ func writeVersionScopeDataForHugo(opts *options) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return ioutil.WriteFile(hugoDataSoloFilename, marshalled, 0x644)
+			return ioutil.WriteFile(hugoDataSoloFilename, marshalled, 0644)
 		},
 	}
 	return app

@@ -434,6 +434,7 @@ ifeq ($(RELEASE),"true")
 	cd docs && make docker-push-docs \
 		VERSION=$(VERSION) \
 		TAGGED_VERSION=$(TAGGED_VERSION) \
+		GCLOUD_PROJECT_ID=$(GCLOUD_PROJECT_ID) \
 		RELEASE=$(RELEASE)
 endif
 

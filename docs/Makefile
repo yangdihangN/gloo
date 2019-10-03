@@ -25,8 +25,8 @@ VERSION ?= $(shell echo $(TAGGED_VERSION) | cut -c 2-)
 GCLOUD_PROJECT_ID := $(GCLOUD_PROJECT_ID)
 BUILD_ID := $(BUILD_ID)
 
-TEST_IMAGE_TAG := test-$(BUILD_ID)
 GCR_REPO_PREFIX := gcr.io/$(GCLOUD_PROJECT_ID)
+IMAGE_REPO := $(GCR_REPO_PREFIX)/gloo-docs
 
 # this allows us to host docs.solo.io/gloo/vX.Y.Z or docs.solo.io/supergloo/vA.B.C
 PRODUCT_SCOPE := gloo
@@ -107,9 +107,10 @@ manifest:
 	helm template install/helm \
 		--set docsVersion=$(VERSION) \
 		--set image.tag=$(VERSION) \
+		--set image.repository=$(IMAGE_REPO) \
 		> install/manifest-versioned.yaml
 	helm template install/helm \
 		--set docsVersion=latest \
 		--set image.tag=$(SERVE_AS_LATEST_TAG) \
+		--set image.repository=$(IMAGE_REPO) \
 		> install/manifest-latest.yaml
-

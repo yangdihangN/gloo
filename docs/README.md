@@ -25,7 +25,7 @@ make serve-site
 
 Normally, CI will handle docs image pushes. If you want to force an image push, you can use this command from the repo root directory.
 ```
-TAGGED_VERSION=<some-version> make publish-docs -B
+GCLOUD_PROJECT_ID=<project-id> TAGGED_VERSION=<some-version> make publish-docs -B
 ```
 
 

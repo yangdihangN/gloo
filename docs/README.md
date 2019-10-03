@@ -21,5 +21,11 @@ make serve-site
 - all urls are scoped relative to the prefix path
 - if you want to run locally, do: `make serve-site` which will build and serve the site from the site/ directory, with no prefix
 
+### Push images
+
+Normally, CI will handle docs image pushes. If you want to force an image push, you can use this command from the repo root directory.
+```
+TAGGED_VERSION=<some-version> make publish-docs -B
+```
 
 

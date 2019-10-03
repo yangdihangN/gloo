@@ -38,7 +38,7 @@ DOCS_VERSION := latest
 
 .PHONY: site-common
 site-common: clean
-	# if [ ! -d themes/hugo-theme-soloio ]; then git clone https://github.com/solo-io/hugo-theme-soloio themes/hugo-theme-soloio && git --git-dir=themes/hugo-theme-soloio/.git checkout b49aed308e7c03edd2640fe52afd745d37fa0cbc; fi
+	# if [ ! -d themes/hugo-theme-soloio ]; then git clone https://github.com/solo-io/hugo-theme-soloio themes/hugo-theme-soloio && git --git-dir=themes/hugo-theme-soloio/.git checkout 08931618d4fbe54b578240c60d563a819d9a8d09; fi
 	cp pending-theme/shortcodes/protobuf.html themes/hugo-theme-soloio/layouts/shortcodes/
 	go run cmd/generate_changelog_doc.go gen-changelog-md gloo > content/changelog/gloo-changelog.sk.md
 	go run cmd/generate_changelog_doc.go gen-changelog-md glooe > content/changelog/glooe-changelog.sk.md
@@ -83,14 +83,18 @@ check-links:
 install-tools:
 	gem install html-proofer
 
+
+# use vx.y.z-latest as the tag for images that are serving version x.y.z of the docs under the docs.solo.io/gloo/latest/ path
+SERVE_AS_LATEST_TAG:=$(VERSION)-latest
+
 .PHONY: docker-push-docs
 docker-push-docs: site-release manifest
 	docker build \
 		--build-arg VERSION=latest \
 		--build-arg PRODUCT_SCOPE=$(PRODUCT_SCOPE) \
 		--build-arg FROM_DIR=./site-latest \
-		-t $(GCR_REPO_PREFIX)/gloo-docs:latest .
-	docker push $(GCR_REPO_PREFIX)/gloo-docs:latest
+		-t $(GCR_REPO_PREFIX)/gloo-docs:$(SERVE_AS_LATEST_TAG) .
+	docker push $(GCR_REPO_PREFIX)/gloo-docs:$(SERVE_AS_LATEST_TAG)
 	docker build \
 		--build-arg VERSION=$(VERSION) \
 		--build-arg PRODUCT_SCOPE=$(PRODUCT_SCOPE) \
@@ -106,6 +110,6 @@ manifest:
 		> install/manifest-versioned.yaml
 	helm template install/helm \
 		--set docsVersion=latest \
-		--set image.tag=latest \
+		--set image.tag=$(SERVE_AS_LATEST_TAG) \
 		> install/manifest-latest.yaml
 

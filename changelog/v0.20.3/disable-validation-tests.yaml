@@ -1,0 +1,3 @@
+changelog:
+- type: NON_USER_FACING
+  description: Temporarily use log-only validation mode in kube e2e test due to frequent test flakes.

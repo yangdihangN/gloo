@@ -27,6 +27,8 @@ import (
 
 var (
 	NoDestinationSpecifiedError = errors.New("must specify at least one weighted destination for multi destination routes")
+
+	SubsetsMisconfiguredErr = errors.New("route has a subset config, but the upstream does not.")
 )
 
 func (t *translator) computeRouteConfig(params plugins.Params, proxy *v1.Proxy, listener *v1.Listener, routeCfgName string, listenerReport *validationapi.ListenerReport) *envoyapi.RouteConfiguration {
@@ -179,17 +181,7 @@ func (t *translator) setAction(params plugins.RouteParams, routeReport *validati
 			Route: &envoyroute.RouteAction{},
 		}
 		if err := t.setRouteAction(params, action.RouteAction, out.Action.(*envoyroute.Route_Route).Route, routeReport); err != nil {
-			if pluginutils.IsDestinationNotFoundErr(err) {
-				validation.AppendRouteWarning(routeReport,
-					validationapi.RouteReport_Warning_InvalidDestinationWarning,
-					err.Error(),
-				)
-			} else {
-				validation.AppendRouteError(routeReport,
-					validationapi.RouteReport_Error_ProcessingError,
-					err.Error(),
-				)
-			}
+			reportRouteError(err, routeReport, true)
 		}
 
 		// run the plugins for RoutePlugin
@@ -202,13 +194,7 @@ func (t *translator) setAction(params plugins.RouteParams, routeReport *validati
 				// plugins can return errors on missing upstream/upstream group
 				// we only want to report errors that are plugin-specific
 				// missing upstream(group) should produce a warning above
-				if pluginutils.IsDestinationNotFoundErr(err) {
-					continue
-				}
-				validation.AppendRouteError(routeReport,
-					validationapi.RouteReport_Error_ProcessingError,
-					fmt.Sprintf("%T: %v", routePlugin, err.Error()),
-				)
+				reportRouteError(err, routeReport, false)
 			}
 		}
 
@@ -223,14 +209,7 @@ func (t *translator) setAction(params plugins.RouteParams, routeReport *validati
 				Route:       in,
 			}
 			if err := routePlugin.ProcessRouteAction(raParams, in.GetRouteAction(), out.GetRoute()); err != nil {
-				// same as above
-				if pluginutils.IsDestinationNotFoundErr(err) {
-					continue
-				}
-				validation.AppendRouteError(routeReport,
-					validationapi.RouteReport_Error_ProcessingError,
-					err.Error(),
-				)
+				reportRouteError(err, routeReport, false)
 			}
 		}
 
@@ -384,7 +363,7 @@ func checkThatSubsetMatchesUpstream(params plugins.Params, dest *v1.Destination)
 
 	// if a route has a subset config, and an upstream doesnt - its an error
 	if subsetConfig == nil {
-		return errors.Errorf("route has a subset config, but the upstream does not.")
+		return SubsetsMisconfiguredErr
 	}
 
 	// make sure that the subset on the route will match a subset on the upstream.
@@ -592,5 +571,25 @@ func DataSourceFromString(str string) *envoycore.DataSource {
 		Specifier: &envoycore.DataSource_InlineString{
 			InlineString: str,
 		},
+	}
+}
+
+func reportRouteError(err error, routeReport *validationapi.RouteReport, appendWarning bool) {
+	switch {
+	case err == SubsetsMisconfiguredErr:
+		fallthrough
+	case pluginutils.IsDestinationNotFoundErr(err):
+		if !appendWarning {
+			return
+		}
+		validation.AppendRouteWarning(routeReport,
+			validationapi.RouteReport_Warning_InvalidDestinationWarning,
+			err.Error(),
+		)
+	default:
+		validation.AppendRouteError(routeReport,
+			validationapi.RouteReport_Error_ProcessingError,
+			err.Error(),
+		)
 	}
 }

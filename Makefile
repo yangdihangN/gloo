@@ -89,8 +89,8 @@ check-spelling:
 clean:
 	rm -rf _output
 	rm -rf _test
-	rm -rf docs/site
-	rm -rf docs/thems
+	rm -rf docs/site*
+	rm -rf docs/themes
 	rm -rf docs/resources
 	git clean -f -X install
 

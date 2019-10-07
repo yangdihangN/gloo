@@ -45,15 +45,15 @@ func setRouteMeta(route *v1.Route, meta *RouteMetadata) error {
 	if err != nil {
 		return err
 	}
-	route.RouteMetadata = metaStruct
+	route.Metadata = metaStruct
 	return nil
 }
 
 func getRouteMeta(route *v1.Route) (*RouteMetadata, error) {
-	if route.RouteMetadata == nil {
+	if route.Metadata == nil {
 		return &RouteMetadata{}, nil
 	}
-	return RouteMetaFromStruct(route.RouteMetadata)
+	return RouteMetaFromStruct(route.Metadata)
 }
 
 func appendSource(route *v1.Route, source resources.InputResource) error {

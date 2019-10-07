@@ -222,7 +222,7 @@ func desiredListenerForHttp(gateway *v2.Gateway, virtualServicesForGateway v1.Vi
 	if httpGateway := gateway.GetHttpGateway(); httpGateway != nil {
 		httpPlugins = httpGateway.Plugins
 	}
-	listener := standardListener(gateway)
+	listener := makeListener(gateway)
 	listener.ListenerType = &gloov1.Listener_HttpListener{
 		HttpListener: &gloov1.HttpListener{
 			VirtualHosts:    virtualHosts,

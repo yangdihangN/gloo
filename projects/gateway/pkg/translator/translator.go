@@ -71,7 +71,7 @@ func (t *translator) Translate(ctx context.Context, proxyName, namespace string,
 
 func makeListener(gateway *v2.Gateway) *gloov1.Listener {
 	return &gloov1.Listener{
-		Name:          gatewayName(gateway),
+		Name:          ListenerName(gateway),
 		BindAddress:   gateway.BindAddress,
 		BindPort:      gateway.BindPort,
 		Plugins:       gateway.Plugins,
@@ -79,7 +79,7 @@ func makeListener(gateway *v2.Gateway) *gloov1.Listener {
 	}
 }
 
-func gatewayName(gateway *v2.Gateway) string {
+func ListenerName(gateway *v2.Gateway) string {
 	return fmt.Sprintf("listener-%s-%d", gateway.BindAddress, gateway.BindPort)
 }
 

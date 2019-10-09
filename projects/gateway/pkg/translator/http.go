@@ -246,7 +246,7 @@ func virtualServiceToVirtualHost(vs *v1.VirtualService, tables v1.RouteTableList
 	}
 
 	vh := &gloov1.VirtualHost{
-		Name:               fmt.Sprintf("%v.%v", vs.Metadata.Namespace, vs.Metadata.Name),
+		Name:               VirtualHostName(vs),
 		Domains:            vs.VirtualHost.Domains,
 		Routes:             routes,
 		VirtualHostPlugins: vs.VirtualHost.VirtualHostPlugins,
@@ -260,6 +260,10 @@ func virtualServiceToVirtualHost(vs *v1.VirtualService, tables v1.RouteTableList
 	}
 
 	return vh, nil
+}
+
+func VirtualHostName(vs *v1.VirtualService) string {
+	return fmt.Sprintf("%v.%v", vs.Metadata.Namespace, vs.Metadata.Name)
 }
 
 func convertRoutes(vs *v1.VirtualService, tables v1.RouteTableList, reports reporter.ResourceReports) ([]*gloov1.Route, error) {

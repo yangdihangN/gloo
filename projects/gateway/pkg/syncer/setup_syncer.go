@@ -2,6 +2,7 @@ package syncer
 
 import (
 	"context"
+	"github.com/solo-io/gloo/projects/gateway/pkg/reconciler"
 	"net/http"
 	"os"
 	"time"
@@ -202,15 +203,6 @@ func RunGateway(opts Opts) error {
 
 	txlator := translator.NewDefaultTranslator()
 
-	translatorSyncer := NewTranslatorSyncer(
-		opts.WriteNamespace,
-		proxyClient,
-		gatewayClient,
-		virtualServiceClient,
-		rpt,
-		prop,
-		txlator)
-
 	var (
 		// this constructor should be called within a lock
 		validationClient             validation.ProxyValidationServiceClient
@@ -236,6 +228,18 @@ func RunGateway(opts Opts) error {
 		ignoreProxyValidationFailure,
 		allowMissingLinks,
 	))
+
+	proxyReconciler := reconciler.NewProxyReconciler(validationClient, proxyClient)
+
+	translatorSyncer := NewTranslatorSyncer(
+		opts.WriteNamespace,
+		proxyClient,
+		proxyReconciler,
+		gatewayClient,
+		virtualServiceClient,
+		rpt,
+		prop,
+		txlator)
 
 	gatewaySyncers := v2.ApiSyncers{
 		translatorSyncer,

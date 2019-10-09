@@ -680,7 +680,7 @@ var _ = Describe("Translator", func() {
 					// gomega.Equals does not like *types.Struct
 					for i, vh := range listener.VirtualHosts {
 						for j, route := range vh.Routes {
-							routeMeta, err := RouteMetaFromStruct(route.Metadata)
+							routeMeta, err := SourceMetaFromStruct(route.Metadata)
 							Expect(err).NotTo(HaveOccurred())
 							Expect(routeMeta).To(Equal(expectedRouteMetadata(i, j)))
 							// after asserting Metadata equality, zero it out
@@ -958,9 +958,9 @@ var _ = Describe("Translator", func() {
 
 })
 
-var expectedRouteMetadatas = [][]*RouteMetadata{
+var expectedRouteMetadatas = [][]*SourceMetadata{
 	{
-		&RouteMetadata{
+		&SourceMetadata{
 			Sources: []SourceRef{
 				{
 					ResourceRef: core.ResourceRef{
@@ -1081,6 +1081,6 @@ var expectedRouteMetadatas = [][]*RouteMetadata{
 	},
 }
 
-func expectedRouteMetadata(virtualHostIndex, routeIndex int) *RouteMetadata {
+func expectedRouteMetadata(virtualHostIndex, routeIndex int) *SourceMetadata {
 	return expectedRouteMetadatas[virtualHostIndex][routeIndex]
 }

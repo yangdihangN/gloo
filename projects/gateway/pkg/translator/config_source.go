@@ -12,7 +12,7 @@ import (
 	"github.com/solo-io/solo-kit/pkg/api/v1/resources/core"
 )
 
-type RouteMetadata struct {
+type SourceMetadata struct {
 	Sources []SourceRef `json:"sources"`
 }
 
@@ -22,47 +22,73 @@ type SourceRef struct {
 	ObservedGeneration int64  `json:"observedGeneration"`
 }
 
-func RouteMetaFromStruct(s *types.Struct) (*RouteMetadata, error) {
+type ObjectWithMetadata interface {
+	GetMetadata() *types.Struct
+}
+
+func SourceMetaFromStruct(s *types.Struct) (*SourceMetadata, error) {
 	if s == nil {
 		return nil, nil
 	}
-	var m RouteMetadata
+	var m SourceMetadata
 	if err := protoutils.UnmarshalStruct(s, &m); err != nil {
 		return nil, err
 	}
 	return &m, nil
 }
 
-func routeMetaToStruct(meta *RouteMetadata) (*types.Struct, error) {
+func objMetaToStruct(meta *SourceMetadata) (*types.Struct, error) {
 	data, err := json.Marshal(meta)
 	var pb types.Struct
 	err = jsonpb.UnmarshalString(string(data), &pb)
 	return &pb, err
 }
 
-func setRouteMeta(route *v1.Route, meta *RouteMetadata) error {
-	metaStruct, err := routeMetaToStruct(meta)
+func setObjMeta(obj ObjectWithMetadata, meta *SourceMetadata) error {
+	metaStruct, err := objMetaToStruct(meta)
 	if err != nil {
 		return err
 	}
-	route.Metadata = metaStruct
+	switch obj := obj.(type) {
+	case *v1.Route:
+		obj.Metadata = metaStruct
+	case *v1.VirtualHost:
+		obj.Metadata = metaStruct
+	case *v1.Listener:
+		obj.Metadata = metaStruct
+	default:
+		return errors.Errorf("unimplemented object type: %T", obj)
+	}
 	return nil
 }
 
-func getRouteMeta(route *v1.Route) (*RouteMetadata, error) {
-	if route.Metadata == nil {
-		return &RouteMetadata{}, nil
+func GetSourceMeta(obj ObjectWithMetadata) (*SourceMetadata, error) {
+	if obj.GetMetadata() == nil {
+		return &SourceMetadata{}, nil
 	}
-	return RouteMetaFromStruct(route.Metadata)
+	return SourceMetaFromStruct(obj.GetMetadata())
 }
 
-func appendSource(route *v1.Route, source resources.InputResource) error {
-	meta, err := getRouteMeta(route)
+func appendSource(obj ObjectWithMetadata, source resources.InputResource) error {
+	meta, err := GetSourceMeta(obj)
 	if err != nil {
-		return errors.Wrapf(err, "getting route metadata")
+		return errors.Wrapf(err, "getting obj metadata")
 	}
 	meta.Sources = append(meta.Sources, makeSourceRef(source))
-	return setRouteMeta(route, meta)
+	return setObjMeta(obj, meta)
+}
+
+func ForEachSource(obj ObjectWithMetadata, fn func(source SourceRef) error) error {
+	meta, err := GetSourceMeta(obj)
+	if err != nil {
+		return errors.Wrapf(err, "getting obj metadata")
+	}
+	for _, src := range meta.Sources {
+		if err := fn(src); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func makeSourceRef(source resources.InputResource) SourceRef {

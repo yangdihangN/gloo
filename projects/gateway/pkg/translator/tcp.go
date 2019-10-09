@@ -18,6 +18,12 @@ func (t *TcpTranslator) GenerateListeners(ctx context.Context, snap *v2.ApiSnaps
 			continue
 		}
 		listener := makeListener(gateway)
+
+		if err := appendSource(listener, gateway); err != nil {
+			// should never happen
+			reports.AddError(gateway, err)
+		}
+
 		listener.ListenerType = &gloov1.Listener_TcpListener{
 			TcpListener: &gloov1.TcpListener{
 				Plugins:  tcpGateway.Plugins,

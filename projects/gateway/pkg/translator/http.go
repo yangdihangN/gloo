@@ -230,6 +230,12 @@ func desiredListenerForHttp(gateway *v2.Gateway, virtualServicesForGateway v1.Vi
 		},
 	}
 	listener.SslConfigurations = sslConfigs
+
+	if err := appendSource(listener, gateway); err != nil {
+		// should never happen
+		reports.AddError(gateway, err)
+	}
+
 	return listener
 }
 
@@ -246,6 +252,11 @@ func virtualServiceToVirtualHost(vs *v1.VirtualService, tables v1.RouteTableList
 		VirtualHostPlugins: vs.VirtualHost.VirtualHostPlugins,
 		// TODO: remove on next breaking change
 		CorsPolicy: vs.VirtualHost.CorsPolicy,
+	}
+
+	if err := appendSource(vh, vs); err != nil {
+		// should never happen
+		return nil, err
 	}
 
 	return vh, nil

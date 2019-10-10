@@ -54,14 +54,14 @@ var _ = Describe("AddProxyValidationResult", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		for _, gw := range snap.Gateways {
-			Expect(reports[gw].Error).To(HaveOccurred())
-			Expect(reports[gw].Error.Error()).To(ContainSubstring(`1 error occurred:
+			Expect(reports[gw].Errors).To(HaveOccurred())
+			Expect(reports[gw].Errors.Error()).To(ContainSubstring(`1 error occurred:
 	* Listener Error: ProcessingError. Reason: bad listener`))
 		}
 
 		for _, vs := range snap.VirtualServices {
-			Expect(reports[vs].Error).To(HaveOccurred())
-			Expect(reports[vs].Error.Error()).To(ContainSubstring(`2 errors occurred:
+			Expect(reports[vs].Errors).To(HaveOccurred())
+			Expect(reports[vs].Errors.Error()).To(ContainSubstring(`2 errors occurred:
 	* VirtualHost Error: DomainsNotUniqueError. Reason: bad vhost
 	* Route Error: InvalidMatcherError. Reason: bad route`))
 		}

@@ -163,7 +163,7 @@ func validateSnapshot(glooSnapshot *v1.ApiSnapshot, xdsSnapshot envoycache.Snaps
 
 	// Find all the errored upstreams and remove them from the xDS snapshot
 	for _, up := range glooSnapshot.Upstreams.AsInputResources() {
-		if errs[up].Error != nil {
+		if errs[up].Errors != nil {
 			clusterName := translator.UpstreamToClusterName(up.GetMetadata().Ref())
 			// remove cluster and endpoints
 			delete(clusters.Items, clusterName)
@@ -188,7 +188,7 @@ func validateSnapshot(glooSnapshot *v1.ApiSnapshot, xdsSnapshot envoycache.Snaps
 
 	// Remove errors related to upstreams
 	for _, up := range glooSnapshot.Upstreams.AsInputResources() {
-		if errs[up].Error != nil {
+		if errs[up].Errors != nil {
 			delete(errs, up)
 		}
 	}

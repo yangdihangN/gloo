@@ -67,7 +67,7 @@ var _ = Describe("ReconcileGatewayProxies", func() {
 
 	addErr := func(resource resources.InputResource) {
 		rpt := reports[resource]
-		rpt.Error = errors.Errorf("i did an oopsie")
+		rpt.Errors = errors.Errorf("i did an oopsie")
 		reports[resource] = rpt
 	}
 

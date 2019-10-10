@@ -36,7 +36,7 @@ var _ = Describe("CheckSourceReports", func() {
 	})
 	It("returns true when false when any sources for the config object have an error", func() {
 		gwReport := reports[snap.Gateways[0]]
-		gwReport.Error = errors.Errorf("i did an oopsie")
+		gwReport.Errors = errors.Errorf("i did an oopsie")
 		reports[snap.Gateways[0]] = gwReport
 
 		accepted, err := AllSourcesAccepted(reports, proxy.Listeners[0])

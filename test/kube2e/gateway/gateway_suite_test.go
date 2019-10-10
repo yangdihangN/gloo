@@ -105,16 +105,7 @@ func StartTestHelper() {
 	// enable strict validation
 	// this can be removed once we enable validation by default
 	// set projects/gateway/pkg/syncer.AcceptAllResourcesByDefault is set to false
-	settingsClient := clienthelpers.MustSettingsClient()
-	settings, err := settingsClient.Read(testHelper.InstallNamespace, "default", clients.ReadOpts{})
-	Expect(err).NotTo(HaveOccurred())
-
-	Expect(settings.Gateway).NotTo(BeNil())
-	Expect(settings.Gateway.Validation).NotTo(BeNil())
-	settings.Gateway.Validation.AlwaysAccept = &types.BoolValue{Value: false}
-
-	_, err = settingsClient.Write(settings, clients.WriteOpts{OverwriteExisting: true})
-	Expect(err).NotTo(HaveOccurred())
+	UpdateAlwaysAcceptSetting(false)
 }
 
 func TearDownTestHelper() {
@@ -126,4 +117,18 @@ func TearDownTestHelper() {
 		Expect(err).NotTo(HaveOccurred())
 		_ = testutils.Kubectl("delete", "--wait=false", "namespace", testHelper.InstallNamespace)
 	}
+}
+
+// enable/disable strict validation
+func UpdateAlwaysAcceptSetting(alwaysAccept bool) {
+	settingsClient := clienthelpers.MustSettingsClient()
+	settings, err := settingsClient.Read(testHelper.InstallNamespace, "default", clients.ReadOpts{})
+	Expect(err).NotTo(HaveOccurred())
+
+	Expect(settings.Gateway).NotTo(BeNil())
+	Expect(settings.Gateway.Validation).NotTo(BeNil())
+	settings.Gateway.Validation.AlwaysAccept = &types.BoolValue{Value: alwaysAccept}
+
+	_, err = settingsClient.Write(settings, clients.WriteOpts{OverwriteExisting: true})
+	Expect(err).NotTo(HaveOccurred())
 }

@@ -479,6 +479,10 @@ var _ = Describe("Kube2e: gateway", func() {
 
 		FContext("with a mix of valid and invalid virtual services", func() {
 			var (
+				validVs, inValidVs *gatewayv1.VirtualService
+			)
+			BeforeEach(func() {
+
 				validVs = withName("i-am-valid", withDomains([]string{"valid.com"},
 					getVirtualService(&gloov1.Destination{
 						DestinationType: &gloov1.Destination_Upstream{
@@ -489,23 +493,36 @@ var _ = Describe("Kube2e: gateway", func() {
 						},
 					}, nil)))
 				inValidVs = withName("i-am-invalid", withDomains([]string{"invalid.com"},
-					getVirtualService(&gloov1.Destination{
-						DestinationType: &gloov1.Destination_Upstream{
-							Upstream: &core.ResourceRef{
-								Name: "you-broke-me",
-							},
+					getVirtualServiceWithRoute(&gatewayv1.Route{
+						RoutePlugins: &gloov1.RoutePlugins{
+							PrefixRewrite: "matcher and action are missing",
 						},
 					}, nil)))
-			)
-			BeforeEach(func() {
+
 				_, err := virtualServiceClient.Write(validVs, clients.WriteOpts{})
 				Expect(err).NotTo(HaveOccurred())
+
+				UpdateAlwaysAcceptSetting(true)
+
 				_, err = virtualServiceClient.Write(inValidVs, clients.WriteOpts{})
 				Expect(err).NotTo(HaveOccurred())
 			})
-			It("propagates the valid virtual services to envoy", func() {
-
+			AfterEach(func() {
+				UpdateAlwaysAcceptSetting(false)
 			})
+			It("propagates the valid virtual services to envoy", func() {
+				testHelper.CurlEventuallyShouldRespond(helper.CurlOpts{
+					Protocol:          "http",
+					Path:              "/",
+					Method:            "GET",
+					Host:              "valid.com",
+					Service:           gatewayProxy,
+					Port:              gatewayPort,
+					ConnectionTimeout: 1, // this is important, as sometimes curl hangs
+					WithoutStats:      true,
+				}, helper.SimpleHttpResponse, 1, 60*time.Second, 1*time.Second)
+			})
+
 			It("preserves the valid virtual services in envoy when a virtual service has been made invalid", func() {
 
 			})

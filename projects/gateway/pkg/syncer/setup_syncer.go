@@ -113,6 +113,9 @@ func Setup(ctx context.Context, kubeCache kube.SharedCache, inMemoryCache memory
 		if validation.ProxyValidationServerAddress == "" {
 			validation.ProxyValidationServerAddress = defaults.GlooProxyValidationServerAddr
 		}
+		if overrideAddr := os.Getenv("PROXY_VALIDATION_ADDR"); overrideAddr != "" {
+			validation.ProxyValidationServerAddress = overrideAddr
+		}
 		if validation.ValidatingWebhookCertPath == "" {
 			validation.ValidatingWebhookCertPath = defaults.ValidationWebhookTlsCertPath
 		}

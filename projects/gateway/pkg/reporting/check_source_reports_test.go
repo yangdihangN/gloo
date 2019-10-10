@@ -2,6 +2,7 @@ package reporting_test
 
 import (
 	"context"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/pkg/errors"

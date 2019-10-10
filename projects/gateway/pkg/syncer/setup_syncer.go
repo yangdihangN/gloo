@@ -2,10 +2,11 @@ package syncer
 
 import (
 	"context"
-	"github.com/solo-io/gloo/projects/gateway/pkg/reconciler"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/solo-io/gloo/projects/gateway/pkg/reconciler"
 
 	"go.uber.org/zap"
 

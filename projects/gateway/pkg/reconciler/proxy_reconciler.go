@@ -4,6 +4,8 @@ import (
 	"context"
 	"sort"
 
+	"github.com/solo-io/go-utils/contextutils"
+
 	"github.com/solo-io/gloo/projects/gateway/pkg/reporting"
 	"github.com/solo-io/gloo/projects/gloo/pkg/api/grpc/validation"
 	"github.com/solo-io/solo-kit/pkg/api/v1/resources"
@@ -123,6 +125,11 @@ func transitionFunc(proxiesToWrite GeneratedProxies) gloov1.TransitionProxyFunc 
 // validate generated proxies and add reports for the owner resources
 // this function makes a gRPC call to gloo validation server
 func (s *proxyReconciler) addProxyValidationResults(ctx context.Context, proxiesToWrite GeneratedProxies) error {
+
+	if s.proxyValidator == nil {
+		contextutils.LoggerFrom(ctx).Warnf("proxy validation is not configured, skipping proxy validation check")
+		return nil
+	}
 
 	for proxy, reports := range proxiesToWrite {
 

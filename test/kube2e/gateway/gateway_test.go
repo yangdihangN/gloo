@@ -157,6 +157,17 @@ var _ = Describe("Kube2e: gateway", func() {
 		kubeCoreCache, err := kubecache.NewKubeCoreCache(ctx, kubeClient)
 		Expect(err).NotTo(HaveOccurred())
 		serviceClient = service.NewServiceClient(kubeClient, kubeCoreCache)
+
+		//give discovery time to write the upstream
+		Eventually(func() error {
+			upstreams, err := upstreamClient.List(testHelper.InstallNamespace, clients.ListOpts{})
+			if err != nil {
+				return err
+			}
+			upstreamName := fmt.Sprintf("%s-%s-%v", testHelper.InstallNamespace, helper.HttpEchoName, helper.HttpEchoPort)
+			_, err = upstreams.Find(testHelper.InstallNamespace, upstreamName)
+			return err
+		}, time.Second*10, time.Second).ShouldNot(HaveOccurred())
 	})
 
 	It("removes all pods when uninstalled", func() {
@@ -465,6 +476,40 @@ var _ = Describe("Kube2e: gateway", func() {
 					ConnectionTimeout: 1,
 					WithoutStats:      true,
 				}, responseString, 1, 60*time.Second, 1*time.Second)
+			})
+		})
+
+		FContext("with a mix of valid and invalid virtual services", func() {
+			var (
+				validVs = withName("i-am-valid", withDomains([]string{"valid.com"},
+					getVirtualService(&gloov1.Destination{
+						DestinationType: &gloov1.Destination_Upstream{
+							Upstream: &core.ResourceRef{
+								Namespace: testHelper.InstallNamespace,
+								Name:      fmt.Sprintf("%s-%s-%v", testHelper.InstallNamespace, helper.TestrunnerName, helper.TestRunnerPort),
+							},
+						},
+					}, nil)))
+				inValidVs = withName("i-am-invalid", withDomains([]string{"invalid.com"},
+					getVirtualService(&gloov1.Destination{
+						DestinationType: &gloov1.Destination_Upstream{
+							Upstream: &core.ResourceRef{
+								Name: "you-broke-me",
+							},
+						},
+					}, nil)))
+			)
+			BeforeEach(func() {
+				_, err := virtualServiceClient.Write(validVs, clients.WriteOpts{})
+				Expect(err).NotTo(HaveOccurred())
+				_, err = virtualServiceClient.Write(inValidVs, clients.WriteOpts{})
+				Expect(err).NotTo(HaveOccurred())
+			})
+			It("propagates the valid virtual services to envoy", func() {
+
+			})
+			It("preserves the valid virtual services in envoy when a virtual service has been made invalid", func() {
+
 			})
 		})
 	})
@@ -1102,6 +1147,16 @@ func ToFile(content string) string {
 	ExpectWithOffset(1, n).To(Equal(len(content)))
 	_ = f.Close()
 	return f.Name()
+}
+
+func withName(name string, vs *gatewayv1.VirtualService) *gatewayv1.VirtualService {
+	vs.Metadata.Name = name
+	return vs
+}
+
+func withDomains(domains []string, vs *gatewayv1.VirtualService) *gatewayv1.VirtualService {
+	vs.VirtualHost.Domains = domains
+	return vs
 }
 
 func getVirtualService(dest *gloov1.Destination, sslConfig *gloov1.SslConfig) *gatewayv1.VirtualService {

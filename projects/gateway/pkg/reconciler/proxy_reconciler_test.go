@@ -12,6 +12,7 @@ import (
 	. "github.com/solo-io/gloo/projects/gateway/pkg/reconciler"
 	"github.com/solo-io/gloo/projects/gateway/pkg/translator"
 	"github.com/solo-io/gloo/projects/gloo/pkg/api/grpc/validation"
+	validationutils "github.com/solo-io/gloo/projects/gloo/pkg/utils/validation"
 	"github.com/solo-io/gloo/test/debugprint"
 	mock_validation "github.com/solo-io/gloo/test/mocks/gloo"
 	"github.com/solo-io/gloo/test/samples"
@@ -31,6 +32,8 @@ import (
 var _ = Describe("ReconcileGatewayProxies", func() {
 
 	var (
+		ctx = context.TODO()
+
 		snap         *v2.ApiSnapshot
 		proxy        *gloov1.Proxy
 		reports      reporter.ResourceReports
@@ -42,7 +45,7 @@ var _ = Describe("ReconcileGatewayProxies", func() {
 			Cache: memory.NewInMemoryResourceCache(),
 		})
 
-		proxyValidationClient validation.ProxyValidationServiceClient
+		proxyValidationClient *mock_validation.MockProxyValidationServiceClient
 
 		reconciler ProxyReconciler
 	)
@@ -57,6 +60,12 @@ var _ = Describe("ReconcileGatewayProxies", func() {
 	BeforeEach(func() {
 		mockCtrl := gomock.NewController(GinkgoT())
 		proxyValidationClient = mock_validation.NewMockProxyValidationServiceClient(mockCtrl)
+		proxyValidationClient.EXPECT().ValidateProxy(ctx, gomock.Any()).DoAndReturn(
+			func(_ context.Context, req *validation.ProxyValidationServiceRequest) (*validation.ProxyValidationServiceResponse, error) {
+				return &validation.ProxyValidationServiceResponse{
+					ProxyReport: validationutils.MakeReport(req.Proxy),
+				}, nil
+			}).AnyTimes()
 
 		reconciler = NewProxyReconciler(proxyValidationClient, proxyClient)
 
@@ -72,7 +81,7 @@ var _ = Describe("ReconcileGatewayProxies", func() {
 	}
 
 	reconcile := func() {
-		err := reconciler.ReconcileProxies(context.TODO(), proxyToWrite, ns, map[string]string{})
+		err := reconciler.ReconcileProxies(ctx, proxyToWrite, ns, map[string]string{})
 		ExpectWithOffset(1, err).NotTo(HaveOccurred())
 	}
 

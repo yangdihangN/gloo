@@ -33,6 +33,10 @@ func NewProxyReconciler(proxyValidator validation.ProxyValidationServiceClient, 
 const proxyValidationErrMsg = "internal err: communication with proxy validation (gloo) failed"
 
 func (s *proxyReconciler) ReconcileProxies(ctx context.Context, proxiesToWrite GeneratedProxies, writeNamespace string, labels map[string]string) error {
+	if err := s.addProxyValidationResults(ctx, proxiesToWrite); err != nil {
+		return errors.Wrapf(err, "failed to add proxy validation results to reports")
+	}
+
 	proxiesToWrite, err := stripInvalidListenersAndVirtualHosts(proxiesToWrite)
 	if err != nil {
 		return err

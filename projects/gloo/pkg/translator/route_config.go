@@ -141,34 +141,36 @@ func (t *translator) envoyRoute(params plugins.RouteParams, routeReport *validat
 }
 
 func setMatch(in *v1.Route, routeReport *validationapi.RouteReport, out *envoyroute.Route) {
+	inMatcher := in.GetMatcher()
 
-	if in.GetMatcher() == nil {
+	if inMatcher == nil {
 		validation.AppendRouteError(routeReport,
 			validationapi.RouteReport_Error_InvalidMatcherError,
 			"no matcher provided",
 		)
+		return
 	}
-	if in.GetMatcher().GetPathSpecifier() == nil {
+	if inMatcher.GetPathSpecifier() == nil {
 		validation.AppendRouteError(routeReport,
 			validationapi.RouteReport_Error_InvalidMatcherError,
 			"no path specifier provided",
 		)
 	}
 	match := envoyroute.RouteMatch{
-		Headers:         envoyHeaderMatcher(in.Matcher.Headers),
-		QueryParameters: envoyQueryMatcher(in.Matcher.QueryParameters),
+		Headers:         envoyHeaderMatcher(inMatcher.GetHeaders()),
+		QueryParameters: envoyQueryMatcher(inMatcher.GetQueryParameters()),
 	}
-	if len(in.Matcher.Methods) > 0 {
+	if len(inMatcher.GetMethods()) > 0 {
 		match.Headers = append(match.Headers, &envoyroute.HeaderMatcher{
 			Name: ":method",
 			HeaderMatchSpecifier: &envoyroute.HeaderMatcher_RegexMatch{
-				RegexMatch: strings.Join(in.Matcher.Methods, "|"),
+				RegexMatch: strings.Join(inMatcher.GetMethods(), "|"),
 			},
 		})
 	}
 	// need to do this because Go's proto implementation makes oneofs private
 	// which genius thought of that?
-	setEnvoyPathMatcher(in.Matcher, &match)
+	setEnvoyPathMatcher(inMatcher, &match)
 
 	out.Match = match
 }

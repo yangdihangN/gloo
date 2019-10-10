@@ -477,7 +477,7 @@ var _ = Describe("Kube2e: gateway", func() {
 			})
 		})
 
-		FContext("with a mix of valid and invalid virtual services", func() {
+		Context("with a mix of valid and invalid virtual services", func() {
 			var (
 				validVs, inValidVs *gatewayv1.VirtualService
 			)
@@ -499,12 +499,19 @@ var _ = Describe("Kube2e: gateway", func() {
 						},
 					}, nil)))
 
-				_, err := virtualServiceClient.Write(validVs, clients.WriteOpts{})
+				var err error
+
+				validVs, err = virtualServiceClient.Write(validVs, clients.WriteOpts{})
 				Expect(err).NotTo(HaveOccurred())
 
+				// sanity check that validation is enabled/strict
+				_, err = virtualServiceClient.Write(inValidVs, clients.WriteOpts{})
+				Expect(err).To(HaveOccurred())
+
+				// disable strict validation
 				UpdateAlwaysAcceptSetting(true)
 
-				_, err = virtualServiceClient.Write(inValidVs, clients.WriteOpts{})
+				inValidVs, err = virtualServiceClient.Write(inValidVs, clients.WriteOpts{})
 				Expect(err).NotTo(HaveOccurred())
 			})
 			AfterEach(func() {
@@ -524,7 +531,42 @@ var _ = Describe("Kube2e: gateway", func() {
 			})
 
 			It("preserves the valid virtual services in envoy when a virtual service has been made invalid", func() {
+				// make the invalid vs valid and the valid vs invalid
+				invalidVh := inValidVs.VirtualHost
+				validVh := validVs.VirtualHost
+				validVh.Domains = []string{"all-good-in-the-hood.com"}
 
+				inValidVs.VirtualHost = validVh
+				validVs.VirtualHost = invalidVh
+
+				_, err := virtualServiceClient.Write(validVs, clients.WriteOpts{OverwriteExisting: true})
+				Expect(err).NotTo(HaveOccurred())
+				_, err = virtualServiceClient.Write(inValidVs, clients.WriteOpts{OverwriteExisting: true})
+				Expect(err).NotTo(HaveOccurred())
+
+				// the original virtual service should work
+				testHelper.CurlEventuallyShouldRespond(helper.CurlOpts{
+					Protocol:          "http",
+					Path:              "/",
+					Method:            "GET",
+					Host:              "valid.com",
+					Service:           gatewayProxy,
+					Port:              gatewayPort,
+					ConnectionTimeout: 1, // this is important, as sometimes curl hangs
+					WithoutStats:      true,
+				}, helper.SimpleHttpResponse, 1, 60*time.Second, 1*time.Second)
+
+				// the fixed virtualservice should also work
+				testHelper.CurlEventuallyShouldRespond(helper.CurlOpts{
+					Protocol:          "http",
+					Path:              "/",
+					Method:            "GET",
+					Host:              "all-good-in-the-hood.com",
+					Service:           gatewayProxy,
+					Port:              gatewayPort,
+					ConnectionTimeout: 1, // this is important, as sometimes curl hangs
+					WithoutStats:      true,
+				}, helper.SimpleHttpResponse, 1, 60*time.Second, 1*time.Second)
 			})
 		})
 	})

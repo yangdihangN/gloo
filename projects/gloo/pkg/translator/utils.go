@@ -8,6 +8,10 @@ import (
 	envoyutil "github.com/envoyproxy/go-control-plane/pkg/conversion"
 	"github.com/gogo/protobuf/proto"
 	"github.com/gogo/protobuf/types"
+	"github.com/golang/protobuf/ptypes"
+	"github.com/golang/protobuf/ptypes/any"
+	structpb "github.com/golang/protobuf/ptypes/struct"
+	"github.com/solo-io/solo-kit/pkg/api/v1/control-plane/util"
 	"github.com/solo-io/solo-kit/pkg/api/v1/resources/core"
 )
 
@@ -63,10 +67,33 @@ func NewAccessLogWithConfig(name string, config proto.Message) (envoyal.AccessLo
 	return s, nil
 }
 
+type configObject interface {
+	GetConfig() *types.Struct
+	GetTypedConfig() *types.Any
+}
+
 func ParseConfig(c configObject, config proto.Message) error {
 	any := c.GetTypedConfig()
 	if any != nil {
 		return types.UnmarshalAny(any, config)
+	}
+	structt := c.GetConfig()
+	if structt != nil {
+		return util.StructToMessage(structt, config)
+	}
+	return nil
+}
+
+type protoConfigObject interface {
+	GetConfig() *structpb.Struct
+	GetTypedConfig() *any.Any
+}
+
+
+func ParseConfigProto(c protoConfigObject, config proto.Message) error {
+	any := c.GetTypedConfig()
+	if any != nil {
+		return ptypes.UnmarshalAny(any, config)
 	}
 	structt := c.GetConfig()
 	if structt != nil {
@@ -75,7 +102,3 @@ func ParseConfig(c configObject, config proto.Message) error {
 	return nil
 }
 
-type configObject interface {
-	GetConfig() *types.Struct
-	GetTypedConfig() *types.Any
-}

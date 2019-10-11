@@ -4,6 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/golang/protobuf/ptypes"
+	"github.com/golang/protobuf/ptypes/duration"
+	"github.com/golang/protobuf/ptypes/wrappers"
+	"github.com/solo-io/gloo/pkg/utils/gogoutils"
+	core2 "github.com/solo-io/gloo/projects/gloo/pkg/api/external/envoy/api/v2/core"
 	"github.com/solo-io/gloo/projects/gloo/pkg/api/grpc/validation"
 
 	envoycore "github.com/envoyproxy/go-control-plane/envoy/api/v2/core"
@@ -383,7 +388,7 @@ var _ = Describe("Translator", func() {
 
 	Context("Health check config", func() {
 		It("will error if required field is nil", func() {
-			upstream.UpstreamSpec.HealthChecks = []*envoycore.HealthCheck{
+			upstream.UpstreamSpec.HealthChecks = []*core2.HealthCheck{
 				{
 					// Timeout:  &defaultTimeout,
 					Interval: &DefaultHealthCheckInterval,
@@ -395,12 +400,12 @@ var _ = Describe("Translator", func() {
 		})
 
 		It("will error if no health checker is supplied", func() {
-			upstream.UpstreamSpec.HealthChecks = []*envoycore.HealthCheck{
+			upstream.UpstreamSpec.HealthChecks = []*core2.HealthCheck{
 				{
 					Timeout:            &DefaultHealthCheckTimeout,
 					Interval:           &DefaultHealthCheckInterval,
-					HealthyThreshold:   DefaultThreshold,
-					UnhealthyThreshold: DefaultThreshold,
+					HealthyThreshold:   DefaultGogoThreshold,
+					UnhealthyThreshold: DefaultGogoThreshold,
 				},
 			}
 			report := translateWithError()
@@ -410,10 +415,10 @@ var _ = Describe("Translator", func() {
 		It("can translate the http health check", func() {
 			expectedResult := []*envoycore.HealthCheck{
 				{
-					Timeout:            &DefaultHealthCheckTimeout,
-					Interval:           &DefaultHealthCheckInterval,
-					HealthyThreshold:   DefaultThreshold,
-					UnhealthyThreshold: DefaultThreshold,
+					Timeout:            gogoutils.DurationStdToProto(&DefaultHealthCheckTimeout),
+					Interval:           gogoutils.DurationStdToProto(&DefaultHealthCheckInterval),
+					HealthyThreshold:   DefaultProtoThreshold,
+					UnhealthyThreshold: DefaultProtoThreshold,
 					HealthChecker: &envoycore.HealthCheck_HttpHealthCheck_{
 						HttpHealthCheck: &envoycore.HealthCheck_HttpHealthCheck{
 							Host:        "host",
@@ -432,8 +437,8 @@ var _ = Describe("Translator", func() {
 		It("can translate the grpc health check", func() {
 			expectedResult := []*envoycore.HealthCheck{
 				{
-					Timeout:            &DefaultHealthCheckTimeout,
-					Interval:           &DefaultHealthCheckInterval,
+					Timeout:            ptypes.DurationProto(DefaultHealthCheckTimeout),
+					Interval:           ptypes.DurationProto(DefaultHealthCheckInterval),
 					HealthyThreshold:   DefaultThreshold,
 					UnhealthyThreshold: DefaultThreshold,
 					HealthChecker: &envoycore.HealthCheck_GrpcHealthCheck_{
@@ -474,7 +479,7 @@ var _ = Describe("Translator", func() {
 		})
 
 		It("can properly validate outlier detection config", func() {
-			dur := &types.Duration{Seconds: 0}
+			dur := &duration.Duration{Seconds: 0}
 			expectedResult := &envoycluster.OutlierDetection{
 				Interval: dur,
 			}
@@ -529,10 +534,10 @@ var _ = Describe("Translator", func() {
 			expectedCircuitBreakers := &envoycluster.CircuitBreakers{
 				Thresholds: []*envoycluster.CircuitBreakers_Thresholds{
 					{
-						MaxConnections:     &types.UInt32Value{Value: 1},
-						MaxPendingRequests: &types.UInt32Value{Value: 2},
-						MaxRequests:        &types.UInt32Value{Value: 3},
-						MaxRetries:         &types.UInt32Value{Value: 4},
+						MaxConnections:     &wrappers.UInt32Value{Value: 1},
+						MaxPendingRequests: &wrappers.UInt32Value{Value: 2},
+						MaxRequests:        &wrappers.UInt32Value{Value: 3},
+						MaxRetries:         &wrappers.UInt32Value{Value: 4},
 					},
 				},
 			}
@@ -561,10 +566,10 @@ var _ = Describe("Translator", func() {
 			expectedCircuitBreakers := &envoycluster.CircuitBreakers{
 				Thresholds: []*envoycluster.CircuitBreakers_Thresholds{
 					{
-						MaxConnections:     &types.UInt32Value{Value: 1},
-						MaxPendingRequests: &types.UInt32Value{Value: 2},
-						MaxRequests:        &types.UInt32Value{Value: 3},
-						MaxRetries:         &types.UInt32Value{Value: 4},
+						MaxConnections:     &wrappers.UInt32Value{Value: 1},
+						MaxPendingRequests: &wrappers.UInt32Value{Value: 2},
+						MaxRequests:        &wrappers.UInt32Value{Value: 3},
+						MaxRetries:         &wrappers.UInt32Value{Value: 4},
 					},
 				},
 			}

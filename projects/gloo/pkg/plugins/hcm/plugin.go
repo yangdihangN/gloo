@@ -4,8 +4,9 @@ import (
 	envoyapi "github.com/envoyproxy/go-control-plane/envoy/api/v2"
 	envoycore "github.com/envoyproxy/go-control-plane/envoy/api/v2/core"
 	envoyhttp "github.com/envoyproxy/go-control-plane/envoy/config/filter/network/http_connection_manager/v2"
-	envoyutil "github.com/envoyproxy/go-control-plane/pkg/conversion"
+	"github.com/envoyproxy/go-control-plane/pkg/wellknown"
 	"github.com/pkg/errors"
+	"github.com/solo-io/gloo/pkg/utils/gogoutils"
 	v1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
 	"github.com/solo-io/gloo/projects/gloo/pkg/api/v1/plugins/hcm"
 	"github.com/solo-io/gloo/projects/gloo/pkg/plugins"
@@ -57,10 +58,10 @@ func (p *Plugin) ProcessListener(params plugins.Params, in *v1.Listener, out *en
 
 	for _, f := range out.FilterChains {
 		for i, filter := range f.Filters {
-			if filter.Name == envoyutil.HTTPConnectionManager {
+			if filter.Name == wellknown.HTTPConnectionManager {
 				// get config
 				var cfg envoyhttp.HttpConnectionManager
-				err := translatorutil.ParseConfig(&filter, &cfg)
+				err := translatorutil.ParseConfigProto(filter, &cfg)
 				// this should never error
 				if err != nil {
 					return err
@@ -78,11 +79,12 @@ func (p *Plugin) ProcessListener(params plugins.Params, in *v1.Listener, out *en
 					}
 				}
 
-				f.Filters[i], err = translatorutil.NewFilterWithConfig(envoyutil.HTTPConnectionManager, &cfg)
+				filter, err := translatorutil.NewFilterWithConfig(wellknown.HTTPConnectionManager, &cfg)
 				// this should never error
 				if err != nil {
 					return err
 				}
+				f.Filters[i] = &filter
 			}
 		}
 	}
@@ -90,18 +92,18 @@ func (p *Plugin) ProcessListener(params plugins.Params, in *v1.Listener, out *en
 }
 
 func copyCoreHcmSettings(cfg *envoyhttp.HttpConnectionManager, hcmSettings *hcm.HttpConnectionManagerSettings) {
-	cfg.UseRemoteAddress = hcmSettings.UseRemoteAddress
+	cfg.UseRemoteAddress = gogoutils.BoolGogoToProto(hcmSettings.UseRemoteAddress)
 	cfg.XffNumTrustedHops = hcmSettings.XffNumTrustedHops
 	cfg.SkipXffAppend = hcmSettings.SkipXffAppend
 	cfg.Via = hcmSettings.Via
-	cfg.GenerateRequestId = hcmSettings.GenerateRequestId
+	cfg.GenerateRequestId = gogoutils.BoolGogoToProto(hcmSettings.GenerateRequestId)
 	cfg.Proxy_100Continue = hcmSettings.Proxy_100Continue
-	cfg.StreamIdleTimeout = hcmSettings.StreamIdleTimeout
-	cfg.IdleTimeout = hcmSettings.IdleTimeout
-	cfg.MaxRequestHeadersKb = hcmSettings.MaxRequestHeadersKb
-	cfg.RequestTimeout = hcmSettings.RequestTimeout
-	cfg.DrainTimeout = hcmSettings.DrainTimeout
-	cfg.DelayedCloseTimeout = hcmSettings.DelayedCloseTimeout
+	cfg.StreamIdleTimeout = gogoutils.DurationStdToProto(hcmSettings.StreamIdleTimeout)
+	cfg.IdleTimeout = gogoutils.DurationStdToProto(hcmSettings.IdleTimeout)
+	cfg.MaxRequestHeadersKb = gogoutils.UInt32GogoToProto(hcmSettings.MaxRequestHeadersKb)
+	cfg.RequestTimeout = gogoutils.DurationStdToProto(hcmSettings.RequestTimeout)
+	cfg.DrainTimeout = gogoutils.DurationStdToProto(hcmSettings.DrainTimeout)
+	cfg.DelayedCloseTimeout = gogoutils.DurationStdToProto(hcmSettings.DelayedCloseTimeout)
 	cfg.ServerName = hcmSettings.ServerName
 
 	if hcmSettings.AcceptHttp_10 {

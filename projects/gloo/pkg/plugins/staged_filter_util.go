@@ -2,8 +2,8 @@ package plugins
 
 import (
 	envoyhttp "github.com/envoyproxy/go-control-plane/envoy/config/filter/network/http_connection_manager/v2"
+	"github.com/envoyproxy/go-control-plane/pkg/conversion"
 	"github.com/gogo/protobuf/proto"
-	"github.com/solo-io/go-utils/protoutils"
 )
 
 func NewStagedFilter(name string, stage FilterStage) StagedHttpFilter {
@@ -21,7 +21,7 @@ func NewStagedFilterWithConfig(name string, config proto.Message, stage FilterSt
 	}
 
 	if config != nil {
-		marshalledConf, err := protoutils.MarshalStruct(config)
+		marshalledConf, err := conversion.MessageToStruct(config)
 		if err != nil {
 			// this should NEVER HAPPEN!
 			return StagedHttpFilter{}, err

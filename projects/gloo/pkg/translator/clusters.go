@@ -8,6 +8,9 @@ import (
 	envoycluster "github.com/envoyproxy/go-control-plane/envoy/api/v2/cluster"
 	envoycore "github.com/envoyproxy/go-control-plane/envoy/api/v2/core"
 	"github.com/gogo/protobuf/types"
+	"github.com/golang/protobuf/ptypes/duration"
+	"github.com/golang/protobuf/ptypes/wrappers"
+	"github.com/solo-io/gloo/pkg/utils/gogoutils"
 	v1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
 	"github.com/solo-io/gloo/projects/gloo/pkg/plugins"
 	"github.com/solo-io/gloo/projects/gloo/pkg/xds"
@@ -80,7 +83,7 @@ func (t *translator) initializeCluster(upstream *v1.Upstream, endpoints []*v1.En
 		HealthChecks:     hcConfig,
 		OutlierDetection: detectCfg,
 		// this field can be overridden by plugins
-		ConnectTimeout:       ClusterConnectionTimeout,
+		ConnectTimeout:       &duration.Duration{},
 		Http2ProtocolOptions: getHttp2ptions(upstream.UpstreamSpec),
 	}
 	// set Type = EDS if we have endpoints for the upstream
@@ -93,8 +96,13 @@ func (t *translator) initializeCluster(upstream *v1.Upstream, endpoints []*v1.En
 var (
 	DefaultHealthCheckTimeout  = time.Second * 5
 	DefaultHealthCheckInterval = time.Millisecond * 100
-	DefaultThreshold           = &types.UInt32Value{
-		Value: 5,
+
+	defaultThreshold      = uint32(5)
+	DefaultProtoThreshold = &wrappers.UInt32Value{
+		Value: defaultThreshold,
+	}
+	DefaultGogoThreshold = &types.UInt32Value{
+		Value: defaultThreshold,
 	}
 
 	NilFieldError = func(fieldName string) error {
@@ -182,10 +190,10 @@ func getCircuitBreakers(cfgs ...*v1.CircuitBreakerConfig) *envoycluster.CircuitB
 		if cfg != nil {
 			envoyCfg := &envoycluster.CircuitBreakers{}
 			envoyCfg.Thresholds = []*envoycluster.CircuitBreakers_Thresholds{{
-				MaxConnections:     cfg.MaxConnections,
-				MaxPendingRequests: cfg.MaxPendingRequests,
-				MaxRequests:        cfg.MaxRequests,
-				MaxRetries:         cfg.MaxRetries,
+				MaxConnections:     gogoutils.UInt32GogoToProto(cfg.MaxConnections),
+				MaxPendingRequests: gogoutils.UInt32GogoToProto(cfg.MaxPendingRequests),
+				MaxRequests:        gogoutils.UInt32GogoToProto(cfg.MaxRequests),
+				MaxRetries:         gogoutils.UInt32GogoToProto(cfg.MaxRetries),
 			}}
 			return envoyCfg
 		}

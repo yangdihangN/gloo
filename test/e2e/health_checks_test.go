@@ -8,12 +8,12 @@ import (
 	"net/http"
 	"time"
 
-	envoycluster "github.com/envoyproxy/go-control-plane/envoy/api/v2/cluster"
-	envoycore "github.com/envoyproxy/go-control-plane/envoy/api/v2/core"
 	"github.com/gogo/protobuf/types"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gstruct"
+	"github.com/solo-io/gloo/projects/gloo/pkg/api/external/envoy/api/v2/cluster"
+	"github.com/solo-io/gloo/projects/gloo/pkg/api/external/envoy/api/v2/core"
 	"github.com/solo-io/gloo/projects/gloo/pkg/defaults"
 	"github.com/solo-io/gloo/projects/gloo/pkg/translator"
 	"github.com/solo-io/gloo/test/services"
@@ -91,13 +91,13 @@ var _ = Describe("Health Checks", func() {
 
 		tests := []struct {
 			Name  string
-			Check *envoycore.HealthCheck
+			Check *core.HealthCheck
 		}{
 			{
 				Name: "http",
-				Check: &envoycore.HealthCheck{
-					HealthChecker: &envoycore.HealthCheck_HttpHealthCheck_{
-						HttpHealthCheck: &envoycore.HealthCheck_HttpHealthCheck{
+				Check: &core.HealthCheck{
+					HealthChecker: &core.HealthCheck_HttpHealthCheck_{
+						HttpHealthCheck: &core.HealthCheck_HttpHealthCheck{
 							Path: "xyz",
 						},
 					},
@@ -105,17 +105,17 @@ var _ = Describe("Health Checks", func() {
 			},
 			{
 				Name: "tcp",
-				Check: &envoycore.HealthCheck{
-					HealthChecker: &envoycore.HealthCheck_TcpHealthCheck_{
-						TcpHealthCheck: &envoycore.HealthCheck_TcpHealthCheck{
-							Send: &envoycore.HealthCheck_Payload{
-								Payload: &envoycore.HealthCheck_Payload_Text{
+				Check: &core.HealthCheck{
+					HealthChecker: &core.HealthCheck_TcpHealthCheck_{
+						TcpHealthCheck: &core.HealthCheck_TcpHealthCheck{
+							Send: &core.HealthCheck_Payload{
+								Payload: &core.HealthCheck_Payload_Text{
 									Text: "AAAA",
 								},
 							},
-							Receive: []*envoycore.HealthCheck_Payload{
+							Receive: []*core.HealthCheck_Payload{
 								{
-									Payload: &envoycore.HealthCheck_Payload_Text{
+									Payload: &core.HealthCheck_Payload_Text{
 										Text: "AAAA",
 									},
 								},
@@ -131,11 +131,11 @@ var _ = Describe("Health Checks", func() {
 			It(v.Name, func() {
 				us, err := testClients.UpstreamClient.Read(tu.Upstream.Metadata.Namespace, tu.Upstream.Metadata.Name, clients.ReadOpts{})
 				Expect(err).NotTo(HaveOccurred())
-				v.Check.Timeout = &translator.DefaultHealthCheckTimeout
+				v.Check.Timeout =&translator.DefaultHealthCheckTimeout
 				v.Check.Interval = &translator.DefaultHealthCheckInterval
-				v.Check.HealthyThreshold = translator.DefaultThreshold
-				v.Check.UnhealthyThreshold = translator.DefaultThreshold
-				us.GetUpstreamSpec().HealthChecks = []*envoycore.HealthCheck{v.Check}
+				v.Check.HealthyThreshold = translator.DefaultGogoThreshold
+				v.Check.UnhealthyThreshold = translator.DefaultGogoThreshold
+				us.GetUpstreamSpec().HealthChecks = []*core.HealthCheck{v.Check}
 
 				_, err = testClients.UpstreamClient.Write(us, clients.WriteOpts{
 					OverwriteExisting: true,
@@ -161,7 +161,7 @@ var _ = Describe("Health Checks", func() {
 		It("outlier detection", func() {
 			us, err := testClients.UpstreamClient.Read(tu.Upstream.Metadata.Namespace, tu.Upstream.Metadata.Name, clients.ReadOpts{})
 			Expect(err).NotTo(HaveOccurred())
-			us.GetUpstreamSpec().OutlierDetection = &envoycluster.OutlierDetection{
+			us.GetUpstreamSpec().OutlierDetection = &cluster.OutlierDetection{
 				Interval: &types.Duration{Seconds: 1},
 			}
 
@@ -202,14 +202,14 @@ var _ = Describe("Health Checks", func() {
 			us, err := testClients.UpstreamClient.Read(tu.Upstream.Metadata.Namespace, tu.Upstream.Metadata.Name, clients.ReadOpts{})
 			Expect(err).NotTo(HaveOccurred())
 
-			us.GetUpstreamSpec().HealthChecks = []*envoycore.HealthCheck{
+			us.GetUpstreamSpec().HealthChecks = []*core.HealthCheck{
 				{
 					Timeout:            &translator.DefaultHealthCheckTimeout,
 					Interval:           &translator.DefaultHealthCheckInterval,
-					UnhealthyThreshold: translator.DefaultThreshold,
-					HealthyThreshold:   translator.DefaultThreshold,
-					HealthChecker: &envoycore.HealthCheck_GrpcHealthCheck_{
-						GrpcHealthCheck: &envoycore.HealthCheck_GrpcHealthCheck{
+					UnhealthyThreshold: translator.DefaultGogoThreshold,
+					HealthyThreshold:   translator.DefaultGogoThreshold,
+					HealthChecker: &core.HealthCheck_GrpcHealthCheck_{
+						GrpcHealthCheck: &core.HealthCheck_GrpcHealthCheck{
 							ServiceName: "TestService",
 						},
 					},

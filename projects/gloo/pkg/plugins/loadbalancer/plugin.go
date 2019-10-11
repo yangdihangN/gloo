@@ -4,7 +4,9 @@ import (
 	envoyapi "github.com/envoyproxy/go-control-plane/envoy/api/v2"
 	envoyroute "github.com/envoyproxy/go-control-plane/envoy/api/v2/route"
 	envoytype "github.com/envoyproxy/go-control-plane/envoy/type"
-	"github.com/gogo/protobuf/types"
+	"github.com/golang/protobuf/ptypes"
+	"github.com/golang/protobuf/ptypes/duration"
+	"github.com/golang/protobuf/ptypes/wrappers"
 	v1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
 	"github.com/solo-io/gloo/projects/gloo/pkg/api/v1/plugins/lbhash"
 	"github.com/solo-io/gloo/projects/gloo/pkg/plugins"
@@ -58,10 +60,14 @@ func getHashPoliciesFromSpec(spec []*lbhash.HashPolicy) []*envoyroute.RouteActio
 				},
 			}
 		case *lbhash.HashPolicy_Cookie:
+			var ttlStruct *duration.Duration
+			if keyType.Cookie.Ttl != nil {
+				ttlStruct = ptypes.DurationProto(*keyType.Cookie.Ttl)
+			}
 			policy.PolicySpecifier = &envoyroute.RouteAction_HashPolicy_Cookie_{
 				Cookie: &envoyroute.RouteAction_HashPolicy_Cookie{
 					Name: keyType.Cookie.Name,
-					Ttl:  keyType.Cookie.Ttl,
+					Ttl:  ttlStruct,
 					Path: keyType.Cookie.Path,
 				},
 			}
@@ -92,7 +98,7 @@ func (p *Plugin) ProcessUpstream(params plugins.Params, in *v1.Upstream, out *en
 			}
 		}
 		if cfg.UpdateMergeWindow != nil {
-			out.CommonLbConfig.UpdateMergeWindow = types.DurationProto(*cfg.UpdateMergeWindow)
+			out.CommonLbConfig.UpdateMergeWindow = ptypes.DurationProto(*cfg.UpdateMergeWindow)
 		}
 	}
 
@@ -105,7 +111,7 @@ func (p *Plugin) ProcessUpstream(params plugins.Params, in *v1.Upstream, out *en
 			if lbtype.LeastRequest.ChoiceCount != 0 {
 				out.LbConfig = &envoyapi.Cluster_LeastRequestLbConfig_{
 					LeastRequestLbConfig: &envoyapi.Cluster_LeastRequestLbConfig{
-						ChoiceCount: &types.UInt32Value{
+						ChoiceCount: &wrappers.UInt32Value{
 							Value: lbtype.LeastRequest.ChoiceCount,
 						},
 					},
@@ -130,12 +136,12 @@ func setRingHashLbConfig(out *envoyapi.Cluster, userConfig *v1.LoadBalancerConfi
 	}
 	if userConfig != nil {
 		if userConfig.MinimumRingSize != 0 {
-			cfg.RingHashLbConfig.MinimumRingSize = &types.UInt64Value{
+			cfg.RingHashLbConfig.MinimumRingSize = &wrappers.UInt64Value{
 				Value: userConfig.MinimumRingSize,
 			}
 		}
 		if userConfig.MaximumRingSize != 0 {
-			cfg.RingHashLbConfig.MaximumRingSize = &types.UInt64Value{
+			cfg.RingHashLbConfig.MaximumRingSize = &wrappers.UInt64Value{
 				Value: userConfig.MaximumRingSize,
 			}
 		}

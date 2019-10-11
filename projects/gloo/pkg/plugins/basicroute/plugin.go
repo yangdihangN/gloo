@@ -2,7 +2,8 @@ package basicroute
 
 import (
 	envoyroute "github.com/envoyproxy/go-control-plane/envoy/api/v2/route"
-	"github.com/gogo/protobuf/types"
+	"github.com/golang/protobuf/ptypes/wrappers"
+	"github.com/solo-io/gloo/pkg/utils/gogoutils"
 	"github.com/solo-io/gloo/projects/gloo/pkg/api/v1/plugins/hostrewrite"
 
 	v1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
@@ -81,7 +82,7 @@ func applyTimeout(in *v1.Route, out *envoyroute.Route) error {
 			"had nil route", in.Action)
 	}
 
-	routeAction.Route.Timeout = in.RoutePlugins.Timeout
+	routeAction.Route.Timeout = gogoutils.DurationStdToProto(in.RoutePlugins.Timeout)
 	return nil
 }
 
@@ -144,7 +145,7 @@ func convertPolicy(policy *retries.RetryPolicy) *envoyroute.RetryPolicy {
 
 	return &envoyroute.RetryPolicy{
 		RetryOn:       policy.RetryOn,
-		NumRetries:    &types.UInt32Value{Value: numRetries},
-		PerTryTimeout: policy.PerTryTimeout,
+		NumRetries:    &wrappers.UInt32Value{Value: numRetries},
+		PerTryTimeout: gogoutils.DurationStdToProto(policy.PerTryTimeout),
 	}
 }

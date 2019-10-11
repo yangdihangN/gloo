@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/gogo/protobuf/types"
+	"github.com/golang/protobuf/ptypes"
 
 	v2 "github.com/envoyproxy/go-control-plane/envoy/api/v2"
 	envoy_api_v2_core1 "github.com/envoyproxy/go-control-plane/envoy/api/v2/core"
@@ -15,6 +15,7 @@ import (
 	envoyutil "github.com/envoyproxy/go-control-plane/pkg/conversion"
 	"github.com/ghodss/yaml"
 	"github.com/gogo/protobuf/proto"
+	_struct "github.com/golang/protobuf/ptypes/struct"
 	"github.com/k0kubun/pp"
 	"github.com/solo-io/go-utils/protoutils"
 	"google.golang.org/grpc"
@@ -38,10 +39,10 @@ func GetYaml(pb proto.Message) []byte {
 func main() {
 	role := flag.String("r", "gloo-system~gateway-proxy-v2", "role to register with")
 	port := flag.String("p", "9977", "gloo port")
-	//out := flag.String("o", "gostructs", "output fmt gostructs|yaml")
+	// out := flag.String("o", "gostructs", "output fmt gostructs|yaml")
 	flag.Parse()
-	dr.Node.Metadata = &types.Struct{
-		Fields: map[string]*types.Value{"role": {Kind: &types.Value_StringValue{StringValue: *role}}}}
+	dr.Node.Metadata = &_struct.Struct{
+		Fields: map[string]*_struct.Value{"role": {Kind: &_struct.Value_StringValue{StringValue: *role}}}}
 
 	conn, err := grpc.Dial("localhost:"+*port, grpc.WithInsecure())
 	if err != nil {
@@ -62,7 +63,7 @@ func main() {
 							hcms = append(hcms, hcm)
 						}
 					case *envoylistener.Filter_TypedConfig:
-						if err := types.UnmarshalAny(config.TypedConfig, &hcm); err == nil {
+						if err := ptypes.UnmarshalAny(config.TypedConfig, &hcm); err == nil {
 							hcms = append(hcms, hcm)
 						}
 					}
@@ -108,9 +109,8 @@ func listClusters(ctx context.Context, conn *grpc.ClientConn) []v2.Cluster {
 	}
 	var clusters []v2.Cluster
 	for _, anyCluster := range dresp.Resources {
-
 		var cluster v2.Cluster
-		cluster.Unmarshal(anyCluster.Value)
+		proto.Unmarshal(anyCluster.Value, &cluster)
 		clusters = append(clusters, cluster)
 		pp.Printf("%v\n", cluster)
 	}
@@ -127,9 +127,8 @@ func listendpoints(ctx context.Context, conn *grpc.ClientConn) []v2.ClusterLoadA
 	pp.Printf("version info: %v\n", dresp.VersionInfo)
 
 	for _, anyCla := range dresp.Resources {
-
 		var cla v2.ClusterLoadAssignment
-		cla.Unmarshal(anyCla.Value)
+		proto.Unmarshal(anyCla.Value, &cla)
 		pp.Printf("%v\n", cla)
 		class = append(class, cla)
 	}
@@ -148,7 +147,7 @@ func listListeners(ctx context.Context, conn *grpc.ClientConn) []v2.Listener {
 
 	for _, anylistener := range dresp.Resources {
 		var listener v2.Listener
-		listener.Unmarshal(anylistener.Value)
+		proto.Unmarshal(anylistener.Value, &listener)
 		pp.Printf("%v\n", listener)
 		listeners = append(listeners, listener)
 	}
@@ -172,7 +171,7 @@ func listRoutes(ctx context.Context, conn *grpc.ClientConn, routenames []string)
 
 	for _, anyRoute := range dresp.Resources {
 		var route v2.RouteConfiguration
-		route.Unmarshal(anyRoute.Value)
+		proto.Unmarshal(anyRoute.Value, &route)
 		pp.Printf("%v\n", route)
 		routes = append(routes, route)
 	}

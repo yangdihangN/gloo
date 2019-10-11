@@ -5,15 +5,15 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/envoyproxy/go-control-plane/pkg/wellknown"
 	"github.com/solo-io/go-utils/contextutils"
 	"go.uber.org/zap"
 
-	"github.com/envoyproxy/go-control-plane/envoy/api/v2/core"
+	core "github.com/envoyproxy/go-control-plane/envoy/api/v2/core"
 	envoy_type "github.com/envoyproxy/go-control-plane/envoy/type"
 
 	envoyroute "github.com/envoyproxy/go-control-plane/envoy/api/v2/route"
-	envoyutil "github.com/envoyproxy/go-control-plane/pkg/conversion"
-	"github.com/gogo/protobuf/types"
+	"github.com/golang/protobuf/ptypes/wrappers"
 	v1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
 	"github.com/solo-io/gloo/projects/gloo/pkg/api/v1/plugins/cors"
 	"github.com/solo-io/gloo/projects/gloo/pkg/plugins"
@@ -104,7 +104,7 @@ func (p *plugin) translateCommonUserCorsConfig(in *cors.CorsPolicy, out *envoyro
 	out.ExposeHeaders = strings.Join(in.ExposeHeaders, ",")
 	out.MaxAge = in.MaxAge
 	if in.AllowCredentials {
-		out.AllowCredentials = &types.BoolValue{Value: in.AllowCredentials}
+		out.AllowCredentials = &wrappers.BoolValue{Value: in.AllowCredentials}
 	}
 	return nil
 }
@@ -128,7 +128,7 @@ func (p *plugin) translateRouteSpecificCorsConfig(in *cors.CorsPolicy, out *envo
 
 func (p *plugin) HttpFilters(params plugins.Params, listener *v1.HttpListener) ([]plugins.StagedHttpFilter, error) {
 	return []plugins.StagedHttpFilter{
-		plugins.NewStagedFilter(envoyutil.CORS, pluginStage),
+		plugins.NewStagedFilter(wellknown.CORS, pluginStage),
 	}, nil
 }
 

@@ -3,6 +3,7 @@ package hcm_test
 import (
 	"time"
 
+	"github.com/envoyproxy/go-control-plane/pkg/wellknown"
 	"github.com/solo-io/gloo/projects/gloo/pkg/plugins/tracing"
 
 	. "github.com/onsi/ginkgo"
@@ -14,7 +15,6 @@ import (
 	envoyapi "github.com/envoyproxy/go-control-plane/envoy/api/v2"
 	envoylistener "github.com/envoyproxy/go-control-plane/envoy/api/v2/listener"
 	envoyhttp "github.com/envoyproxy/go-control-plane/envoy/config/filter/network/http_connection_manager/v2"
-	envoyutil "github.com/envoyproxy/go-control-plane/pkg/conversion"
 	"github.com/gogo/protobuf/types"
 	v1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
 	"github.com/solo-io/gloo/projects/gloo/pkg/api/v1/plugins/hcm"
@@ -60,12 +60,12 @@ var _ = Describe("Plugin", func() {
 			},
 		}
 
-		filters := []envoylistener.Filter{{
-			Name: envoyutil.HTTPConnectionManager,
+		filters := []*envoylistener.Filter{{
+			Name: wellknown.HTTPConnectionManager,
 		}}
 
 		outl := &envoyapi.Listener{
-			FilterChains: []envoylistener.FilterChain{{
+			FilterChains: []*envoylistener.FilterChain{{
 				Filters: filters,
 			}},
 		}

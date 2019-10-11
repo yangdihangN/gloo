@@ -6,9 +6,9 @@ import (
 	. "github.com/onsi/gomega"
 	v1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
 	"github.com/solo-io/gloo/projects/gloo/pkg/plugins"
+	"github.com/solo-io/solo-kit/pkg/api/v1/control-plane/util"
 
 	envoyroute "github.com/envoyproxy/go-control-plane/envoy/api/v2/route"
-	"github.com/envoyproxy/go-control-plane/pkg/conversion"
 	transformation "github.com/solo-io/gloo/projects/gloo/pkg/api/v1/plugins/transformation"
 	. "github.com/solo-io/gloo/projects/gloo/pkg/plugins/transformation"
 )

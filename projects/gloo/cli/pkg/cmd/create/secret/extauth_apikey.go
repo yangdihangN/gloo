@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/base64"
 
-	envoyutil "github.com/envoyproxy/go-control-plane/pkg/conversion"
 	"github.com/hashicorp/go-uuid"
 	"github.com/solo-io/gloo/pkg/cliutil"
 	"github.com/solo-io/gloo/projects/gloo/cli/pkg/argsutils"
@@ -15,6 +14,7 @@ import (
 	gloov1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
 	extauth "github.com/solo-io/gloo/projects/gloo/pkg/api/v1/enterprise/plugins/extauth/v1"
 	"github.com/solo-io/solo-kit/pkg/api/v1/clients"
+	"github.com/solo-io/solo-kit/pkg/api/v1/control-plane/util"
 	"github.com/solo-io/solo-kit/pkg/api/v1/resources/core"
 	"github.com/solo-io/solo-kit/pkg/errors"
 	"github.com/spf13/cobra"
@@ -123,7 +123,7 @@ func createApiKeySecret(ctx context.Context, meta core.Metadata, input extauth.A
 	labels.Entries = input.Labels
 	meta.Labels = labels.MustMap()
 
-	secretStruct, err := envoyutil.MessageToStruct(&input)
+	secretStruct, err := util.MessageToStruct(&input)
 	if err != nil {
 		return UnableToMarshalApiKeySecret(err)
 	}

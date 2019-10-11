@@ -304,7 +304,7 @@
   version = "v1.12.0"
 
 [[projects]]
-  digest = "1:3e7ae4a1a357e943cb1deeded9b7020dea429c46b3cbfae4fa6d7729899de3a9"
+  digest = "1:8e6da8bf6d676eb10309927cfa79a8ac21d5bdeeff2e4161a871d6df0e081286"
   name = "github.com/envoyproxy/go-control-plane"
   packages = [
     "envoy/api/v2",
@@ -334,6 +334,7 @@
     "envoy/type",
     "envoy/type/matcher",
     "pkg/conversion",
+    "pkg/wellknown",
   ]
   pruneopts = "UT"
   revision = "52b167a709f111e6298136064bbaae43419ab22f"
@@ -1417,7 +1418,7 @@
   version = "v0.10.9"
 
 [[projects]]
-  digest = "1:ef54baf046556ff26d2c09e74b49eb51432a0b72d7e148b0427d27ca6eb876f9"
+  digest = "1:83acf4141208441ca2345e4434262124d11357f26bc838020c1ba4743c263785"
   name = "github.com/solo-io/solo-kit"
   packages = [
     "api/external/kubernetes/configmap",
@@ -1426,6 +1427,8 @@
     "api/external/kubernetes/namespace",
     "api/external/kubernetes/pod",
     "api/external/kubernetes/service",
+    "pkg/api/external/envoy/api/v2/core",
+    "pkg/api/external/envoy/type",
     "pkg/api/external/kubernetes/namespace",
     "pkg/api/external/kubernetes/service",
     "pkg/api/v1/clients",
@@ -2711,6 +2714,7 @@
     "github.com/envoyproxy/go-control-plane/envoy/service/metrics/v2",
     "github.com/envoyproxy/go-control-plane/envoy/type",
     "github.com/envoyproxy/go-control-plane/pkg/conversion",
+    "github.com/envoyproxy/go-control-plane/pkg/wellknown",
     "github.com/envoyproxy/protoc-gen-validate/validate",
     "github.com/fgrosse/zaptest",
     "github.com/ghodss/yaml",
@@ -2728,7 +2732,11 @@
     "github.com/golang/mock/mockgen/model",
     "github.com/golang/protobuf/proto",
     "github.com/golang/protobuf/protoc-gen-go/descriptor",
+    "github.com/golang/protobuf/ptypes",
     "github.com/golang/protobuf/ptypes/any",
+    "github.com/golang/protobuf/ptypes/duration",
+    "github.com/golang/protobuf/ptypes/struct",
+    "github.com/golang/protobuf/ptypes/wrappers",
     "github.com/google/go-github/github",
     "github.com/gorilla/mux",
     "github.com/grpc-ecosystem/go-grpc-middleware",
@@ -2758,6 +2766,7 @@
     "github.com/pkg/errors",
     "github.com/prometheus/client_golang/api",
     "github.com/prometheus/client_golang/api/prometheus/v1",
+    "github.com/prometheus/client_model/go",
     "github.com/prometheus/prometheus/discovery/targetgroup",
     "github.com/solo-io/envoy-operator/pkg/downward",
     "github.com/solo-io/go-checkpoint",
@@ -2790,6 +2799,7 @@
     "github.com/solo-io/go-utils/versionutils/dep",
     "github.com/solo-io/go-utils/versionutils/git",
     "github.com/solo-io/solo-kit/api/external/kubernetes/namespace",
+    "github.com/solo-io/solo-kit/pkg/api/external/envoy/api/v2/core",
     "github.com/solo-io/solo-kit/pkg/api/external/kubernetes/namespace",
     "github.com/solo-io/solo-kit/pkg/api/external/kubernetes/service",
     "github.com/solo-io/solo-kit/pkg/api/v1/clients",

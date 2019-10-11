@@ -3,6 +3,7 @@ package create
 import (
 	"strings"
 
+	"github.com/solo-io/gloo/pkg/utils/gogoutils"
 	"github.com/solo-io/gloo/projects/gloo/cli/pkg/prerun"
 
 	envoyutil "github.com/envoyproxy/go-control-plane/pkg/conversion"
@@ -149,7 +150,8 @@ func virtualServiceFromOpts(meta core.Metadata, input options.InputVirtualServic
 		if vs.VirtualHost.VirtualHostPlugins.Extensions.Configs == nil {
 			vs.VirtualHost.VirtualHostPlugins.Extensions.Configs = make(map[string]*types.Struct)
 		}
-		vs.VirtualHost.VirtualHostPlugins.Extensions.Configs[constants.RateLimitExtensionName] = ingressRateLimitStruct
+		protoSt, err := gogoutils.StructProtoToGogo(ingressRateLimitStruct)
+		vs.VirtualHost.VirtualHostPlugins.Extensions.Configs[constants.RateLimitExtensionName] = protoSt
 	}
 
 	return vs, authFromOpts(vs, input)

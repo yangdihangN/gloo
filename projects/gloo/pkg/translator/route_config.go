@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/solo-io/gloo/projects/gloo/pkg/plugins/pluginutils"
 
 	"github.com/gogo/protobuf/proto"
@@ -15,7 +16,6 @@ import (
 	envoyapi "github.com/envoyproxy/go-control-plane/envoy/api/v2"
 	envoycore "github.com/envoyproxy/go-control-plane/envoy/api/v2/core"
 	envoyroute "github.com/envoyproxy/go-control-plane/envoy/api/v2/route"
-	"github.com/gogo/protobuf/types"
 	"github.com/pkg/errors"
 	v1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
 	v1plugins "github.com/solo-io/gloo/projects/gloo/pkg/api/v1/plugins"
@@ -59,7 +59,7 @@ func (t *translator) computeRouteConfig(params plugins.Params, proxy *v1.Proxy, 
 	}
 }
 
-func (t *translator) computeVirtualHosts(params plugins.Params, proxy *v1.Proxy, listener *v1.Listener, httpListenerReport *validationapi.HttpListenerReport) []envoyroute.VirtualHost {
+func (t *translator) computeVirtualHosts(params plugins.Params, proxy *v1.Proxy, listener *v1.Listener, httpListenerReport *validationapi.HttpListenerReport) []*envoyroute.VirtualHost {
 	httpListener, ok := listener.ListenerType.(*v1.Listener_HttpListener)
 	if !ok {
 		return nil
@@ -67,7 +67,7 @@ func (t *translator) computeVirtualHosts(params plugins.Params, proxy *v1.Proxy,
 	virtualHosts := httpListener.HttpListener.VirtualHosts
 	validateVirtualHostDomains(virtualHosts, httpListenerReport)
 	requireTls := len(listener.SslConfigurations) > 0
-	var envoyVirtualHosts []envoyroute.VirtualHost
+	var envoyVirtualHosts []*envoyroute.VirtualHost
 	for i, virtualHost := range virtualHosts {
 		vhostParams := plugins.VirtualHostParams{
 			Params:   params,
@@ -80,13 +80,13 @@ func (t *translator) computeVirtualHosts(params plugins.Params, proxy *v1.Proxy,
 	return envoyVirtualHosts
 }
 
-func (t *translator) computeVirtualHost(params plugins.VirtualHostParams, virtualHost *v1.VirtualHost, requireTls bool, vhostReport *validationapi.VirtualHostReport) envoyroute.VirtualHost {
+func (t *translator) computeVirtualHost(params plugins.VirtualHostParams, virtualHost *v1.VirtualHost, requireTls bool, vhostReport *validationapi.VirtualHostReport) *envoyroute.VirtualHost {
 
 	// Make copy to avoid modifying the snapshot
 	virtualHost = proto.Clone(virtualHost).(*v1.VirtualHost)
 	virtualHost.Name = utils.SanitizeForEnvoy(params.Ctx, virtualHost.Name, "virtual host")
 
-	var envoyRoutes []envoyroute.Route
+	var envoyRoutes []*envoyroute.Route
 	for i, route := range virtualHost.Routes {
 		routeParams := plugins.RouteParams{
 			VirtualHostParams: params,
@@ -94,7 +94,7 @@ func (t *translator) computeVirtualHost(params plugins.VirtualHostParams, virtua
 		}
 		routeReport := vhostReport.RouteReports[i]
 		envoyRoute := t.envoyRoute(routeParams, routeReport, route)
-		envoyRoutes = append(envoyRoutes, envoyRoute)
+		envoyRoutes = append(envoyRoutes, &envoyRoute)
 	}
 	domains := virtualHost.Domains
 	if len(domains) == 0 || (len(domains) == 1 && domains[0] == "") {
@@ -127,7 +127,7 @@ func (t *translator) computeVirtualHost(params plugins.VirtualHostParams, virtua
 			)
 		}
 	}
-	return out
+	return &out
 }
 
 func (t *translator) envoyRoute(params plugins.RouteParams, routeReport *validationapi.RouteReport, in *v1.Route) envoyroute.Route {
@@ -170,7 +170,7 @@ func setMatch(in *v1.Route, routeReport *validationapi.RouteReport, out *envoyro
 	// which genius thought of that?
 	setEnvoyPathMatcher(in.Matcher, &match)
 
-	out.Match = match
+	out.Match = &match
 }
 
 func (t *translator) setAction(params plugins.RouteParams, routeReport *validationapi.RouteReport, in *v1.Route, out *envoyroute.Route) {
@@ -324,7 +324,7 @@ func (t *translator) setWeightedClusters(params plugins.RouteParams, multiDest *
 
 		weightedCluster := &envoyroute.WeightedCluster_ClusterWeight{
 			Name:          UpstreamToClusterName(*usRef),
-			Weight:        &types.UInt32Value{Value: weightedDest.Weight},
+			Weight:        &wrappers.UInt32Value{Value: weightedDest.Weight},
 			MetadataMatch: getSubsetMatch(weightedDest.Destination),
 		}
 
@@ -349,7 +349,7 @@ func (t *translator) setWeightedClusters(params plugins.RouteParams, multiDest *
 		}
 	}
 
-	clusterSpecifier.WeightedClusters.TotalWeight = &types.UInt32Value{Value: totalWeight}
+	clusterSpecifier.WeightedClusters.TotalWeight = &wrappers.UInt32Value{Value: totalWeight}
 
 	out.ClusterSpecifier = clusterSpecifier
 	return nil
@@ -485,7 +485,7 @@ func envoyQueryMatcher(in []*v1.QueryParameterMatcher) []*envoyroute.QueryParame
 		envoyMatch := &envoyroute.QueryParameterMatcher{
 			Name:  matcher.Name,
 			Value: matcher.Value,
-			Regex: &types.BoolValue{
+			Regex: &wrappers.BoolValue{
 				Value: matcher.Regex,
 			},
 		}

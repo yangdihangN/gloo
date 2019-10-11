@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/solo-io/gloo/projects/gloo/cli/pkg/argsutils"
+	"github.com/solo-io/solo-kit/pkg/api/v1/control-plane/util"
 
-	envoyutil "github.com/envoyproxy/go-control-plane/pkg/conversion"
 	"github.com/solo-io/gloo/pkg/cliutil"
 	"github.com/solo-io/gloo/projects/gloo/cli/pkg/cmd/options"
 	"github.com/solo-io/gloo/projects/gloo/cli/pkg/helpers"
@@ -76,7 +76,7 @@ func createOauthSecret(ctx context.Context, meta core.Metadata, input extauth.Oa
 		return fmt.Errorf("client-secret not provided")
 	}
 
-	secretStruct, err := envoyutil.MessageToStruct(&input)
+	secretStruct, err := util.MessageToStruct(&input)
 	if err != nil {
 		return errors.Wrapf(err, "Error marshalling oauth secret")
 	}

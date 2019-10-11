@@ -7,12 +7,11 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	. "github.com/solo-io/gloo/projects/gloo/pkg/api/external/envoy/extensions/aws"
-	"github.com/solo-io/gloo/projects/gloo/pkg/plugins/transformation"
-
 	v1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
 	"github.com/solo-io/gloo/projects/gloo/pkg/api/v1/plugins/aws"
 	awsapi "github.com/solo-io/gloo/projects/gloo/pkg/api/v1/plugins/aws"
 	"github.com/solo-io/gloo/projects/gloo/pkg/plugins"
+	"github.com/solo-io/gloo/projects/gloo/pkg/plugins/transformation"
 	"github.com/solo-io/solo-kit/pkg/api/v1/resources/core"
 )
 
@@ -115,7 +114,7 @@ var _ = Describe("Plugin", func() {
 	})
 
 	processProtocolOptions := func() {
-		err := util.StructToMessage(out.ExtensionProtocolOptions[filterName], lpe)
+		err := conversion.StructToMessage(out.ExtensionProtocolOptions[filterName], lpe)
 		Expect(err).NotTo(HaveOccurred())
 	}
 
@@ -284,7 +283,7 @@ var _ = Describe("Plugin", func() {
 			filters, err := plugin.(plugins.HttpFilterPlugin).HttpFilters(params, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(filters).To(HaveLen(1))
-			err = util.StructToMessage(filters[0].HttpFilter.GetConfig(), cfg)
+			err = conversion.StructToMessage(filters[0].HttpFilter.GetConfig(), cfg)
 			Expect(err).NotTo(HaveOccurred())
 
 		}

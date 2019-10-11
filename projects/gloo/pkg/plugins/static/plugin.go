@@ -11,7 +11,7 @@ import (
 	envoycore "github.com/envoyproxy/go-control-plane/envoy/api/v2/core"
 	envoyendpoint "github.com/envoyproxy/go-control-plane/envoy/api/v2/endpoint"
 	envoyroute "github.com/envoyproxy/go-control-plane/envoy/api/v2/route"
-	"github.com/gogo/protobuf/types"
+	"github.com/golang/protobuf/ptypes/wrappers"
 	v1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
 	"github.com/solo-io/gloo/projects/gloo/pkg/plugins"
 	"github.com/solo-io/gloo/projects/gloo/pkg/plugins/pluginutils"
@@ -78,18 +78,18 @@ func (p *plugin) ProcessUpstream(params plugins.Params, in *v1.Upstream, out *en
 		if out.LoadAssignment == nil {
 			out.LoadAssignment = &envoyapi.ClusterLoadAssignment{
 				ClusterName: out.Name,
-				Endpoints:   []envoyendpoint.LocalityLbEndpoints{{}},
+				Endpoints:   []*envoyendpoint.LocalityLbEndpoints{{}},
 			}
 		}
 
 		out.LoadAssignment.Endpoints[0].LbEndpoints = append(out.LoadAssignment.Endpoints[0].LbEndpoints,
-			envoyendpoint.LbEndpoint{
+			&envoyendpoint.LbEndpoint{
 				HostIdentifier: &envoyendpoint.LbEndpoint_Endpoint{
 					Endpoint: &envoyendpoint.Endpoint{
 						Address: &envoycore.Address{
 							Address: &envoycore.Address_SocketAddress{
 								SocketAddress: &envoycore.SocketAddress{
-									Protocol: envoycore.TCP,
+									Protocol: envoycore.SocketAddress_TCP,
 									Address:  host.Addr,
 									PortSpecifier: &envoycore.SocketAddress_PortValue{
 										PortValue: host.Port,
@@ -149,7 +149,7 @@ func (p *plugin) ProcessRouteAction(params plugins.RouteActionParams, in *v1.Rou
 		// this is a route to one of our ssl upstreams
 		// enable auto host rewrite
 		out.HostRewriteSpecifier = &envoyroute.RouteAction_AutoHostRewrite{
-			AutoHostRewrite: &types.BoolValue{
+			AutoHostRewrite: &wrappers.BoolValue{
 				Value: true,
 			},
 		}

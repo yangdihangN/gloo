@@ -326,6 +326,27 @@ message GlooOptions {
     }
 
     AWSOptions aws_options = 5;
+
+    // policy for how Gloo should handle invalid config
+    message InvalidConfigPolicy {
+
+        // if True, routes whose destinations point to a service or upstream which does not exist
+        // (or is not visible within Gloo's watchNamespaces) will respond to clients with a fallback
+        // message
+        // default is 'false'
+        bool enable_fallback_response = 1;
+
+        // if enableFallbackResponse is set to `true`, reply to clients with this response code
+        // default is 404
+        int64 fallback_response_code = 2;
+
+        // if enableFallbackResponse is set to `true`, reply to clients with this body
+        // default is 'Gateway has invalid configuration. Administrators should run `glooctl check` to find and fix config errors.'
+        string fallback_response_body = 3;
+    }
+
+    // set these options to fine-tune the way Gloo handles invalid user configuration
+    InvalidConfigPolicy invalid_config_policy = 6;
 }
 
 // Settings specific to the Gateway controller

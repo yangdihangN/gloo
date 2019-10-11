@@ -463,6 +463,7 @@ var _ = Describe("Kube2e: gateway", func() {
 					}, nil)))
 				inValidVs = withName("i-am-invalid", withDomains([]string{"invalid.com"},
 					getVirtualServiceWithRoute(&gatewayv1.Route{
+						Matchers: []*gloov1.Matcher{{}},
 						RoutePlugins: &gloov1.RoutePlugins{
 							PrefixRewrite: "matcher and action are missing",
 						},
@@ -480,8 +481,10 @@ var _ = Describe("Kube2e: gateway", func() {
 				// disable strict validation
 				UpdateAlwaysAcceptSetting(true)
 
-				inValidVs, err = virtualServiceClient.Write(inValidVs, clients.WriteOpts{})
-				Expect(err).NotTo(HaveOccurred())
+				Eventually(func() error {
+					inValidVs, err = virtualServiceClient.Write(inValidVs, clients.WriteOpts{})
+					return err
+				}).ShouldNot(HaveOccurred())
 			})
 			AfterEach(func() {
 				UpdateAlwaysAcceptSetting(false)
@@ -497,6 +500,17 @@ var _ = Describe("Kube2e: gateway", func() {
 					ConnectionTimeout: 1, // this is important, as sometimes curl hangs
 					WithoutStats:      true,
 				}, helper.SimpleHttpResponse, 1, 60*time.Second, 1*time.Second)
+				testHelper.CurlEventuallyShouldRespond(helper.CurlOpts{
+					Protocol:          "http",
+					Path:              "/",
+					Method:            "GET",
+					Host:              "invalid.com",
+					Service:           gatewayProxy,
+					Port:              gatewayPort,
+					ConnectionTimeout: 1, // this is important, as sometimes curl hangs
+					WithoutStats:      true,
+					Verbose:           true,
+				}, `HTTP/1.1 404 Not Found`, 1, 60*time.Second, 1*time.Second)
 			})
 
 			It("preserves the valid virtual services in envoy when a virtual service has been made invalid", func() {

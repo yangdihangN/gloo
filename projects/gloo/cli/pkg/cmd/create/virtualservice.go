@@ -5,7 +5,7 @@ import (
 
 	"github.com/solo-io/gloo/projects/gloo/cli/pkg/prerun"
 
-	envoyutil "github.com/envoyproxy/go-control-plane/pkg/util"
+	envoyutil "github.com/envoyproxy/go-control-plane/pkg/conversion"
 	"github.com/gogo/protobuf/types"
 	gatewayv1 "github.com/solo-io/gloo/projects/gateway/pkg/api/v1"
 	v1 "github.com/solo-io/gloo/projects/gateway/pkg/api/v1"

@@ -16,7 +16,7 @@ import (
 	envoyalcfg "github.com/envoyproxy/go-control-plane/envoy/config/accesslog/v2"
 	envoyhttp "github.com/envoyproxy/go-control-plane/envoy/config/filter/network/http_connection_manager/v2"
 	envoytcp "github.com/envoyproxy/go-control-plane/envoy/config/filter/network/tcp_proxy/v2"
-	envoyutil "github.com/envoyproxy/go-control-plane/pkg/util"
+	envoyutil "github.com/envoyproxy/go-control-plane/pkg/conversion"
 	v1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
 	"github.com/solo-io/gloo/projects/gloo/pkg/plugins"
 )

@@ -1,6 +1,6 @@
 
 ---
-title: "envoy.glooe.solo.io.project"
+title: "envoy.solo.io.project"
 weight: 5
 ---
 
@@ -10,7 +10,7 @@ weight: 5
 
 ### API Reference for 
 
-API Version: `envoy.glooe.solo.io.v1`
+API Version: `envoy.solo.io.v1`
 
 
 

@@ -4,7 +4,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/envoyproxy/go-control-plane/pkg/util"
+	"github.com/envoyproxy/go-control-plane/pkg/conversion"
 	v1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
 	. "github.com/solo-io/gloo/projects/gloo/pkg/plugins/utils"
 	"github.com/solo-io/solo-kit/pkg/api/v1/resources/core"

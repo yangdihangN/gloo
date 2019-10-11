@@ -12,7 +12,7 @@ import (
 	envoy_type "github.com/envoyproxy/go-control-plane/envoy/type"
 
 	envoyroute "github.com/envoyproxy/go-control-plane/envoy/api/v2/route"
-	envoyutil "github.com/envoyproxy/go-control-plane/pkg/util"
+	envoyutil "github.com/envoyproxy/go-control-plane/pkg/conversion"
 	"github.com/gogo/protobuf/types"
 	v1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
 	"github.com/solo-io/gloo/projects/gloo/pkg/api/v1/plugins/cors"

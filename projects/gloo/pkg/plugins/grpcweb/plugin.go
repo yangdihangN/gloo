@@ -1,7 +1,7 @@
 package grpcweb
 
 import (
-	envoyutil "github.com/envoyproxy/go-control-plane/pkg/util"
+	envoyutil "github.com/envoyproxy/go-control-plane/pkg/conversion"
 
 	v1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
 	"github.com/solo-io/gloo/projects/gloo/pkg/plugins"

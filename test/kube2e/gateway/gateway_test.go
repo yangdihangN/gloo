@@ -361,7 +361,7 @@ var _ = Describe("Kube2e: gateway", func() {
 				settingsClientFactory := &factory.KubeResourceClientFactory{
 					Crd:         gloov1.SettingsCrd,
 					Cfg:         cfg,
-					SharedCache: cache,
+					SharedCache: kube.NewKubeCache(ctx),
 				}
 
 				settingsClient, err = gloov1.NewSettingsClient(settingsClientFactory)

@@ -485,6 +485,8 @@ var _ = Describe("Kube2e: gateway", func() {
 					inValidVs, err = virtualServiceClient.Write(inValidVs, clients.WriteOpts{})
 					return err
 				}).ShouldNot(HaveOccurred())
+
+				Expect(inValidVs).NotTo(BeNil())
 			})
 			AfterEach(func() {
 				UpdateAlwaysAcceptSetting(false)

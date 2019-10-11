@@ -481,12 +481,10 @@ var _ = Describe("Kube2e: gateway", func() {
 				// disable strict validation
 				UpdateAlwaysAcceptSetting(true)
 
-				Eventually(func() error {
+				Eventually(func() (*gatewayv1.VirtualService, error) {
 					inValidVs, err = virtualServiceClient.Write(inValidVs, clients.WriteOpts{})
-					return err
-				}).ShouldNot(HaveOccurred())
-
-				Expect(inValidVs).NotTo(BeNil())
+					return inValidVs, err
+				}, time.Second*10).ShouldNot(BeNil())
 			})
 			AfterEach(func() {
 				UpdateAlwaysAcceptSetting(false)

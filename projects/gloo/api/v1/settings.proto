@@ -330,19 +330,20 @@ message GlooOptions {
     // policy for how Gloo should handle invalid config
     message InvalidConfigPolicy {
 
-        // if True, routes whose destinations point to a service or upstream which does not exist
-        // (or is not visible within Gloo's watchNamespaces) will respond to clients with a fallback
-        // message
-        // default is 'false'
-        bool enable_fallback_response = 1;
+        // set replaceInvalidRoutes to `true`, Gloo remove any routes from the provided configuration
+        // which point to a missing destination. Routes that are removed in this way
+        // will instead return a configurable direct response to clients.
+        //
+        // Note: enabling this option allows Gloo to accept partially valid proxy configurations
+        bool replace_invalid_routes = 1;
 
-        // if enableFallbackResponse is set to `true`, reply to clients with this response code
+        // if invalidRouteResponseCode is set to `true`, reply to clients with this response code
         // default is 404
-        int64 fallback_response_code = 2;
+        int64 invalid_route_response_code = 2;
 
-        // if enableFallbackResponse is set to `true`, reply to clients with this body
-        // default is 'Gateway has invalid configuration. Administrators should run `glooctl check` to find and fix config errors.'
-        string fallback_response_body = 3;
+        // if replaceInvalidRoutes is set to `true`, reply to clients with this body
+        // default is 'Gloo Gateway has invalid configuration. Administrators should run `glooctl check` to find and fix config errors.'
+        string invalid_route_response_body = 3;
     }
 
     // set these options to fine-tune the way Gloo handles invalid user configuration

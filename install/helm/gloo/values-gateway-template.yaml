@@ -11,7 +11,7 @@ settings:
   invalidConfigPolicy:
     enableFallbackResponse: false
     fallbackResponseCode: 404
-    fallbackResponseBody: 'Gateway has invalid configuration. Administrators should run `glooctl check` to find and fix config errors.'
+    fallbackResponseBody: 'Gloo Gateway has invalid configuration. Administrators should run `glooctl check` to find and fix config errors.'
   integrations:
     knative:
       enabled: false

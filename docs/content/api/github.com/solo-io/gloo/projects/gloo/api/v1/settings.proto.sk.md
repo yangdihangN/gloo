@@ -441,17 +441,17 @@ Settings specific to the gloo (Envoy xDS server) controller
 policy for how Gloo should handle invalid config
 
 ```yaml
-"enableFallbackResponse": bool
-"fallbackResponseCode": int
-"fallbackResponseBody": string
+"replaceInvalidRoutes": bool
+"invalidRouteResponseCode": int
+"invalidRouteResponseBody": string
 
 ```
 
 | Field | Type | Description | Default |
 | ----- | ---- | ----------- |----------- | 
-| `enableFallbackResponse` | `bool` | if True, routes whose destinations point to a service or upstream which does not exist (or is not visible within Gloo's watchNamespaces) will respond to clients with a fallback message default is 'false'. |  |
-| `fallbackResponseCode` | `int` | if enableFallbackResponse is set to `true`, reply to clients with this response code default is 404. |  |
-| `fallbackResponseBody` | `string` | if enableFallbackResponse is set to `true`, reply to clients with this body default is 'Gateway has invalid configuration. Administrators should run `glooctl check` to find and fix config errors.'. |  |
+| `replaceInvalidRoutes` | `bool` | set replaceInvalidRoutes to `true`, Gloo remove any routes from the provided configuration which point to a missing destination. Routes that are removed in this way will instead return a configurable direct response to clients. Note: enabling this option allows Gloo to accept partially valid proxy configurations. |  |
+| `invalidRouteResponseCode` | `int` | if invalidRouteResponseCode is set to `true`, reply to clients with this response code default is 404. |  |
+| `invalidRouteResponseBody` | `string` | if replaceInvalidRoutes is set to `true`, reply to clients with this body default is 'Gloo Gateway has invalid configuration. Administrators should run `glooctl check` to find and fix config errors.'. |  |
 
 
 

@@ -3,7 +3,7 @@ package healthcheck
 import (
 	"github.com/envoyproxy/go-control-plane/envoy/api/v2/route"
 	evnoyhealthcheck "github.com/envoyproxy/go-control-plane/envoy/config/filter/http/health_check/v2"
-	envoyutil "github.com/envoyproxy/go-control-plane/pkg/util"
+	envoyutil "github.com/envoyproxy/go-control-plane/pkg/conversion"
 	"github.com/gogo/protobuf/types"
 	"github.com/pkg/errors"
 

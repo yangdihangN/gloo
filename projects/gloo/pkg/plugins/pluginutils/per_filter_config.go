@@ -6,7 +6,7 @@ import (
 
 	envoyroute "github.com/envoyproxy/go-control-plane/envoy/api/v2/route"
 
-	"github.com/envoyproxy/go-control-plane/pkg/util"
+	"github.com/envoyproxy/go-control-plane/pkg/conversion"
 	"github.com/gogo/protobuf/proto"
 	"github.com/gogo/protobuf/types"
 	"github.com/pkg/errors"

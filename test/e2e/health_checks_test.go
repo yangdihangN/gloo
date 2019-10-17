@@ -131,7 +131,7 @@ var _ = Describe("Health Checks", func() {
 			It(v.Name, func() {
 				us, err := testClients.UpstreamClient.Read(tu.Upstream.Metadata.Namespace, tu.Upstream.Metadata.Name, clients.ReadOpts{})
 				Expect(err).NotTo(HaveOccurred())
-				v.Check.Timeout = &translator.DefaultHealthCheckTimeout
+				v.Check.Timeout =   &translator.DefaultHealthCheckTimeout
 				v.Check.Interval = &translator.DefaultHealthCheckInterval
 				v.Check.HealthyThreshold = translator.DefaultThreshold
 				v.Check.UnhealthyThreshold = translator.DefaultThreshold

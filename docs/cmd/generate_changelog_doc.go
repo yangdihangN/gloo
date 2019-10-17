@@ -62,9 +62,7 @@ func changelogMdCmd(opts *options) *cobra.Command {
 		Use:   "gen-changelog-md",
 		Short: "generate a markdown file from changelogs",
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			return generateChangelogMd(opts, args)
-			return nil
 		},
 	}
 	return app

@@ -28,7 +28,8 @@
 
 [[constraint]]
   name = "github.com/solo-io/solo-kit"
-  version = "0.11.0"
+  # version = "0.11.0"
+  revision = "883ce258c40625919c29845f51fd9f59cc39de0d"
 
 [[override]]
   name = "github.com/solo-io/go-utils"

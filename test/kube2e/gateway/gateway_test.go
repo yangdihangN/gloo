@@ -449,10 +449,16 @@ var _ = Describe("Kube2e: gateway", func() {
 
 		Context("with a mix of valid and invalid virtual services", func() {
 			var (
-				validVsName   = "i-am-valid"
-				invalidVsName = "i-am-invalid"
+				validVsName       string
+				invalidVsName     string
+				validVsNameSeed   = "i-am-valid"
+				invalidVsNameSeed = "i-am-invalid"
+				runCount          = 0
 			)
 			BeforeEach(func() {
+				runCount++
+				validVsName = nameFromSeed(validVsNameSeed, runCount)
+				invalidVsName = nameFromSeed(invalidVsNameSeed, runCount)
 
 				valid := withName(validVsName, withDomains([]string{"valid.com"},
 					getVirtualService(&gloov1.Destination{
@@ -1308,4 +1314,8 @@ func getRouteWithDelegate(delegate string, path string) *gatewayv1.Route {
 func addPrefixRewrite(route *gatewayv1.Route, rewrite string) *gatewayv1.Route {
 	route.RoutePlugins = &gloov1.RoutePlugins{PrefixRewrite: &types.StringValue{Value: rewrite}}
 	return route
+}
+
+func nameFromSeed(validVsNameSeed string, runCount int) string {
+	return fmt.Sprintf("%v-%v", validVsNameSeed, runCount)
 }

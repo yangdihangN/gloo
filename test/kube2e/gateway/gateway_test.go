@@ -456,7 +456,8 @@ var _ = Describe("Kube2e: gateway", func() {
 				runCount          = 0
 			)
 			BeforeEach(func() {
-				runCount++
+				// temporary test to run with this disabled in CI
+				//runCount++
 				validVsName = nameFromSeed(validVsNameSeed, runCount)
 				invalidVsName = nameFromSeed(invalidVsNameSeed, runCount)
 

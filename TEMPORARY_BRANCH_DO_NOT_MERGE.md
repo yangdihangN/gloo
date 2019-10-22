@@ -16,6 +16,6 @@ Do not merge this branch to the main branch, it only exists to produce docs with
 - run the make target to publish the image:
 
 ```bash
-GCLOUD_PROJECT_ID=solo-public TAGGED_VERSION=v0.20 make publish-v-20-docs -B
+GCLOUD_PROJECT_ID=solo-public TAGGED_VERSION=v0-20 make publish-v-20-docs -B
 ```
 - force the cluster to repull the v0.20 tagged-image

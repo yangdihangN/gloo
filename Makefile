@@ -444,6 +444,7 @@ endif
 publish-v-20-docs: gather-v-20-docs publish-docs
 
 OLD_DOCS_TEMP_DIR := "old_docs_temp_dir"
+OLD_DOCS_SHIM_DIR := "old_docs_shim"
 .PHONY: gather-v-20-docs
 gather-v-20-docs:
 	rm -rf $(OLD_DOCS_TEMP_DIR)
@@ -453,6 +454,7 @@ gather-v-20-docs:
 	cp $(OLD_DOCS_TEMP_DIR)/solo-docs/gloo/docs/cli/glooctl* docs/content/cli/
 	rm -rf docs/content/api/
 	cp -r $(OLD_DOCS_TEMP_DIR)/solo-docs/gloo/docs/api/ docs/content/api/
+	cp $(OLD_DOCS_SHIM_DIR)/api_index.md docs/content/api/_index.md # use a version-scoped form
 
 #----------------------------------------------------------------------------------
 # Docker

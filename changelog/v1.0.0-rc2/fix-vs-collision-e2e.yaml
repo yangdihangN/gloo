@@ -1,0 +1,4 @@
+changelog:
+  - type: NON_USER_FACING
+    description: Fix flake caused by resource name collision in gateway e2e test.
+    issueLink: https://github.com/solo-io/gloo/issues/1468
